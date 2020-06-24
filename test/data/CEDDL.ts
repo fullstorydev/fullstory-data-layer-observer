@@ -4,8 +4,8 @@
  */
 
 /**
- * The root JavaScript Object (JSO) MUST be digitalData, and all data properties within this specification MUST fall
- * within the hierarchy of the digitalData object.
+ * The root JavaScript Object (JSO) MUST be window.digitalData.
+ * All data properties within this specification MUST fall within the hierarchy of the digitalData object.
  */
 export interface CEDDL {
   pageInstanceID: string;
@@ -23,8 +23,10 @@ export interface CEDDL {
 /**
  * Because of the wide range of methods for categorization, an object literal is provided for categories.
  */
-export interface Category {
+export interface PageCategory {
   primaryCategory: string;
+  subCategory1?: string;
+  pageType?: string;
 }
 
 /**
@@ -33,7 +35,7 @@ export interface Category {
  */
 export interface Page {
   pageInfo: PageInfo;
-  category: Category;
+  category: PageCategory;
   attributes?: { [key: string]: any };
 }
 
@@ -64,7 +66,33 @@ export interface PageInfo {
  * ordered in a transaction, see the Cart and Transaction objects below.
  */
 export interface Product {
+  productInfo: ProductInfo;
+  category: ProductCategory;
+  linkedProduct: LinkedProduct[];
+  attributes: { [key: string]: any };
+}
 
+export interface ProductInfo {
+  productID: string;
+  productName: string;
+  description: string;
+  productURL: string;
+  productImage: string;
+  productThumbnail: string;
+  manufacturer: string;
+  sku: string;
+  color: string;
+  size: string;
+}
+
+export interface ProductCategory {
+  primaryCategory: string;
+  subCategory1?: string;
+  productType?: string;
+}
+
+export interface LinkedProduct {
+  productInfo: ProductInfo
 }
 
 /**
@@ -73,7 +101,34 @@ export interface Product {
  * orders.
  */
 export interface Cart {
+  cartID: string;
+  price: TotalCartPrice;
+  attributes: { [key: string]: any };
+  item: ProductItem[];
+}
 
+export interface Price {
+  basePrice: number;
+  voucherCode: string;
+  voucherDiscount: number;
+  currency: string; // ISO 4217 is RECOMMENDED
+  taxRate: number;
+  shipping: number;
+  shippingMethod: string;
+  priceWithTax: number;
+}
+
+export interface TotalCartPrice extends Price {
+  cartTotal: number;
+}
+
+export interface ProductItem {
+  productInfo: ProductInfo;
+  category: ProductCategory;
+  quantity: number;
+  price: Price;
+  linkedProduct: LinkedProduct[];
+  attributes: { [key: string]: any };
 }
 
 /**
@@ -81,8 +136,23 @@ export interface Cart {
  * contains analogous sub-objects to the Cart object as well as additional subobjects specific to completed orders.
  */
 export interface Transaction {
-
+  transactionID: string;
+  profile: TransactionProfile;
+  total: TotalTransactionPrice;
+  attributes: { [key: string]: any };
+  item: ProductItem[];
 }
+
+export interface TransactionProfile {
+  profileInfo: ProfileInfo;
+  address: Address;
+  shippingAddress: Address;
+}
+
+export interface TotalTransactionPrice extends Price {
+  transactionTotal: number;
+}
+
 
 /**
  * The Event object collects information about an interaction event by the user. An event might be a button click,
@@ -90,7 +160,23 @@ export interface Transaction {
  * could be captured by an Event object.
  */
 export interface Event {
+  eventInfo: EventInfo;
+  category: EventCategory;
+}
 
+export interface EventInfo {
+  eventName: string;
+  eventAction: string;
+  eventPoints: number;
+  type: string;
+  timeStamp: Date;
+  effect: string;
+}
+
+export interface EventCategory {
+  primaryCategory: string;
+  subCategory1?: string;
+  attributes: { [key: string]: any };
 }
 
 /**
@@ -99,15 +185,59 @@ export interface Event {
  * object above.
  */
 export interface Component {
+  componentInfo: ComponentInfo;
+  category: ComponentCategory;
+}
 
+export interface ComponentInfo {
+  componentID: string;
+  componentName?: string;
+  description?: string;
+}
+
+export interface ComponentCategory {
+  primaryCategory: string;
+  subCategory1?: string;
+  componentType: string;
+  attributes: { [key: string]: any };
 }
 
 /**
  * The User object captures the profile of a user who is interacting with the website.
  */
 export interface User {
-
+  segment: UserSegment;
+  profile: UserProfile[];
 }
+
+export interface UserSegment {}
+
+export interface UserProfile {
+  profileInfo: ProfileInfo;
+  address: Address;
+  social: UserSocial;
+  attributes: { [key: string]: any };
+}
+
+export interface ProfileInfo {
+  profileID: string;
+  userName: string;
+  email?: string;
+  language?: string;
+  returningStatus?: string;
+  type?: string;
+}
+
+export interface Address {
+  line1: string;
+  line2: string;
+  city: string;
+  stateProvince: string;
+  postalCode: string;
+  country: string;
+}
+
+export interface UserSocial {}
 
 /**
  * The Privacy object holds the privacy policy settings that could be used to:
@@ -116,8 +246,15 @@ export interface User {
  * of tracking technologies.
  */
 export interface Privacy {
-
+  accessCategories: AccessCategory[];
 }
+
+export interface AccessCategory {
+  categoryName: string;
+  domains: string[];
+}
+
+/*
 
 export const digitalData: CEDDL = {
   pageInstanceID: '755ebb86-60b5-451e-92d3-044157d29965',
@@ -144,7 +281,12 @@ export const digitalData: CEDDL = {
     }
   },
   product: [],
-  cart: {},
+  cart: {
+    cartID: 'cart-1234',
+    price: 23.04,
+    attributes: {},
+    item: {}
+  },
   transaction: {},
   event: [],
   component: [],
@@ -152,3 +294,4 @@ export const digitalData: CEDDL = {
   privacy: {},
   version: '1.0.0'
 }
+*/
