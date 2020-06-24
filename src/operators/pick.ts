@@ -9,11 +9,11 @@ type picktionary = { [key: string]: boolean };
 /**
  * PickOperator returns a new object containing only desired (i.e. picked) properties.
  */
-export class PickOperator extends Operator {
+export class PickOperator extends Operator<PickOperatorOptions> {
 
   properties: string[] = [];
 
-  constructor(private options: PickOperatorOptions) {
+  constructor(options: PickOperatorOptions) {
     super(options);
   }
 

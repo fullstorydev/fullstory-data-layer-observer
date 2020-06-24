@@ -27,17 +27,14 @@ export enum OperatorValidationError {
  *
  * An Operator can choose not to pass information to the next operator by returning null.
  */
-export abstract class Operator {
+export abstract class Operator<O extends OperatorOptions> {
+
   readonly name: string;
-  readonly index: number;
-  readonly maxDepth: number;
+  readonly index: number; // NB (van) create a member for index because it's optional and this confuses the ts compiler in subclasses
 
-  constructor(options: OperatorOptions) {
-    const { name, index, maxDepth } = options;
-
-    this.name = name;
-    this.index = index || 0;
-    this.maxDepth = maxDepth || 0;
+  constructor(protected options: O) {
+    this.name = options.name;
+    this.index = options.index || 0;
   }
 
   /**
