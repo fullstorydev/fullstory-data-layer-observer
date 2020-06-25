@@ -6,10 +6,10 @@ import * as CEDDL from './data/CEDDL';
 describe('mock CEDDL unit tests', () => {
 
   it('it should have JSO subobjects ', () => {
-    const { digitalData } = CEDDL;
-    const { pageInstanceID, page, product, cart, transaction, event, component, user, privacy, version } = digitalData;
+    const { minimalDigitalData } = CEDDL;
+    const { pageInstanceID, page, product, cart, transaction, event, component, user, privacy, version } = minimalDigitalData;
 
-    expect(digitalData).not.be.undefined;
+    expect(minimalDigitalData).not.be.undefined;
     expect(pageInstanceID).not.be.undefined;
     expect(pageInstanceID).not.be.empty;
     expect(page).not.be.undefined;

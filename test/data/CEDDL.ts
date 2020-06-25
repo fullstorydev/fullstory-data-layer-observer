@@ -69,7 +69,7 @@ export interface Product {
   productInfo: ProductInfo;
   category: ProductCategory;
   linkedProduct: LinkedProduct[];
-  attributes: { [key: string]: any };
+  attributes?: { [key: string]: any };
 }
 
 export interface ProductInfo {
@@ -169,7 +169,7 @@ export interface EventInfo {
   eventAction: string;
   eventPoints: number;
   type: string;
-  timeStamp: Date;
+  timeStamp: string | Date;
   effect: string;
 }
 
@@ -254,9 +254,8 @@ export interface AccessCategory {
   domains: string[];
 }
 
-/*
 
-export const digitalData: CEDDL = {
+export const minimalDigitalData: CEDDL = {
   pageInstanceID: '755ebb86-60b5-451e-92d3-044157d29965',
   page: {
     pageInfo: {
@@ -280,18 +279,182 @@ export const digitalData: CEDDL = {
       primaryCategory: 'homepage'
     }
   },
-  product: [],
+  product: [{
+    productInfo: {
+      productID: '668ebb86-60b5-451e-92d3-044157d27823',
+      productName: 'Cosmic Crisp Apple',
+      description: 'A crisp and cosmic apple',
+      productURL: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823',
+      productImage: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/image',
+      productThumbnail: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/thumbnail',
+      manufacturer: 'Washington State Apple Farm',
+      sku: 'cca-1234',
+      color: 'red and white',
+      size: 'medium'
+    },
+    category: {
+      primaryCategory: 'fruit'
+    },
+    linkedProduct: []
+  }],
   cart: {
     cartID: 'cart-1234',
-    price: 23.04,
-    attributes: {},
-    item: {}
+    price: {
+      basePrice: 15.55,
+      voucherCode: '',
+      voucherDiscount: 0,
+      currency: 'USD',
+      taxRate: 0.09,
+      shipping: 5.0,
+      shippingMethod: 'UPS-Ground',
+      priceWithTax: 16.95,
+      cartTotal: 21.95
+    },
+    item: [{
+      productInfo: {
+        productID: '668ebb86-60b5-451e-92d3-044157d27823',
+        productName: 'Cosmic Crisp Apple',
+        description: 'A crisp and cosmic apple',
+        productURL: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823',
+        productImage: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/image',
+        productThumbnail: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/thumbnail',
+        manufacturer: 'Washington State Apple Farm',
+        sku: 'cca-1234',
+        color: 'red and white',
+        size: 'medium',
+      },
+      category: { primaryCategory: 'fruit' },
+      price: {
+        basePrice: 15.55,
+        voucherCode: '',
+        voucherDiscount: 0,
+        currency: 'USD',
+        taxRate: 0.09,
+        shipping: 5.0,
+        shippingMethod: 'UPS-Ground',
+        priceWithTax: 16.95
+      },
+      quantity: 1,
+      linkedProduct: [],
+      attributes: {}
+    }],
+    attributes: {}
   },
-  transaction: {},
-  event: [],
-  component: [],
-  user: {},
-  privacy: {},
+  transaction: {
+    transactionID: 'tr-235098236',
+    profile: {
+      profileInfo: {
+        profileID: 'pr-12333211',
+        userName: 'JohnyAppleseed'
+      },
+      address: {
+        line1: '123 Easy St.',
+        line2: '',
+        city: 'Athens',
+        stateProvince: 'GA',
+        postalCode: '30606',
+        country: 'USA'
+      },
+      shippingAddress: {
+        line1: '123 Easy St.',
+        line2: '',
+        city: 'Athens',
+        stateProvince: 'GA',
+        postalCode: '30606',
+        country: 'USA'
+      }
+    },
+    total: {
+      basePrice: 15.55,
+      voucherCode: '',
+      voucherDiscount: 0,
+      currency: 'USD',
+      taxRate: 0.09,
+      shipping: 5.0,
+      shippingMethod: 'UPS-Ground',
+      priceWithTax: 16.95,
+      transactionTotal: 16.95
+    },
+    attributes: {},
+    item: [{
+      productInfo: {
+        productID: '668ebb86-60b5-451e-92d3-044157d27823',
+        productName: 'Cosmic Crisp Apple',
+        description: 'A crisp and cosmic apple',
+        productURL: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823',
+        productImage: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/image',
+        productThumbnail: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/thumbnail',
+        manufacturer: 'Washington State Apple Farm',
+        sku: 'cca-1234',
+        color: 'red and white',
+        size: 'medium',
+      },
+      category: { primaryCategory: 'fruit' },
+      price: {
+        basePrice: 15.55,
+        voucherCode: '',
+        voucherDiscount: 0,
+        currency: 'USD',
+        taxRate: 0.09,
+        shipping: 5.0,
+        shippingMethod: 'UPS-Ground',
+        priceWithTax: 16.95
+      },
+      quantity: 1,
+      linkedProduct: [],
+      attributes: {}
+    }]
+  },
+  event: [{
+    eventInfo: {
+      eventName: 'Cart Item Added',
+      eventAction: 'cart-item-added',
+      eventPoints: 11,
+      type: 'cart-modifier',
+      timeStamp: new Date(),
+      effect: 'cart has a new item'
+    },
+    category: {
+      primaryCategory: 'cart',
+      attributes: {}
+    }
+  }],
+  component: [{
+    componentInfo: {
+      componentID: 'c-54123',
+      componentName: 'Cosmic Crisp Promo Video',
+      description: 'A video showing you just how cosmic and just how crisp is this apple.'
+    },
+    category: {
+      primaryCategory: 'promo-video',
+      componentType: 'video',
+      attributes: {}
+    }
+  }],
+  user: {
+    segment: {},
+    profile: [{
+      profileInfo: {
+        profileID: 'pr-12333211',
+        userName: 'JohnyAppleseed'
+      },
+      address: {
+        line1: '123 Easy St.',
+        line2: '',
+        city: 'Athens',
+        stateProvince: 'GA',
+        postalCode: '30606',
+        country: 'USA'
+      },
+      social: {},
+      attributes: {}
+    }]
+  },
+  privacy: {
+    accessCategories: [{
+      categoryName: 'analytics',
+      domains: ['fruitshoppe.firebaseapp.com',]
+    }]
+  },
   version: '1.0.0'
 }
-*/
