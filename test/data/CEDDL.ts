@@ -3,6 +3,8 @@
  * See https://www.w3.org/2013/12/ceddl-201312.pdf
  */
 
+export const ceddlVersion = '1.0'
+
 /**
  * The root JavaScript Object (JSO) MUST be window.digitalData.
  * All data properties within this specification MUST fall within the hierarchy of the digitalData object.
@@ -254,8 +256,98 @@ export interface AccessCategory {
   domains: string[];
 }
 
+export const emptyDigitalData = {
+  pageInstanceID: '',
+  page: {
+    pageInfo: {
+      pageID: '',
+      pageName: '',
+      destinationURL: '',
+      referringURL: '',
+      sysEnv: '',
+      variant: '',
+      version: '',
+      breadcrumbs: [],
+      author: '',
+      issueDate: '',
+      effectiveDate: '',
+      expiryDate: '',
+      language: '',
+      industryCodes: '',
+      publisher: ''
+    },
+    category: {
+      primaryCategory: ''
+    }
+  },
+  product: [],
+  cart: {
+    cartID: '',
+    price: {
+      basePrice: 0,
+      voucherCode: '',
+      voucherDiscount: 0,
+      currency: '',
+      taxRate: 0.0,
+      shipping: 0,
+      shippingMethod: '',
+      priceWithTax: 0,
+      cartTotal: 0
+    },
+    item: [],
+    attributes: {}
+  },
+  transaction: {
+    transactionID: '',
+    profile: {
+      profileInfo: {
+        profileID: '',
+        userName: ''
+      },
+      address: {
+        line1: '',
+        line2: '',
+        city: '',
+        stateProvince: '',
+        postalCode: '',
+        country: ''
+      },
+      shippingAddress: {
+        line1: '',
+        line2: '',
+        city: '',
+        stateProvince: '',
+        postalCode: '',
+        country: ''
+      }
+    },
+    total: {
+      basePrice: 0,
+      voucherCode: '',
+      voucherDiscount: 0,
+      currency: '',
+      taxRate: 0,
+      shipping: 0,
+      shippingMethod: '',
+      priceWithTax: 0,
+      transactionTotal: 0
+    },
+    attributes: {},
+    item: []
+  },
+  event: [],
+  component: [],
+  user: {
+    segment: {},
+    profile: []
+  },
+  privacy: {
+    accessCategories: []
+  },
+  version: ceddlVersion
+}
 
-export const minimalDigitalData: CEDDL = {
+export const basicDigitalData: CEDDL = {
   pageInstanceID: '755ebb86-60b5-451e-92d3-044157d29965',
   page: {
     pageInfo: {
@@ -456,5 +548,5 @@ export const minimalDigitalData: CEDDL = {
       domains: ['fruitshoppe.firebaseapp.com',]
     }]
   },
-  version: '1.0.0'
+  version: ceddlVersion
 }

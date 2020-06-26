@@ -87,6 +87,15 @@ describe('pick operator unit tests', () => {
     expect(output![0].contact.email).to.eq(data.contact.email);
   });
 
+  it('it should find properties at different depths', () => {
+    const pick = new PickOperator({ name: 'pick', properties: 'id,color' })
+    const output = pick.handleData([data]);
+
+    expect(output).to.not.be.null;
+    expect(output![0].id).to.eq(data.id);
+    expect(output![0].color).to.eq(data.favorites.color);
+  });
+
   it('it should not go below a certain depth', () => {
     const pick = new PickOperator({ name: 'pick', properties: 'id,contact,email', maxDepth: 0 })
     const output = pick.handleData([data]);
