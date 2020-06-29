@@ -2,7 +2,6 @@ import { expect } from 'chai';
 import 'mocha';
 
 import * as CEDDL from './data/CEDDL';
-import { PickOperator } from '../src/operators';
 
 describe('mock CEDDL unit tests', () => {
 
@@ -49,22 +48,4 @@ describe('mock CEDDL unit tests', () => {
     expect(version).not.be.undefined;
     expect(version).not.be.empty;
   });
-
-
-  it('it should pick data from CEDDL', () => {
-    const { basicDigitalData, ceddlVersion } = CEDDL;
-    expect(basicDigitalData.version).to.not.be.undefined;
-    expect(basicDigitalData.page.pageInfo.pageID).to.not.be.undefined;
-
-    const pick = new PickOperator({
-      name: 'pick',
-      properties: 'version,pageID'
-    })
-    const output = pick.handleData([basicDigitalData]);
-    console.log('output', output);
-    expect(output).to.not.be.null;
-    expect(output![0].version).to.eq(ceddlVersion);
-    expect(output![0].pageID).to.eq(basicDigitalData.page.pageInfo.pageID);
-  });
-
 });

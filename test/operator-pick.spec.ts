@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import 'mocha';
 
+import * as CEDDL from './data/CEDDL';
 import { PickOperator } from '../src/operators';
 
 const data = {
@@ -122,6 +123,21 @@ describe('pick operator unit tests', () => {
 
     output![0].id = 'diff';
     expect(output![0].id).to.not.eq(data.id);
+  });
+
+  it('it should pick data from CEDDL', () => {
+    const { basicDigitalData, ceddlVersion } = CEDDL;
+    expect(basicDigitalData.version).to.not.be.undefined;
+    expect(basicDigitalData.page.pageInfo.pageID).to.not.be.undefined;
+
+    const pick = new PickOperator({
+      name: 'pick',
+      properties: 'version,pageID'
+    })
+    const output = pick.handleData([basicDigitalData]);
+    expect(output).to.not.be.null;
+    expect(output![0].version).to.eq(ceddlVersion);
+    expect(output![0].pageID).to.eq(basicDigitalData.page.pageInfo.pageID);
   });
 
 });
