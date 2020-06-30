@@ -33,7 +33,7 @@ export class Call {
  * @param callQueueLength an optional expected number of Calls in the queue; defaults to greater than 0
  */
 export function expectCall(mock: MockClass, methodName: string, callQueueLength?: number): Call {
-  if (callQueueLength) {
+  if (callQueueLength !== undefined) {
     if (callQueueLength <= 0) throw new Error('Use expectNoCalls for empty call queues');
     expect(mock.callQueues[methodName].length).to.eq(callQueueLength);
   } else {
