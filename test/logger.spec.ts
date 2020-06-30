@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import 'mocha';
 import { Logger, LogLevel, LogEvent } from '../src/utils/logger';
 import { FullStory } from './vendor/fullstory-recording';
-import { expectParams, MockClass } from './mock';
+import { expectParams, MockClass, expectNoCalls } from './mock';
 
 class MockConsole extends MockClass {
 
@@ -26,18 +26,19 @@ describe('logger unit tests', () => {
     const logger = Logger.getInstance();
 
     logger.error('Data layer not found', mockDatalayer);
+    logger.warn('Data layer not ready', mockDatalayer);
+
     const [ error ] = expectParams(console, 'error');
     expect(error).to.eq(`Data layer not found (${mockDatalayer})`);
 
-    logger.warn('Data layer not ready', mockDatalayer);
     const [ warn ] = expectParams(console, 'warn');
     expect(warn).to.eq(`Data layer not ready (${mockDatalayer})`);
 
     logger.info('Data layer rules loaded', mockDatalayer);
-    expect(console.callQueues.info.length).to.eq(0)
+    expectNoCalls(console, 'info');
 
     logger.debug('Operator output', mockDatalayer);
-    expect(console.callQueues.debug.length).to.eq(0)
+    expectNoCalls(console, 'debug');
 
   });
 
