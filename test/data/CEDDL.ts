@@ -3,9 +3,11 @@
  * See https://www.w3.org/2013/12/ceddl-201312.pdf
  */
 
+export const ceddlVersion = '1.0'
+
 /**
- * The root JavaScript Object (JSO) MUST be digitalData, and all data properties within this specification MUST fall
- * within the hierarchy of the digitalData object.
+ * The root JavaScript Object (JSO) MUST be window.digitalData.
+ * All data properties within this specification MUST fall within the hierarchy of the digitalData object.
  */
 export interface CEDDL {
   pageInstanceID: string;
@@ -23,8 +25,10 @@ export interface CEDDL {
 /**
  * Because of the wide range of methods for categorization, an object literal is provided for categories.
  */
-export interface Category {
+export interface PageCategory {
   primaryCategory: string;
+  subCategory1?: string;
+  pageType?: string;
 }
 
 /**
@@ -33,7 +37,7 @@ export interface Category {
  */
 export interface Page {
   pageInfo: PageInfo;
-  category: Category;
+  category: PageCategory;
   attributes?: { [key: string]: any };
 }
 
@@ -64,7 +68,33 @@ export interface PageInfo {
  * ordered in a transaction, see the Cart and Transaction objects below.
  */
 export interface Product {
+  productInfo: ProductInfo;
+  category: ProductCategory;
+  linkedProduct: LinkedProduct[];
+  attributes?: { [key: string]: any };
+}
 
+export interface ProductInfo {
+  productID: string;
+  productName: string;
+  description: string;
+  productURL: string;
+  productImage: string;
+  productThumbnail: string;
+  manufacturer: string;
+  sku: string;
+  color: string;
+  size: string;
+}
+
+export interface ProductCategory {
+  primaryCategory: string;
+  subCategory1?: string;
+  productType?: string;
+}
+
+export interface LinkedProduct {
+  productInfo: ProductInfo
 }
 
 /**
@@ -73,7 +103,34 @@ export interface Product {
  * orders.
  */
 export interface Cart {
+  cartID: string;
+  price: TotalCartPrice;
+  attributes: { [key: string]: any };
+  item: ProductItem[];
+}
 
+export interface Price {
+  basePrice: number;
+  voucherCode: string;
+  voucherDiscount: number;
+  currency: string; // ISO 4217 is RECOMMENDED
+  taxRate: number;
+  shipping: number;
+  shippingMethod: string;
+  priceWithTax: number;
+}
+
+export interface TotalCartPrice extends Price {
+  cartTotal: number;
+}
+
+export interface ProductItem {
+  productInfo: ProductInfo;
+  category: ProductCategory;
+  quantity: number;
+  price: Price;
+  linkedProduct: LinkedProduct[];
+  attributes: { [key: string]: any };
 }
 
 /**
@@ -81,8 +138,23 @@ export interface Cart {
  * contains analogous sub-objects to the Cart object as well as additional subobjects specific to completed orders.
  */
 export interface Transaction {
-
+  transactionID: string;
+  profile: TransactionProfile;
+  total: TotalTransactionPrice;
+  attributes: { [key: string]: any };
+  item: ProductItem[];
 }
+
+export interface TransactionProfile {
+  profileInfo: ProfileInfo;
+  address: Address;
+  shippingAddress: Address;
+}
+
+export interface TotalTransactionPrice extends Price {
+  transactionTotal: number;
+}
+
 
 /**
  * The Event object collects information about an interaction event by the user. An event might be a button click,
@@ -90,7 +162,23 @@ export interface Transaction {
  * could be captured by an Event object.
  */
 export interface Event {
+  eventInfo: EventInfo;
+  category: EventCategory;
+}
 
+export interface EventInfo {
+  eventName: string;
+  eventAction: string;
+  eventPoints: number;
+  type: string;
+  timeStamp: string | Date;
+  effect: string;
+}
+
+export interface EventCategory {
+  primaryCategory: string;
+  subCategory1?: string;
+  attributes: { [key: string]: any };
 }
 
 /**
@@ -99,15 +187,59 @@ export interface Event {
  * object above.
  */
 export interface Component {
+  componentInfo: ComponentInfo;
+  category: ComponentCategory;
+}
 
+export interface ComponentInfo {
+  componentID: string;
+  componentName?: string;
+  description?: string;
+}
+
+export interface ComponentCategory {
+  primaryCategory: string;
+  subCategory1?: string;
+  componentType: string;
+  attributes: { [key: string]: any };
 }
 
 /**
  * The User object captures the profile of a user who is interacting with the website.
  */
 export interface User {
-
+  segment: UserSegment;
+  profile: UserProfile[];
 }
+
+export interface UserSegment {}
+
+export interface UserProfile {
+  profileInfo: ProfileInfo;
+  address: Address;
+  social: UserSocial;
+  attributes: { [key: string]: any };
+}
+
+export interface ProfileInfo {
+  profileID: string;
+  userName: string;
+  email?: string;
+  language?: string;
+  returningStatus?: string;
+  type?: string;
+}
+
+export interface Address {
+  line1: string;
+  line2: string;
+  city: string;
+  stateProvince: string;
+  postalCode: string;
+  country: string;
+}
+
+export interface UserSocial {}
 
 /**
  * The Privacy object holds the privacy policy settings that could be used to:
@@ -116,10 +248,106 @@ export interface User {
  * of tracking technologies.
  */
 export interface Privacy {
-
+  accessCategories: AccessCategory[];
 }
 
-export const digitalData: CEDDL = {
+export interface AccessCategory {
+  categoryName: string;
+  domains: string[];
+}
+
+export const emptyDigitalData = {
+  pageInstanceID: '',
+  page: {
+    pageInfo: {
+      pageID: '',
+      pageName: '',
+      destinationURL: '',
+      referringURL: '',
+      sysEnv: '',
+      variant: '',
+      version: '',
+      breadcrumbs: [],
+      author: '',
+      issueDate: '',
+      effectiveDate: '',
+      expiryDate: '',
+      language: '',
+      industryCodes: '',
+      publisher: ''
+    },
+    category: {
+      primaryCategory: ''
+    }
+  },
+  product: [],
+  cart: {
+    cartID: '',
+    price: {
+      basePrice: 0,
+      voucherCode: '',
+      voucherDiscount: 0,
+      currency: '',
+      taxRate: 0.0,
+      shipping: 0,
+      shippingMethod: '',
+      priceWithTax: 0,
+      cartTotal: 0
+    },
+    item: [],
+    attributes: {}
+  },
+  transaction: {
+    transactionID: '',
+    profile: {
+      profileInfo: {
+        profileID: '',
+        userName: ''
+      },
+      address: {
+        line1: '',
+        line2: '',
+        city: '',
+        stateProvince: '',
+        postalCode: '',
+        country: ''
+      },
+      shippingAddress: {
+        line1: '',
+        line2: '',
+        city: '',
+        stateProvince: '',
+        postalCode: '',
+        country: ''
+      }
+    },
+    total: {
+      basePrice: 0,
+      voucherCode: '',
+      voucherDiscount: 0,
+      currency: '',
+      taxRate: 0,
+      shipping: 0,
+      shippingMethod: '',
+      priceWithTax: 0,
+      transactionTotal: 0
+    },
+    attributes: {},
+    item: []
+  },
+  event: [],
+  component: [],
+  user: {
+    segment: {},
+    profile: []
+  },
+  privacy: {
+    accessCategories: []
+  },
+  version: ceddlVersion
+}
+
+export const basicDigitalData: CEDDL = {
   pageInstanceID: '755ebb86-60b5-451e-92d3-044157d29965',
   page: {
     pageInfo: {
@@ -143,12 +371,182 @@ export const digitalData: CEDDL = {
       primaryCategory: 'homepage'
     }
   },
-  product: [],
-  cart: {},
-  transaction: {},
-  event: [],
-  component: [],
-  user: {},
-  privacy: {},
-  version: '1.0.0'
+  product: [{
+    productInfo: {
+      productID: '668ebb86-60b5-451e-92d3-044157d27823',
+      productName: 'Cosmic Crisp Apple',
+      description: 'A crisp and cosmic apple',
+      productURL: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823',
+      productImage: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/image',
+      productThumbnail: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/thumbnail',
+      manufacturer: 'Washington State Apple Farm',
+      sku: 'cca-1234',
+      color: 'red and white',
+      size: 'medium'
+    },
+    category: {
+      primaryCategory: 'fruit'
+    },
+    linkedProduct: []
+  }],
+  cart: {
+    cartID: 'cart-1234',
+    price: {
+      basePrice: 15.55,
+      voucherCode: '',
+      voucherDiscount: 0,
+      currency: 'USD',
+      taxRate: 0.09,
+      shipping: 5.0,
+      shippingMethod: 'UPS-Ground',
+      priceWithTax: 16.95,
+      cartTotal: 21.95
+    },
+    item: [{
+      productInfo: {
+        productID: '668ebb86-60b5-451e-92d3-044157d27823',
+        productName: 'Cosmic Crisp Apple',
+        description: 'A crisp and cosmic apple',
+        productURL: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823',
+        productImage: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/image',
+        productThumbnail: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/thumbnail',
+        manufacturer: 'Washington State Apple Farm',
+        sku: 'cca-1234',
+        color: 'red and white',
+        size: 'medium',
+      },
+      category: { primaryCategory: 'fruit' },
+      price: {
+        basePrice: 15.55,
+        voucherCode: '',
+        voucherDiscount: 0,
+        currency: 'USD',
+        taxRate: 0.09,
+        shipping: 5.0,
+        shippingMethod: 'UPS-Ground',
+        priceWithTax: 16.95
+      },
+      quantity: 1,
+      linkedProduct: [],
+      attributes: {}
+    }],
+    attributes: {}
+  },
+  transaction: {
+    transactionID: 'tr-235098236',
+    profile: {
+      profileInfo: {
+        profileID: 'pr-12333211',
+        userName: 'JohnyAppleseed'
+      },
+      address: {
+        line1: '123 Easy St.',
+        line2: '',
+        city: 'Athens',
+        stateProvince: 'GA',
+        postalCode: '30606',
+        country: 'USA'
+      },
+      shippingAddress: {
+        line1: '123 Easy St.',
+        line2: '',
+        city: 'Athens',
+        stateProvince: 'GA',
+        postalCode: '30606',
+        country: 'USA'
+      }
+    },
+    total: {
+      basePrice: 15.55,
+      voucherCode: '',
+      voucherDiscount: 0,
+      currency: 'USD',
+      taxRate: 0.09,
+      shipping: 5.0,
+      shippingMethod: 'UPS-Ground',
+      priceWithTax: 16.95,
+      transactionTotal: 16.95
+    },
+    attributes: {},
+    item: [{
+      productInfo: {
+        productID: '668ebb86-60b5-451e-92d3-044157d27823',
+        productName: 'Cosmic Crisp Apple',
+        description: 'A crisp and cosmic apple',
+        productURL: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823',
+        productImage: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/image',
+        productThumbnail: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/thumbnail',
+        manufacturer: 'Washington State Apple Farm',
+        sku: 'cca-1234',
+        color: 'red and white',
+        size: 'medium',
+      },
+      category: { primaryCategory: 'fruit' },
+      price: {
+        basePrice: 15.55,
+        voucherCode: '',
+        voucherDiscount: 0,
+        currency: 'USD',
+        taxRate: 0.09,
+        shipping: 5.0,
+        shippingMethod: 'UPS-Ground',
+        priceWithTax: 16.95
+      },
+      quantity: 1,
+      linkedProduct: [],
+      attributes: {}
+    }]
+  },
+  event: [{
+    eventInfo: {
+      eventName: 'Cart Item Added',
+      eventAction: 'cart-item-added',
+      eventPoints: 11,
+      type: 'cart-modifier',
+      timeStamp: new Date(),
+      effect: 'cart has a new item'
+    },
+    category: {
+      primaryCategory: 'cart',
+      attributes: {}
+    }
+  }],
+  component: [{
+    componentInfo: {
+      componentID: 'c-54123',
+      componentName: 'Cosmic Crisp Promo Video',
+      description: 'A video showing you just how cosmic and just how crisp is this apple.'
+    },
+    category: {
+      primaryCategory: 'promo-video',
+      componentType: 'video',
+      attributes: {}
+    }
+  }],
+  user: {
+    segment: {},
+    profile: [{
+      profileInfo: {
+        profileID: 'pr-12333211',
+        userName: 'JohnyAppleseed'
+      },
+      address: {
+        line1: '123 Easy St.',
+        line2: '',
+        city: 'Athens',
+        stateProvince: 'GA',
+        postalCode: '30606',
+        country: 'USA'
+      },
+      social: {},
+      attributes: {}
+    }]
+  },
+  privacy: {
+    accessCategories: [{
+      categoryName: 'analytics',
+      domains: ['fruitshoppe.firebaseapp.com',]
+    }]
+  },
+  version: ceddlVersion
 }
