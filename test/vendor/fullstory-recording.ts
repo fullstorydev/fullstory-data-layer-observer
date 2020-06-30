@@ -7,7 +7,7 @@ export class FullStory extends MockClass {
   
   enableConsole(): void {}
   
-  event(eventName: string, eventProperties: object): string | null {
+  event(eventName: string, eventProperties: object, source?: string): string | null {
     return null
   }
   
