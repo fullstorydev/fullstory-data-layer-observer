@@ -1,0 +1,35 @@
+version: 2.1
+executors:
+  browser-executor:
+    docker:
+      - image: circleci/node:12-browsers
+    working_directory: ~/repo
+jobs:
+  test:
+    executor: browser-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package.json" }}
+      - run:
+          name: Install
+          command: npm ci
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+      - run:
+          name: Audit
+          command: npm audit --audit-level=low
+      - run:
+          name: Test
+          command: npm test
+      - persist_to_workspace:
+          root: .
+          paths: .
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test
