@@ -4,7 +4,7 @@
   "description": "Monitor, transform, and send data layer content to FullStory",
   "main": "dist/index.js",
   "scripts": {
-    "test": "nyc mocha -r ts-node/register -r source-map-support/register test/**/*.spec.ts"
+    "test": "nyc mocha -r ts-node/register -r source-map-support/register -r jsdom-global/register test/**/*.spec.ts"
   },
   "repository": {
     "type": "git",
@@ -24,8 +24,11 @@
   "homepage": "https://github.com/fullstorydev/fullstory-data-layer-observer#readme",
   "devDependencies": {
     "@types/chai": "^4.2.11",
+    "@types/jsdom": "^16.2.3",
     "@types/mocha": "^7.0.2",
     "chai": "^4.2.0",
+    "jsdom": "^16.2.2",
+    "jsdom-global": "^3.0.2",
     "mocha": "^8.0.1",
     "nyc": "^15.1.0",
     "source-map-support": "^0.5.19",
