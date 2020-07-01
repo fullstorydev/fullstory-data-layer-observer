@@ -89,12 +89,12 @@ describe('pick operator unit tests', () => {
   });
 
   it('it should find properties at different depths', () => {
-    const pick = new PickOperator({ name: 'pick', properties: 'id,color' })
+    const pick = new PickOperator({ name: 'pick', properties: 'id,favorites,color' })
     const output = pick.handleData([data]);
 
     expect(output).to.not.be.null;
     expect(output![0].id).to.eq(data.id);
-    expect(output![0].color).to.eq(data.favorites.color);
+    expect(output![0].favorites.color).to.eq(data.favorites.color);
   });
 
   it('it should not go below a certain depth', () => {
@@ -132,12 +132,12 @@ describe('pick operator unit tests', () => {
 
     const pick = new PickOperator({
       name: 'pick',
-      properties: 'version,pageID'
+      properties: 'version,page,pageInfo,pageID'
     })
     const output = pick.handleData([basicDigitalData]);
     expect(output).to.not.be.null;
     expect(output![0].version).to.eq(ceddlVersion);
-    expect(output![0].pageID).to.eq(basicDigitalData.page.pageInfo.pageID);
+    expect(output![0].page.pageInfo.pageID).to.eq(basicDigitalData.page.pageInfo.pageID);
   });
 
 });
