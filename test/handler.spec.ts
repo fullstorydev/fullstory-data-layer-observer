@@ -124,7 +124,7 @@ describe('DataHandler unit tests', () => {
 
   it('debug should print operator transformations', () => {
     const handler = new DataHandler('digitalData.page');
-    // handler.debug = true;
+    handler.debug = true;
 
     const seen: any = [];
 
@@ -154,7 +154,6 @@ describe('DataHandler unit tests', () => {
 
   it('operator exceptions should fail gracefully', () => {
     const handler = new DataHandler('digitalData.page');
-    handler.debug = true;
 
     const seen: any = [];
 
@@ -165,6 +164,13 @@ describe('DataHandler unit tests', () => {
     handler.fireEvent();
 
     expect(seen.length).to.eq(0);
+  });
+
+  it('objects should only allow manual firing of events', () => {
+    // @ts-ignore
+    basicDigitalData.fn = () => console.log('Hello World');
+    const handler = new DataHandler('digitalData.fn');
+    expect(() => handler.fireEvent()).to.throw();
   });
 
 });
