@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import 'mocha';
 
-import { select, validate } from '../src/selector';
+import { select, validate, Path } from '../src/selector';
 
 const testData = {
   favorites: {
@@ -17,8 +17,41 @@ const testData = {
 
 describe('test selection paths', () => {
 
-  it('it should respect dot notation', () => {
+  it('should parse valid paths and throw exceptions for invalid paths', () => {
+    // Empty
+    expect(() => { new Path('') }).to.throw(Error);
+    expect(() => { new Path('   ') }).to.throw(Error);
+
+    // Pluck
+    expect(() => { new Path('favorites') }).to.not.throw();
+    expect(() => { new Path('favorites.color') }).to.not.throw();
+    expect(() => { new Path('favorites.color.films') }).to.not.throw();
+    expect(() => { new Path('.') }).to.throw(Error);
+    expect(() => { new Path('..') }).to.throw(Error);
+    expect(() => { new Path('favorites..films') }).to.throw(Error);
+    expect(() => { new Path('favorites.') }).to.throw(Error);
+    expect(() => { new Path('.favorites.films') }).to.throw(Error);
+
+    // Index
+    expect(() => { new Path('cities[0]') }).to.not.throw();
+    expect(() => { new Path('cities[1]') }).to.not.throw();
+    expect(() => { new Path('cities[-2]') }).to.not.throw();
+    expect(() => { new Path('favorites.cities[-2]') }).to.not.throw();
+    expect(() => { new Path('favorites.cities[-2].neighborhoods') }).to.not.throw();
+    expect(() => { new Path('[0]') }).to.throw(Error);
+    expect(() => { new Path('[]') }).to.throw(Error);
+    expect(() => { new Path('cities[]') }).to.throw(Error);
+    expect(() => { new Path('favorites.cities[].neighborhoods') }).to.throw(Error);
+
+    // Pick
+    expect(() => { new Path('films[(action)]') }).to.not.throw();
+    expect(() => { new Path('films[()]') }).to.throw(Error);
+
     expect(validate('favorites.films.action')).to.be.true;
+    expect(validate('.')).to.be.false;
+  });
+
+  it('should respect dot notation', () => {
     expect(select('favorites.films.action', testData)).to.eq('Armageddon');
   });
 

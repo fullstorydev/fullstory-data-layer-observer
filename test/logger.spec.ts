@@ -15,6 +15,8 @@ class MockConsole extends MockClass {
   debug(message: string): void { }
 }
 
+const originalConsole = console;
+
 describe('logger unit tests', () => {
 
   it('it should create a console logger with warn and error levels by default', () => {
@@ -40,6 +42,7 @@ describe('logger unit tests', () => {
     logger.debug('Operator output', mockDatalayer);
     expectNoCalls(console, 'debug');
 
+    globalThis.console = originalConsole;
   });
 
   it('it should allow setting higher log levels', () => {
@@ -57,6 +60,8 @@ describe('logger unit tests', () => {
     logger.debug('Operator output');
     const [ debug ] = expectParams(console, 'debug');
     expect(debug).to.eq(`Operator output`);
+
+    globalThis.console = originalConsole;
   });
 
   it('it should allow setting a custom appender', () => {
