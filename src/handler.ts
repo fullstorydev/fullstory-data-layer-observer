@@ -51,7 +51,7 @@ export class DataHandler {
         detail: new PropertyDetail(this.target, this.target[this.property], this.path)
       }));
     } else {
-      throw new Error(`${this.path} (${type}) is not a support type`);
+      throw new Error(`${this.path} (${type}) is not a supported type`);
     }
   }
 
