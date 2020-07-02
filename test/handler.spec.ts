@@ -5,6 +5,7 @@ import { DataHandler } from '../src/handler';
 
 import { basicDigitalData, PageInfo, Page } from './data/CEDDL';
 import { Operator, OperatorOptions } from '../src/operator';
+import { DataLayerDetail, PropertyDetail } from '../src/event';
 
 // inject the data layer into global scope
 (globalThis as any).digitalData = basicDigitalData;
@@ -171,6 +172,21 @@ describe('DataHandler unit tests', () => {
     basicDigitalData.fn = () => console.log('Hello World');
     const handler = new DataHandler('digitalData.fn');
     expect(() => handler.fireEvent()).to.throw();
+  });
+
+  it('events with unknown types should not be handled', () => {
+    const handler = new DataHandler('digitalData.page.pageInfo');
+
+    const seen: any = [];
+
+    const echo = new EchoOperator(seen);
+    handler.push(echo);
+
+    handler.handleEvent(new CustomEvent<DataLayerDetail>('unknownType', {
+      detail: new PropertyDetail(basicDigitalData.page.pageInfo, basicDigitalData.page, 'digitalData.page.pageInfo')
+    }));
+
+    expect(seen.length).to.eq(0);
   });
 
 });
