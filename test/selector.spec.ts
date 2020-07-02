@@ -52,7 +52,18 @@ describe('test selection paths', () => {
   });
 
   it('should respect dot notation', () => {
+    expect(select('favorites', testData)).to.eq(testData.favorites);
+    expect(select('favorites.color', testData)).to.eq('red');
     expect(select('favorites.films.action', testData)).to.eq('Armageddon');
+  });
+
+  it('should respect index notation', () => {
+    expect(select('cities[0]', testData)).to.eq('Seattle');
+    expect(select('cities[1]', testData)).to.eq('Atlanta');
+    expect(select('cities[-1]', testData)).to.eq('New York City');
+    expect(select('cities[-2]', testData)).to.eq('San Francisco');
+    expect(select('cities[20]', testData)).to.eq(undefined);
+    expect(select('cities[-20]', testData)).to.eq(undefined);
   });
 
 });

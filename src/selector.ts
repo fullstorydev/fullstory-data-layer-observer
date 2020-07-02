@@ -60,7 +60,7 @@ For example: `!(foo=bar, blatz)` where `!` is the kind and `foo=bar` and `blatz`
 */
 class Op {
   kind: OpKind;
-  index?: Number;
+  index: number = 0;
   props: OpProp[] = [];
 
   constructor(public raw: string) {
@@ -191,7 +191,25 @@ class PathElement {
   }
 
   selectIndex(target: any): any | undefined {
-    throw new Error('TBD');
+    if (!this.brackets) throw Error('Invalid brackets state!' + this);
+
+    let prop = target[this.brackets.prop];
+    if (typeof prop === 'undefined') return undefined;
+    if (typeof prop.length === 'undefined') return undefined;
+
+    let index = this.brackets.op.index;
+    if (index >= prop.length) return undefined;
+    if (index < 0) {
+      index = prop.length + index
+    }
+    if (index < 0) return undefined;
+
+    try {
+      return prop[index];
+    } catch (e) {
+      console.log('Index fail', this.brackets, e);
+      return undefined;
+    }
   }
 
   selectPick(target: any): any | undefined {
