@@ -3,8 +3,8 @@
  * See https://developer.mozilla.org/en-US/docs/Web/API/Event/type
  */
 export enum DataLayerEventType {
-  PROPERTY = '_fs_DataLayerProperty',
-  FUNCTION = '_fs_DataLayerFunction',
+  PROPERTY = '_dlo_DataLayerProperty',
+  FUNCTION = '_dlo_DataLayerFunction',
 }
 
 /**
