@@ -4,10 +4,8 @@ import { DataLayerEventType, DataLayerDetail, PropertyDetail } from "./event";
 import { fromPath } from "./utils/object";
 
 /**
- * DataLayerObserver is responsible for monitoring and handling changes to a datalayer.
- * While not responsible for detecting JavaScript object mutations or function calls,
- * the DataLayerObserver should provide higher order features that decide which events are valid
- * and provide methods to send these events to consumers such as FullStory.
+ * DataHandler listens for changes from lower level PropertyListeners. Events emitted from PropertyListeners
+ * are inspected, and valid event data is transformed through a series of registered operators.
  */
 export class DataHandler {
 
@@ -24,8 +22,10 @@ export class DataHandler {
 
   /**
    * Creates a DataHandler.
-   * @param target the data layer (i.e. object) to observe
-   * @param property the property or function to monitor
+   * @param path the string path to the data layer (used to identify which data layer emitted data)
+   * @param target the data layer (i.e. object)
+   * @param property the property or function to be handled
+   * @throws will throw an error if the data layer is not found (i.e. undefined or null)
    */
   constructor(public readonly path: string, target?: any, property?: string) {
     // TODO (van) parse the path using the query syntax when it is completed
@@ -41,7 +41,7 @@ export class DataHandler {
 
   /**
    * Manually emit the current value of the observed target property.
-   * Emitting values only applies to properties and not functions.
+   * @throws will throw an error if the target's property is not an object
    */
   fireEvent() {
     const type = typeof this.target[this.property];
@@ -51,36 +51,35 @@ export class DataHandler {
         detail: new PropertyDetail(this.target, this.target[this.property], this.path)
       }));
     } else {
-      Logger.getInstance().error(`Failed to fire ${this.path} (${type})`);
+      throw new Error(`${this.path} (${type}) is not a support type`);
     }
   }
 
   /**
    * Handles the incoming event. This function implements EventListener to also support addEventListener()
    * browser APIs and Data Layer Observer events.
-   * @param event a browser Event or CustomEvent emitted from the Data Layer Observer
+   * @param event a browser Event or CustomEvent emitted
    */
-  handleEvent(event: Event | CustomEvent<DataLayerDetail>): void {
-    // check if the incoming object is a CustomEvent from DLO
-    if ((event as CustomEvent<DataLayerDetail>).detail) {
-      const { detail } = (event as CustomEvent<DataLayerDetail>);
+  handleEvent(event: CustomEvent<DataLayerDetail>): void {
+    const { detail: { args, value, path }, type } = event;
 
-      // since window is the event dispatcher, always check that the target in the CustomEvent detail
-      // matches the one expected by this DataHandler
-      const { args, value, path } = detail;
-
-      // check that this handler is registered to observe the emitted event based on path
-      if (this.path === path) {
-        if (value === undefined && args === undefined) {
-          Logger.getInstance().warn(`${this.path} emitted no data`, this.path);
-        } else {
-          const data = value ? [value] : args ? args : [];
-          this.handleData(data);
+    // since window is the event dispatcher, use the path in DataLayerDetail to decide if this DataHandler
+    // should process the data
+    if (this.path === path) {
+      if (value === undefined && args === undefined) {
+        Logger.getInstance().warn(`${this.path} emitted no data`, this.path);
+      } else {
+        switch (type) {
+          case DataLayerEventType.PROPERTY:
+            this.handleData([value]);
+            break;
+          case DataLayerEventType.FUNCTION:
+            this.handleData(args || []);
+            break
+          default:
+            Logger.getInstance().warn(`Unknown event type ${type}`);
         }
       }
-    } else {
-      // TODO (van) add implementation when DOM event support is added
-      throw Error('not implemented');
     }
   }
 
@@ -96,7 +95,7 @@ export class DataHandler {
 
       try {
         // if the data is null, it is a signal to stop processing
-        // this can happen if an upstream handler needed to prevent a downstream op like filtering use-cases
+        // this can happen if an upstream handler needed to prevent a downstream operator (e.g filter use-case)
         if (data === null) {
           this.runDebugger(`[${i}] ${name} halted`, data, '  ');
           return null;
@@ -123,7 +122,7 @@ export class DataHandler {
   }
 
   /**
-   * Adds an operator to the list. Operators will be sequentially passed data from the previous operator in the pipe.
+   * Adds an operator to the list. Operators will sequentially pass data to the next operator.
    * @param operators Operator(s) to add
    */
   push(...operators: Operator<OperatorOptions>[]): void {
