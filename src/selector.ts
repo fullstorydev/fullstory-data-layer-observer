@@ -37,7 +37,7 @@ For now we assume equality ('=') but in the future we could add prop ops types l
 */
 class OpProp {
   name: string;
-  value?: string;
+  value: string | null;
 
   constructor(public raw: string) {
     raw = raw.trim();
@@ -50,6 +50,7 @@ class OpProp {
       this.value = keyValTokens[1];
     } else {
       this.name = raw;
+      this.value = null;
     }
   }
 }
@@ -269,11 +270,40 @@ class PathElement {
   }
 
   selectSuffix(target: any): any | undefined {
-    throw new Error('TBD');
+    if (!this.brackets || this.brackets.op.kind != OpKind.Suffix) throw new Error('Invalid brackets state!' + this);
+
+    const prop: any = target[this.brackets.prop];
+    if (typeof prop === 'undefined') return undefined;
+
+    let results: { [key: string]: any } = {};
+    let atLeastOne = false;
+    for (const key of Object.getOwnPropertyNames(prop)) {
+      for (const propPrefix of this.brackets.op.propNames) {
+        if (key.endsWith(propPrefix)) {
+          results[key] = prop[key];
+          atLeastOne = true;
+          break;
+        }
+      }
+    }
+    if (atLeastOne === false) return undefined;
+    return results;
   }
 
   selectFilter(target: any): any | undefined {
-    throw new Error('TBD');
+    if (!this.brackets || this.brackets.op.kind != OpKind.Filter) throw new Error('Invalid brackets state!' + this);
+
+    const prop: any = target[this.brackets.prop];
+    if (typeof prop === 'undefined') return undefined;
+
+    // Check that all of the filter properties are matched (by existence or value)
+    for (const opProp of this.brackets.op.props) {
+      if (typeof prop[opProp.name] === 'undefined') return undefined;
+      if (opProp.value === null) continue; // Existance is enough
+      if (prop[opProp.name] != opProp.value) return undefined; // Value must loosely match (not ===)
+    }
+
+    return prop;
   }
 
   static sniffKind(raw: string): ElementKind {

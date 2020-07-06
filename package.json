@@ -4,7 +4,7 @@
   "description": "Monitor, transform, and send data layer content to FullStory",
   "main": "dist/index.js",
   "scripts": {
-    "test": "nyc mocha -r ts-node/register -r source-map-support/register -r jsdom-global/register test/**/*.spec.ts"
+    "test": "nyc mocha -r ts-node/register -r source-map-support/register -r jsdom-global/register test/*.spec.ts test/**/*.spec.ts"
   },
   "repository": {
     "type": "git",

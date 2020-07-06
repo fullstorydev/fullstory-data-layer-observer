@@ -91,7 +91,7 @@ describe('test selection paths', () => {
   it('should respect dot notation', () => {
     expect(select('favorites', testData)).to.eq(testData.favorites);
     expect(select('favorites.color', testData)).to.eq('red');
-    expect(select('favorites.films.action', testData)).to.eq('Armageddon');
+    expect(select('favorites.films.action', testData)).to.eq('Rogue One');
   });
 
   it('should respect index notation', () => {
@@ -126,12 +126,40 @@ describe('test selection paths', () => {
   });
 
   it('should respect prefix notation', () => {
-    expect(select('favorites[!(color)]', testData).color).to.be.undefined;
-    expect(select('favorites[!(color)]', testData).number).to.eq(25);
-    expect(select('favorites[!(color)]', testData).pickle).to.eq('dill');
-    expect(select('favorites[!(color, number)]', testData).color).to.be.undefined;
-    expect(select('favorites[!(color, number)]', testData).number).to.be.undefined;
-    expect(select('favorites[!(color, number)]', testData).pickle).to.eq('dill');
+    expect(select('favorites[^(color)]', testData).color).to.eq('red');
+    expect(select('favorites[^(co)]', testData).color).to.eq('red');
+    expect(select('favorites[^(colr)]', testData)).to.be.undefined;
+    expect(select('favorites[^(bogus)]', testData)).to.be.undefined;
+    expect(select('favorites[^(bogus, col)]', testData).color).to.eq('red');
+    expect(select('favorites[^(bogus, col)]', testData).bogus).to.be.undefined;
+    expect(select('favorites[^(col, bogus)]', testData).color).to.eq('red');
+    expect(select('favorites[^(col, bogus)]', testData).bogus).to.be.undefined;
   });
 
+  it('should respect suffix notation', () => {
+    expect(select('favorites[$(color)]', testData).color).to.eq('red');
+    expect(select('favorites[$(olor)]', testData).color).to.eq('red');
+    expect(select('favorites[$(clor)]', testData)).to.be.undefined;
+    expect(select('favorites[$(bogus)]', testData)).to.be.undefined;
+    expect(select('favorites[$(bogus, olor)]', testData).color).to.eq('red');
+    expect(select('favorites[$(bogus, olor)]', testData).bogus).to.be.undefined;
+    expect(select('favorites[$(olor, bogus)]', testData).color).to.eq('red');
+    expect(select('favorites[$(olor, bogus)]', testData).bogus).to.be.undefined;
+  });
+
+  it('should respect filter notation', () => {
+    expect(select('favorites[?(color)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(bogus)]', testData)).to.be.undefined;
+    expect(select('favorites[?(color=red)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(bogus=totally)]', testData)).to.be.undefined;
+    expect(select('favorites[?(color, number)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(bogus, number)]', testData)).to.be.undefined;
+    expect(select('favorites[?(color=red, number)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(bogus=totally, number)]', testData)).to.be.undefined;
+    expect(select('favorites[?(color, number=25)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(bogus, number=25)]', testData)).to.be.undefined;
+    expect(select('favorites[?(color=red, number=25)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(bogus=totally, number=25)]', testData)).to.be.undefined;
+    expect(select('favorites[?(color=red, number=pi)]', testData)).to.be.undefined;
+  });
 });
