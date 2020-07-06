@@ -4,7 +4,8 @@
     "es2020": true
   },
   "extends": [
-    "airbnb-base"
+    "airbnb-base",
+    "plugin:import/typescript"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -14,6 +15,16 @@
   "plugins": [
     "@typescript-eslint"
   ],
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [".ts"]
+      }
+    }
+  },
   "rules": {
+    "import/extensions": ["error", "ignorePackages", {
+      "ts": "never"
+    }]
   }
 }
