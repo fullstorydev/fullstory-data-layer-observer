@@ -21,33 +21,33 @@ describe('pick operator unit tests', () => {
   it('it should not validate undefined properties', () => {
     // @ts-ignore
     const pick = new PickOperator({ name: 'pick' })
-    expect(pick.validate.bind(pick)).to.throw();
+    expect(() => pick.validate()).to.throw();
   });
 
   it('it should not validate invalid type properties', () => {
     // @ts-ignore
     const pick = new PickOperator({ name: 'pick', properties: 1 })
-    expect(pick.validate.bind(pick)).to.throw();
+    expect(() => pick.validate()).to.throw();
   });
 
   it('it should not validate empty string', () => {
     const pick = new PickOperator({ name: 'pick', properties: '' })
-    expect(pick.validate.bind(pick)).to.throw();
+    expect(() => pick.validate()).to.throw();
   });
 
   it('it should not validate empty array', () => {
     const pick = new PickOperator({ name: 'pick', properties: [] })
-    expect(pick.validate.bind(pick)).to.throw();
+    expect(() => pick.validate()).to.throw();
   });
 
   it('it should not validate leading commas', () => {
     const pick = new PickOperator({ name: 'pick', properties: ',foo,bar' })
-    expect(pick.validate.bind(pick)).to.throw();
+    expect(() => pick.validate()).to.throw();
   });
 
   it('it should not validate trailing commas', () => {
     const pick = new PickOperator({ name: 'pick', properties: 'foo,bar,' })
-    expect(pick.validate.bind(pick)).to.throw();
+    expect(() => pick.validate()).to.throw();
   });
 
   it('it should pick array properties from an object', () => {
