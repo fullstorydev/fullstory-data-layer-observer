@@ -7,8 +7,10 @@ const testData = {
   favorites: {
     color: 'red',
     number: 25,
+    pickle: 'dill',
     films: {
-      action: 'Armageddon',
+      action: 'Rogue One',
+      adventure: 'Atomic Blonde',
       'rom com': "Isn't it romantic"
     }
   },
@@ -21,6 +23,8 @@ describe('test selection paths', () => {
     // Empty
     expect(() => { new Path('') }).to.throw(Error);
     expect(() => { new Path('   ') }).to.throw(Error);
+    expect(() => { new Path('\t') }).to.throw(Error);
+    expect(() => { new Path('\n') }).to.throw(Error);
 
     // Pluck
     expect(() => { new Path('favorites') }).to.not.throw();
@@ -41,11 +45,44 @@ describe('test selection paths', () => {
     expect(() => { new Path('[0]') }).to.throw(Error);
     expect(() => { new Path('[]') }).to.throw(Error);
     expect(() => { new Path('cities[]') }).to.throw(Error);
+    expect(() => { new Path('cities[\'luna\']') }).to.throw(Error);
     expect(() => { new Path('favorites.cities[].neighborhoods') }).to.throw(Error);
 
     // Pick
     expect(() => { new Path('films[(action)]') }).to.not.throw();
+    expect(() => { new Path('films[(action,adventure)]') }).to.not.throw();
+    expect(() => { new Path('films[(action, adventure)]') }).to.not.throw();
     expect(() => { new Path('films[()]') }).to.throw(Error);
+
+    // Omit
+    expect(() => { new Path('films[!(action)]') }).to.not.throw();
+    expect(() => { new Path('films[!(action,adventure)]') }).to.not.throw();
+    expect(() => { new Path('films[!(action, adventure)]') }).to.not.throw();
+    expect(() => { new Path('films[!()]') }).to.throw(Error);
+    expect(() => { new Path('films[!]') }).to.throw(Error);
+
+    // Prefix
+    expect(() => { new Path('films[^(act)]') }).to.not.throw();
+    expect(() => { new Path('films[^(act,adventure)]') }).to.not.throw();
+    expect(() => { new Path('films[^(act, adventure)]') }).to.not.throw();
+    expect(() => { new Path('films[^()]') }).to.throw(Error);
+    expect(() => { new Path('films[^]') }).to.throw(Error);
+
+    // Suffix
+    expect(() => { new Path('films[$(act)]') }).to.not.throw();
+    expect(() => { new Path('films[$(act,adventure)]') }).to.not.throw();
+    expect(() => { new Path('films[$(act, adventure)]') }).to.not.throw();
+    expect(() => { new Path('films[$()]') }).to.throw(Error);
+    expect(() => { new Path('films[$]') }).to.throw(Error);
+
+    // Filter
+    expect(() => { new Path('films[?(act)]') }).to.not.throw();
+    expect(() => { new Path('films[?(act,adventure)]') }).to.not.throw();
+    expect(() => { new Path('films[?(act, adventure)]') }).to.not.throw();
+    expect(() => { new Path('films[?(action=Armageddon, adventure)]') }).to.not.throw();
+    expect(() => { new Path('films[?(action, adventure=Atomic Blonde)]') }).to.not.throw();
+    expect(() => { new Path('films[?()]') }).to.throw(Error);
+    expect(() => { new Path('films[?]') }).to.throw(Error);
 
     expect(validate('favorites.films.action')).to.be.true;
     expect(validate('.')).to.be.false;
@@ -64,6 +101,37 @@ describe('test selection paths', () => {
     expect(select('cities[-2]', testData)).to.eq('San Francisco');
     expect(select('cities[20]', testData)).to.eq(undefined);
     expect(select('cities[-20]', testData)).to.eq(undefined);
+  });
+
+  it('should respect pick notation', () => {
+    expect(select('favorites[(color)]', testData).color).to.eq('red');
+    expect(select('favorites[(color)]', testData).number).to.be.undefined;
+    expect(select('favorites[(color,number)]', testData).color).to.eq('red');
+    expect(select('favorites[(color,number)]', testData).number).to.eq(25);
+    expect(select('favorites[(color,number)]', testData).pickle).to.be.undefined;
+    expect(select('favorites[(color, number)]', testData).color).to.eq('red');
+    expect(select('favorites[(color, number)]', testData).number).to.eq(25);
+    expect(select('favorites[(color, number)]', testData).pickle).to.be.undefined;
+    expect(select('favorites[(color, number, bogus)]', testData).bogus).to.be.undefined;
+    expect(select('favorites[(totally, bogus)]', testData)).to.be.undefined;
+  });
+
+  it('should respect omit notation', () => {
+    expect(select('favorites[!(color)]', testData).color).to.be.undefined;
+    expect(select('favorites[!(color)]', testData).number).to.eq(25);
+    expect(select('favorites[!(color)]', testData).pickle).to.eq('dill');
+    expect(select('favorites[!(color, number)]', testData).color).to.be.undefined;
+    expect(select('favorites[!(color, number)]', testData).number).to.be.undefined;
+    expect(select('favorites[!(color, number)]', testData).pickle).to.eq('dill');
+  });
+
+  it('should respect prefix notation', () => {
+    expect(select('favorites[!(color)]', testData).color).to.be.undefined;
+    expect(select('favorites[!(color)]', testData).number).to.eq(25);
+    expect(select('favorites[!(color)]', testData).pickle).to.eq('dill');
+    expect(select('favorites[!(color, number)]', testData).color).to.be.undefined;
+    expect(select('favorites[!(color, number)]', testData).number).to.be.undefined;
+    expect(select('favorites[!(color, number)]', testData).pickle).to.eq('dill');
   });
 
 });
