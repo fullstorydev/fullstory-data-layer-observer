@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import 'mocha';
 
-import { FullStory } from './vendor/fullstory-recording';
-import { expectParams, expectNoCalls } from './mock';
+import { FullStory } from './fullstory-recording';
+import { expectParams, expectNoCalls } from '../utils/mocha';
 
 describe('mock FullStory recording tests', () => {
 

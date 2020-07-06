@@ -1,29 +1,27 @@
 import { expect } from 'chai';
 import 'mocha';
+
 import { Logger, LogLevel, LogEvent } from '../src/utils/logger';
-import { FullStory } from './vendor/fullstory-recording';
-import { expectParams, MockClass, expectNoCalls } from './mock';
+import { Console, FullStory } from './mocks';
+import { expectParams, expectNoCalls } from './utils/mocha';
 
-class MockConsole extends MockClass {
-
-  error(message: string): void { }
-
-  warn(message: string): void { }
-
-  info(message: string): void { }
-
-  debug(message: string): void { }
-}
-
+const console = new Console();
 const originalConsole = console;
 
 describe('logger unit tests', () => {
 
-  it('it should create a console logger with warn and error levels by default', () => {
-    const mockDatalayer = 'digitalData.user';
-    const console = new MockConsole();
+  before(() => {
     // @ts-ignore
     globalThis.console = console;
+  });
+
+  after(() => {
+    // @ts-ignore
+    globalThis.console = originalConsole;
+  });
+
+  it('it should create a console logger with warn and error levels by default', () => {
+    const mockDatalayer = 'digitalData.user';
 
     const logger = Logger.getInstance();
 
@@ -41,15 +39,9 @@ describe('logger unit tests', () => {
 
     logger.debug('Operator output', mockDatalayer);
     expectNoCalls(console, 'debug');
-
-    globalThis.console = originalConsole;
   });
 
   it('it should allow setting higher log levels', () => {
-    const console = new MockConsole();
-    // @ts-ignore
-    globalThis.console = console;
-
     const logger = Logger.getInstance();
     logger.level = LogLevel.DEBUG;
 
@@ -60,8 +52,6 @@ describe('logger unit tests', () => {
     logger.debug('Operator output');
     const [ debug ] = expectParams(console, 'debug');
     expect(debug).to.eq(`Operator output`);
-
-    globalThis.console = originalConsole;
   });
 
   it('it should allow setting a custom appender', () => {
@@ -85,7 +75,6 @@ describe('logger unit tests', () => {
     expect(payload.message_str).to.eq('Data layer not found');
     expect(payload.datalayer_str).to.eq(mockDatalayer);
     expect(source).to.eq('dataLayerObserver');
-
   });
 
 });
