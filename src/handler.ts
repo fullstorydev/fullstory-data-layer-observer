@@ -1,7 +1,7 @@
 import { Logger } from "./utils/logger";
 import { Operator, OperatorOptions } from "./operator";
 import { DataLayerEventType, DataLayerDetail, PropertyDetail } from "./event";
-import { fromPath } from "./utils/object";
+import { select } from "./selector";
 
 /**
  * DataHandler listens for changes from lower level PropertyListeners. Events emitted from PropertyListeners
@@ -12,7 +12,6 @@ export class DataHandler {
   private operators: Operator<OperatorOptions>[] = [];
 
   readonly target: any;
-  readonly property: string;
 
   debug = false;  // NOTE debugging is done at a rule level, which is why Logger is not used
 
@@ -23,18 +22,14 @@ export class DataHandler {
   /**
    * Creates a DataHandler.
    * @param path the string path to the data layer (used to identify which data layer emitted data)
-   * @param target the data layer (i.e. object)
-   * @param property the property or function to be handled
    * @throws will throw an error if the data layer is not found (i.e. undefined or null)
    */
-  constructor(public readonly path: string, target?: any, property?: string) {
-    // TODO (van) parse the path using the query syntax when it is completed
-    this.target = !target ? fromPath(path)[0] : target;
-    this.property = !property ? fromPath(path)[1] : property;
+  constructor(private readonly path: string) {
+    this.target = select(path);
 
     // guards against trying to register an observer on a non-existent datalayer
     // this could happen if the data layer is dynamically loaded after DLO starts
-    if (!this.target || !this.target[this.property]) {
+    if (!this.target) {
       throw new Error(`Data layer ${path} not found on page`);
     }
   }
@@ -44,11 +39,12 @@ export class DataHandler {
    * @throws will throw an error if the target's property is not an object
    */
   fireEvent() {
-    const type = typeof this.target[this.property];
+    const value = select(this.path);
+    const type = typeof value;
 
     if (type === 'object') {
       this.handleEvent(new CustomEvent<DataLayerDetail>(DataLayerEventType.PROPERTY, {
-        detail: new PropertyDetail(this.target, this.target[this.property], this.path)
+        detail: new PropertyDetail(this.target, value, this.path)
       }));
     } else {
       throw new Error(`${this.path} (${type}) is not a supported type`);
