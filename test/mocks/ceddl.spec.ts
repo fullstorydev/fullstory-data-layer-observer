@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import 'mocha';
 
-import * as CEDDL from './data/CEDDL';
+import * as CEDDL from './CEDDL';
 
 describe('mock CEDDL unit tests', () => {
 
