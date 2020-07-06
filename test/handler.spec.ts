@@ -7,9 +7,6 @@ import { basicDigitalData, PageInfo, Page } from './data/CEDDL';
 import { Operator, OperatorOptions } from '../src/operator';
 import { DataLayerDetail, PropertyDetail } from '../src/event';
 
-// inject the data layer into global scope
-(globalThis as any).digitalData = basicDigitalData;
-
 // create a mock operators that store something we can check
 class EchoOperatorOptions implements OperatorOptions {
   name = 'echo';
@@ -81,8 +78,16 @@ class ThrowOperator extends Operator<ThrowOperatorOptions> {
 
 describe('DataHandler unit tests', () => {
 
+  before(() => {
+    (globalThis as any).digitalData = basicDigitalData;
+  });
+
+  after(() => {
+    delete (globalThis as any).digitalData;
+  });
+
   it('data handlers should find a data layer for a given target and property', () => {
-    const handler = new DataHandler('digitalData', globalThis, 'digitalData');
+    const handler = new DataHandler('digitalData');
     expect(handler).to.not.be.undefined;
   });
 
@@ -92,7 +97,7 @@ describe('DataHandler unit tests', () => {
   });
 
   it('non-existent data layers should throw an Error', () => {
-    expect(() => new DataHandler('notFound', undefined)).to.throw();
+    expect(() => new DataHandler('notFound')).to.throw();
     expect(() => new DataHandler('notFound')).to.throw();
   });
 
