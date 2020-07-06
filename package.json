@@ -8,6 +8,7 @@
     "lint": "eslint src/**/* test/**/*",
     "lint:fix": "eslint --fix src/**/* test/**/*"
   },
+  "pre-commit": [ "lint:fix" ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/fullstorydev/fullstory-data-layer-observer.git"
@@ -38,6 +39,7 @@
     "jsdom-global": "^3.0.2",
     "mocha": "^8.0.1",
     "nyc": "^15.1.0",
+    "pre-commit": "^1.2.2",
     "source-map-support": "^0.5.19",
     "ts-node": "^8.10.2",
     "typescript": "^3.9.5"
