@@ -1,6 +1,6 @@
 import { MockClass } from './mock';
 
-export class FullStory extends MockClass {
+export default class FullStory extends MockClass {
   consent(userConsents?: boolean): void {}
 
   disableConsole(): void {}

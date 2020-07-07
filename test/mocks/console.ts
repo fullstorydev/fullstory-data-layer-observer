@@ -1,6 +1,6 @@
 import { MockClass } from './mock';
 
-export class Console extends MockClass {
+export default class Console extends MockClass {
   log(message: string): void { }
 
   error(message: string): void { }

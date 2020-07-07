@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import 'mocha';
 
-import { Console } from './console';
+import Console from './console';
 import { expectParams, expectNoCalls } from '../utils/mocha';
 
 const console = new Console();
