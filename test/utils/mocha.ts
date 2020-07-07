@@ -6,7 +6,7 @@ import { MockClass, Call } from '../mocks/mock';
  * Tests whether a call queue has one Call and returns it.
  * @param mock the MockClass
  * @param methodName the method's name
- * @param callQueueLength an optional expected number of Calls in the queue; defaults to greater than 0
+ * @param callQueueLength (optional) expected number of Calls in the queue; default is >= 0
  */
 export function expectCall(mock: MockClass, methodName: string, callQueueLength?: number): Call {
   if (callQueueLength !== undefined) {
@@ -23,7 +23,7 @@ export function expectCall(mock: MockClass, methodName: string, callQueueLength?
  * Tests whether a method call has not been made.
  * @param mock the MockClass
  * @param methodName the method's name
- * @param callQueueLength an optional expected number of Calls in the queue; defaults to greater than 0
+ * @param callQueueLength (optional) expected number of Calls in the queue; default is >= 0
  */
 export function expectNoCalls(mock: MockClass, methodName: string): void {
   expect(mock.callQueues[methodName].length).to.eq(0);
@@ -33,7 +33,7 @@ export function expectNoCalls(mock: MockClass, methodName: string): void {
  * Tests whether a call queue has one Call and returns the Call's parameters.
  * @param mock the MockClass
  * @param methodName the method's name
- * @param callQueueLength an optional expected number of Calls in the queue; defaults to greater than 0
+ * @param callQueueLength (optional) expected number of Calls in the queue; default is >= 0
  */
 export function expectParams(mock: MockClass, methodName: string, callQueueLength?: number): any[] {
   const { parameters } = expectCall(mock, methodName, callQueueLength);

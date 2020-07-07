@@ -30,7 +30,14 @@
   },
   "overrides": [
     {
-      "files": ["test/**/*.spec.ts"],
+      "files": ["*.ts"],
+      "rules": {
+        "no-unused-vars": "off",
+        "@typescript-eslint/no-unused-vars": ["error"]
+      }
+    },
+    {
+      "files": ["test/**/*.spec.ts", "test/utils/mocha.ts"],
       "rules": {
         "no-unused-expressions": "off"
       }
