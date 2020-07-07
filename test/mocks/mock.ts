@@ -1,3 +1,8 @@
+export interface Call {
+  parameters: any[];
+  result: string | null | void;
+}
+
 export class MockClass {
   public callQueues: { [methodName: string]: Call[] } = {}
 
@@ -6,18 +11,14 @@ export class MockClass {
       if (methodName === 'constructor') continue;
       this.callQueues[methodName] = [];
       const originalMethod: Function = (this as any)[methodName].bind(this);
-      (this as any)[methodName] = (...params: any[]) => {
-        const result = originalMethod(...params);
-        this.callQueues[methodName].push(new Call(
-          params,
+      (this as any)[methodName] = (...parameters: any[]) => {
+        const result = originalMethod(...parameters);
+        this.callQueues[methodName].push({
+          parameters,
           result,
-        ));
+        });
         return result;
       };
     }
   }
-}
-
-export class Call {
-  constructor(public parameters: any[], public result: string | null | void) {}
 }
