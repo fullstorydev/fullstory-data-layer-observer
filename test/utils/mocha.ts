@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import { MockClass, Call } from "../mocks/mock";
+import { MockClass, Call } from '../mocks/mock';
 
 /**
  * Tests whether a call queue has one Call and returns it.
@@ -28,7 +28,6 @@ export function expectCall(mock: MockClass, methodName: string, callQueueLength?
 export function expectNoCalls(mock: MockClass, methodName: string): void {
   expect(mock.callQueues[methodName].length).to.eq(0);
 }
-
 
 /**
  * Tests whether a call queue has one Call and returns the Call's parameters.

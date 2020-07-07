@@ -9,7 +9,6 @@ export interface LogAppender {
  * ConsoleAppender serializes LogEvents to the browser's console.
  */
 class ConsoleAppender implements LogAppender {
-
   constructor() {
 
   }
@@ -52,7 +51,6 @@ export enum LogLevel {
  * Log levels can be controlled by updating `level`.
  */
 export class Logger {
-
   private static instance: Logger;
 
   private constructor(public appender = new ConsoleAppender(), public level = 1) {
@@ -79,7 +77,7 @@ export class Logger {
       this.appender.log({
         level,
         message,
-        datalayer
+        datalayer,
       });
     }
   }

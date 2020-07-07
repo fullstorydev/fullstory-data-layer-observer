@@ -1,8 +1,7 @@
 export class MockClass {
-
   public callQueues: { [methodName: string]: Call[] } = {}
 
-  constructor(){
+  constructor() {
     for (const methodName of Object.getOwnPropertyNames(this.constructor.prototype)) {
       if (methodName === 'constructor') continue;
       this.callQueues[methodName] = [];
@@ -11,7 +10,7 @@ export class MockClass {
         const result = originalMethod(...params);
         this.callQueues[methodName].push(new Call(
           params,
-          result
+          result,
         ));
         return result;
       };
@@ -20,5 +19,5 @@ export class MockClass {
 }
 
 export class Call {
-  constructor(public parameters: any[], public result: string | null | void){}
+  constructor(public parameters: any[], public result: string | null | void) {}
 }
