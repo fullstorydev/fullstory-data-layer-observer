@@ -3,7 +3,7 @@
  * See https://www.w3.org/2013/12/ceddl-201312.pdf
  */
 
-export const ceddlVersion = '1.0'
+export const ceddlVersion = '1.0';
 
 /**
  * The root JavaScript Object (JSO) MUST be window.digitalData.
@@ -155,7 +155,6 @@ export interface TotalTransactionPrice extends Price {
   transactionTotal: number;
 }
 
-
 /**
  * The Event object collects information about an interaction event by the user. An event might be a button click,
  * the addition of a portal widget, playing a video, adding a product to the shopping cart, etc. Any action on the page
@@ -274,11 +273,11 @@ export const emptyDigitalData = {
       expiryDate: '',
       language: '',
       industryCodes: '',
-      publisher: ''
+      publisher: '',
     },
     category: {
-      primaryCategory: ''
-    }
+      primaryCategory: '',
+    },
   },
   product: [],
   cart: {
@@ -292,17 +291,17 @@ export const emptyDigitalData = {
       shipping: 0,
       shippingMethod: '',
       priceWithTax: 0,
-      cartTotal: 0
+      cartTotal: 0,
     },
     item: [],
-    attributes: {}
+    attributes: {},
   },
   transaction: {
     transactionID: '',
     profile: {
       profileInfo: {
         profileID: '',
-        userName: ''
+        userName: '',
       },
       address: {
         line1: '',
@@ -310,7 +309,7 @@ export const emptyDigitalData = {
         city: '',
         stateProvince: '',
         postalCode: '',
-        country: ''
+        country: '',
       },
       shippingAddress: {
         line1: '',
@@ -318,8 +317,8 @@ export const emptyDigitalData = {
         city: '',
         stateProvince: '',
         postalCode: '',
-        country: ''
-      }
+        country: '',
+      },
     },
     total: {
       basePrice: 0,
@@ -330,22 +329,22 @@ export const emptyDigitalData = {
       shipping: 0,
       shippingMethod: '',
       priceWithTax: 0,
-      transactionTotal: 0
+      transactionTotal: 0,
     },
     attributes: {},
-    item: []
+    item: [],
   },
   event: [],
   component: [],
   user: {
     segment: {},
-    profile: []
+    profile: [],
   },
   privacy: {
-    accessCategories: []
+    accessCategories: [],
   },
-  version: ceddlVersion
-}
+  version: ceddlVersion,
+};
 
 export const basicDigitalData: CEDDL = {
   pageInstanceID: '755ebb86-60b5-451e-92d3-044157d29965',
@@ -365,11 +364,11 @@ export const basicDigitalData: CEDDL = {
       expiryDate: '2021-06-23',
       language: 'en-US',
       industryCodes: '7372',
-      publisher: 'FullStory'
+      publisher: 'FullStory',
     },
     category: {
-      primaryCategory: 'homepage'
-    }
+      primaryCategory: 'homepage',
+    },
   },
   product: [{
     productInfo: {
@@ -382,12 +381,12 @@ export const basicDigitalData: CEDDL = {
       manufacturer: 'Washington State Apple Farm',
       sku: 'cca-1234',
       color: 'red and white',
-      size: 'medium'
+      size: 'medium',
     },
     category: {
-      primaryCategory: 'fruit'
+      primaryCategory: 'fruit',
     },
-    linkedProduct: []
+    linkedProduct: [],
   }],
   cart: {
     cartID: 'cart-1234',
@@ -400,7 +399,7 @@ export const basicDigitalData: CEDDL = {
       shipping: 5.0,
       shippingMethod: 'UPS-Ground',
       priceWithTax: 16.95,
-      cartTotal: 21.95
+      cartTotal: 21.95,
     },
     item: [{
       productInfo: {
@@ -424,20 +423,20 @@ export const basicDigitalData: CEDDL = {
         taxRate: 0.09,
         shipping: 5.0,
         shippingMethod: 'UPS-Ground',
-        priceWithTax: 16.95
+        priceWithTax: 16.95,
       },
       quantity: 1,
       linkedProduct: [],
-      attributes: {}
+      attributes: {},
     }],
-    attributes: {}
+    attributes: {},
   },
   transaction: {
     transactionID: 'tr-235098236',
     profile: {
       profileInfo: {
         profileID: 'pr-12333211',
-        userName: 'JohnyAppleseed'
+        userName: 'JohnyAppleseed',
       },
       address: {
         line1: '123 Easy St.',
@@ -445,7 +444,7 @@ export const basicDigitalData: CEDDL = {
         city: 'Athens',
         stateProvince: 'GA',
         postalCode: '30606',
-        country: 'USA'
+        country: 'USA',
       },
       shippingAddress: {
         line1: '123 Easy St.',
@@ -453,8 +452,8 @@ export const basicDigitalData: CEDDL = {
         city: 'Athens',
         stateProvince: 'GA',
         postalCode: '30606',
-        country: 'USA'
-      }
+        country: 'USA',
+      },
     },
     total: {
       basePrice: 15.55,
@@ -465,7 +464,7 @@ export const basicDigitalData: CEDDL = {
       shipping: 5.0,
       shippingMethod: 'UPS-Ground',
       priceWithTax: 16.95,
-      transactionTotal: 16.95
+      transactionTotal: 16.95,
     },
     attributes: {},
     item: [{
@@ -490,12 +489,12 @@ export const basicDigitalData: CEDDL = {
         taxRate: 0.09,
         shipping: 5.0,
         shippingMethod: 'UPS-Ground',
-        priceWithTax: 16.95
+        priceWithTax: 16.95,
       },
       quantity: 1,
       linkedProduct: [],
-      attributes: {}
-    }]
+      attributes: {},
+    }],
   },
   event: [{
     eventInfo: {
@@ -504,31 +503,31 @@ export const basicDigitalData: CEDDL = {
       eventPoints: 11,
       type: 'cart-modifier',
       timeStamp: new Date(),
-      effect: 'cart has a new item'
+      effect: 'cart has a new item',
     },
     category: {
       primaryCategory: 'cart',
-      attributes: {}
-    }
+      attributes: {},
+    },
   }],
   component: [{
     componentInfo: {
       componentID: 'c-54123',
       componentName: 'Cosmic Crisp Promo Video',
-      description: 'A video showing you just how cosmic and just how crisp is this apple.'
+      description: 'A video showing you just how cosmic and just how crisp is this apple.',
     },
     category: {
       primaryCategory: 'promo-video',
       componentType: 'video',
-      attributes: {}
-    }
+      attributes: {},
+    },
   }],
   user: {
     segment: {},
     profile: [{
       profileInfo: {
         profileID: 'pr-12333211',
-        userName: 'JohnyAppleseed'
+        userName: 'JohnyAppleseed',
       },
       address: {
         line1: '123 Easy St.',
@@ -536,17 +535,17 @@ export const basicDigitalData: CEDDL = {
         city: 'Athens',
         stateProvince: 'GA',
         postalCode: '30606',
-        country: 'USA'
+        country: 'USA',
       },
       social: {},
-      attributes: {}
-    }]
+      attributes: {},
+    }],
   },
   privacy: {
     accessCategories: [{
       categoryName: 'analytics',
-      domains: ['fruitshoppe.firebaseapp.com',]
-    }]
+      domains: ['fruitshoppe.firebaseapp.com'],
+    }],
   },
-  version: ceddlVersion
-}
+  version: ceddlVersion,
+};

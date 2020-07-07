@@ -4,12 +4,11 @@ import 'mocha';
 import * as CEDDL from './CEDDL';
 
 describe('mock CEDDL unit tests', () => {
-
   it('empty digitalData should have JSO subobjects ', () => {
     const { emptyDigitalData } = CEDDL;
     const {
-        pageInstanceID, page, product, cart, transaction,
-        event, component, user, privacy, version
+      pageInstanceID, page, product, cart, transaction,
+      event, component, user, privacy, version,
     } = emptyDigitalData;
 
     expect(emptyDigitalData).not.be.undefined;
@@ -30,8 +29,8 @@ describe('mock CEDDL unit tests', () => {
   it('basic digitalData should have JSO subobjects ', () => {
     const { basicDigitalData } = CEDDL;
     const {
-        pageInstanceID, page, product, cart, transaction,
-        event, component, user, privacy, version
+      pageInstanceID, page, product, cart, transaction,
+      event, component, user, privacy, version,
     } = basicDigitalData;
 
     expect(basicDigitalData).not.be.undefined;
