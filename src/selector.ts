@@ -5,11 +5,11 @@ let parsedPaths: { [path: string]: Path | false } = {};
 enum ElementKind {
   Pluck = "pluck",    // color
   Index = "index",    // colors[-2]
-  Pick = "pick",      // colors[(favorite, hated)]
-  Omit = "omit",      // colors[!(hated)]
-  Prefix = "prefix",  // colors[^(fav)]
-  Suffix = "suffix",  // colors[$(orite)]
-  Filter = "filter"   // colors[?(favorite=red, hated)]
+  Pick = "pick",      // colors[(favorite, hated, ...)]
+  Omit = "omit",      // colors[!(hated, loved, ...)]
+  Prefix = "prefix",  // colors[^(fav, lov, ...)]
+  Suffix = "suffix",  // colors[$(orite, ove, ...)]
+  Filter = "filter"   // colors[?(favorite=red, hated, ...)]
 }
 
 const kindSniffers: { [key: string]: any } = {
@@ -37,19 +37,20 @@ For now we assume equality ('=') but in the future we could add prop ops types l
 */
 class OpProp {
   name: string;
-  value?: string;
+  value: string | null;
 
   constructor(public raw: string) {
     raw = raw.trim();
     const tokens = raw.split('=');
     if (tokens.length > 2) throw new Error('Invalid OpProp: ' + raw);
     if (raw.includes('=')) {
-      let keyValTokens = raw.split('=');
+      const keyValTokens = raw.split('=');
       if (keyValTokens.length != 2) throw new Error('Invalid OpProp: ' + raw);
       this.name = keyValTokens[0];
       this.value = keyValTokens[1];
     } else {
       this.name = raw;
+      this.value = null;
     }
   }
 }
@@ -62,6 +63,7 @@ class Op {
   kind: OpKind;
   index: number = 0;
   props: OpProp[] = [];
+  propNames: string[]; // Used often when iterating during selection
 
   constructor(public raw: string) {
     raw = raw.trim();
@@ -101,13 +103,14 @@ class Op {
         this.kind = OpKind.Index;
         this.index = index;
     }
+    this.propNames = this.props.map(op => { return op.name; });
   }
 
   parseProps(rawProps: string) {
     rawProps = rawProps.trim();
     if (rawProps.length === 0) throw new Error('Could not parse operation properties: ' + rawProps);
     const tokens = rawProps.split(',');
-    for (let token of tokens) {
+    for (const token of tokens) {
       this.props.push(new OpProp(token));
     }
   }
@@ -123,7 +126,7 @@ class Brackets {
     raw = raw.trim();
     if (raw.includes('[') === false) throw new Error('Could not parse brackets: ' + raw);
     if (raw.endsWith(']') === false) throw new Error('Could not parse brackets: ' + raw);
-    let tokens = raw.split('[');
+    const tokens = raw.split('[');
     if (tokens.length != 2) throw new Error('Could not parse brackets: ' + raw);
     this.prop = tokens[0];
     this.op = new Op(tokens[1].substring(0, tokens[1].length - 1));
@@ -133,12 +136,11 @@ class Brackets {
 class PathElement {
   kind: ElementKind;
   brackets?: Brackets;
-  parsedInfo: { [key: string]: any }; // per-kind info populated in `parse` calls
+  parsedInfo: { [key: string]: any } = {}; // per-kind info populated in `parse` calls
 
   // This throws an exception if `raw` can not be parsed
   constructor(public raw: string) {
     this.kind = PathElement.sniffKind(raw);
-    this.parsedInfo = {};
     this.parse();
   }
 
@@ -152,16 +154,16 @@ class PathElement {
         return this.selectPick(target);
         break;
       case ElementKind.Omit:
-        throw new Error('TBD');
+        return this.selectOmit(target);
         break;
       case ElementKind.Prefix:
-        throw new Error('TBD');
+        return this.selectPrefix(target);
         break;
       case ElementKind.Suffix:
-        throw new Error('TBD');
+        return this.selectSuffix(target);
         break;
       case ElementKind.Filter:
-        throw new Error('TBD');
+        return this.selectFilter(target);
         break;
        default:
          throw new Error('Unknown PathElement.kind: ' + this.kind);
@@ -191,11 +193,10 @@ class PathElement {
   }
 
   selectIndex(target: any): any | undefined {
-    if (!this.brackets) throw Error('Invalid brackets state!' + this);
+    if (!this.brackets || this.brackets.op.kind != OpKind.Index) throw new Error('Invalid brackets state!' + this);
 
-    let prop = target[this.brackets.prop];
+    const prop = target[this.brackets.prop];
     if (typeof prop === 'undefined') return undefined;
-    if (typeof prop.length === 'undefined') return undefined;
 
     let index = this.brackets.op.index;
     if (index >= prop.length) return undefined;
@@ -213,12 +214,101 @@ class PathElement {
   }
 
   selectPick(target: any): any | undefined {
-    throw new Error('TBD');
+    if (!this.brackets || this.brackets.op.kind != OpKind.Pick) throw new Error('Invalid brackets state!' + this);
+
+    const prop: any = target[this.brackets.prop];
+    if (typeof prop === 'undefined') return undefined;
+
+    let results: { [key: string]: any } = {};
+    let atLeastOne = false;
+    for (const opProp of this.brackets.op.props) {
+      if (typeof prop[opProp.name] !== 'undefined') {
+        results[opProp.name] = prop[opProp.name];
+        atLeastOne = true;
+      }
+    }
+    if (atLeastOne === false) return undefined;
+    return results;
+  }
+
+  selectOmit(target: any): any | undefined {
+    if (!this.brackets || this.brackets.op.kind != OpKind.Omit) throw new Error('Invalid brackets state!' + this);
+
+    const prop: any = target[this.brackets.prop];
+    if (typeof prop === 'undefined') return undefined;
+
+    let results: { [key: string]: any } = {};
+    let atLeastOne = false;
+    for (const key of Object.getOwnPropertyNames(prop)) {
+      if (this.brackets.op.propNames.includes(key)) continue;
+      results[key] = prop[key];
+      atLeastOne = true;
+    }
+    if (atLeastOne === false) return undefined;
+    return results;
+  }
+
+  selectPrefix(target: any): any | undefined {
+    if (!this.brackets || this.brackets.op.kind != OpKind.Prefix) throw new Error('Invalid brackets state!' + this);
+
+    const prop: any = target[this.brackets.prop];
+    if (typeof prop === 'undefined') return undefined;
+
+    let results: { [key: string]: any } = {};
+    let atLeastOne = false;
+    for (const key of Object.getOwnPropertyNames(prop)) {
+      for (const propPrefix of this.brackets.op.propNames) {
+        if (key.startsWith(propPrefix)) {
+          results[key] = prop[key];
+          atLeastOne = true;
+          break;
+        }
+      }
+    }
+    if (atLeastOne === false) return undefined;
+    return results;
+  }
+
+  selectSuffix(target: any): any | undefined {
+    if (!this.brackets || this.brackets.op.kind != OpKind.Suffix) throw new Error('Invalid brackets state!' + this);
+
+    const prop: any = target[this.brackets.prop];
+    if (typeof prop === 'undefined') return undefined;
+
+    let results: { [key: string]: any } = {};
+    let atLeastOne = false;
+    for (const key of Object.getOwnPropertyNames(prop)) {
+      for (const propPrefix of this.brackets.op.propNames) {
+        if (key.endsWith(propPrefix)) {
+          results[key] = prop[key];
+          atLeastOne = true;
+          break;
+        }
+      }
+    }
+    if (atLeastOne === false) return undefined;
+    return results;
+  }
+
+  selectFilter(target: any): any | undefined {
+    if (!this.brackets || this.brackets.op.kind != OpKind.Filter) throw new Error('Invalid brackets state!' + this);
+
+    const prop: any = target[this.brackets.prop];
+    if (typeof prop === 'undefined') return undefined;
+
+    // Check that all of the filter properties are matched (by existence or value)
+    for (const opProp of this.brackets.op.props) {
+      if (typeof prop[opProp.name] === 'undefined') return undefined;
+      if (opProp.value === null) continue; // Existance is enough
+      if (prop[opProp.name] != opProp.value) return undefined; // Value must loosely match (not ===)
+    }
+
+    return prop;
   }
 
   static sniffKind(raw: string): ElementKind {
     if (raw.length == 0) throw new Error(`Invalid path element: ${ raw }`);
-    for (let kind of Object.keys(kindSniffers)) {
+    for (const kind of Object.keys(kindSniffers)) {
       if (kindSniffers[kind](raw)) return kind as ElementKind;
     }
     throw new Error(`Could not sniff kind of ${ raw }`);
@@ -232,14 +322,14 @@ export class Path {
   constructor(public path: string) {
     path = path.trim();
     this.tokens = path.split('.');
-    for (let token of this.tokens) {
+    for (const token of this.tokens) {
       this.elements.push(new PathElement(token)) // Will throw an exception if it can't parse
     }
   }
 
   select(target: object): any | undefined {
     let selection = target;
-    for (let element of this.elements) {
+    for (const element of this.elements) {
       selection = element.select(selection);
       if (typeof selection === 'undefined') return undefined
     }

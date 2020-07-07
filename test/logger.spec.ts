@@ -5,8 +5,8 @@ import { Logger, LogLevel, LogEvent } from '../src/utils/logger';
 import { Console, FullStory } from './mocks';
 import { expectParams, expectNoCalls } from './utils/mocha';
 
+const originalConsole = globalThis.console;
 const console = new Console();
-const originalConsole = console;
 
 describe('logger unit tests', () => {
 
