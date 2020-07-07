@@ -13,7 +13,8 @@ export function traverseObject(root: any, path: string[]): any | undefined {
 
 export function fromPath(path: string): [object, string] {
   const tokens = path.split('.'); // [dataLayer, page]
-  const target = tokens.length === 1 ? globalThis : traverseObject(globalThis, tokens.slice(0, tokens.length - 1)); // e.g. dataLayer
+  const target = tokens.length === 1 ? globalThis : traverseObject(globalThis, tokens.slice(0,
+    tokens.length - 1)); // e.g. dataLayer
   const property = tokens.length === 1 ? tokens[0] : tokens[tokens.length - 1]; // e.g. page
 
   return [target, property];
