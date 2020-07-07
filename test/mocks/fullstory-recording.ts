@@ -1,6 +1,8 @@
 import { MockClass } from './mock';
 
-export class FullStory extends MockClass {
+// NOTE linting is disabled in stubs
+/* eslint-disable class-methods-use-this, @typescript-eslint/no-unused-vars */
+export default class FullStory extends MockClass {
   consent(userConsents?: boolean): void {}
 
   disableConsole(): void {}
@@ -8,7 +10,7 @@ export class FullStory extends MockClass {
   enableConsole(): void {}
 
   event(eventName: string, eventProperties: object, source?: string): string | null {
-    return null
+    return null;
   }
 
   identify(uid: string, customVars?: object): void {}
@@ -24,10 +26,10 @@ export class FullStory extends MockClass {
   setUserVars(customVars: object): void {}
 
   getCurrentSession(): string | null {
-    return null
+    return null;
   }
 
   getCurrentSessionURL(now?: boolean): string | null {
-    return null
+    return null;
   }
 }

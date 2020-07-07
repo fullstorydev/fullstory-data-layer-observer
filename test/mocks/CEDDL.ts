@@ -3,11 +3,12 @@
  * See https://www.w3.org/2013/12/ceddl-201312.pdf
  */
 
-export const ceddlVersion = '1.0'
+export const ceddlVersion = '1.0';
 
 /**
  * The root JavaScript Object (JSO) MUST be window.digitalData.
- * All data properties within this specification MUST fall within the hierarchy of the digitalData object.
+ * All data properties within this specification MUST fall within the hierarchy of the digitalData
+ * object.
  */
 export interface CEDDL {
   pageInstanceID: string;
@@ -23,7 +24,8 @@ export interface CEDDL {
 }
 
 /**
- * Because of the wide range of methods for categorization, an object literal is provided for categories.
+ * Because of the wide range of methods for categorization, an object literal is provided for
+ * categories.
  */
 export interface PageCategory {
   primaryCategory: string;
@@ -32,7 +34,8 @@ export interface PageCategory {
 }
 
 /**
- * The Page object carries significant details about the page, and the most commonly used data elements are captured by
+ * The Page object carries significant details about the page, and the most commonly used data
+ * elements are captured by
  * the specification below.
  */
 export interface Page {
@@ -63,9 +66,10 @@ export interface PageInfo {
 }
 
 /**
- * The Product object carries details about a particular product with frequently used properties listed below. This is
- * intended for data about products displayed on pages or other content. For products added to a shopping cart or
- * ordered in a transaction, see the Cart and Transaction objects below.
+ * The Product object carries details about a particular product with frequently used properties
+ * listed below. This is intended for data about products displayed on pages or other content. For
+ * products added to a shopping cart or ordered in a transaction, see the Cart and Transaction
+ * objects below.
  */
 export interface Product {
   productInfo: ProductInfo;
@@ -98,9 +102,9 @@ export interface LinkedProduct {
 }
 
 /**
- * The Cart object carries details about a shopping cart or basket and the products that have been added to it. The Cart
- * object is intended for a purchase that has not yet been completed. See the Transaction object below for completed
- * orders.
+ * The Cart object carries details about a shopping cart or basket and the products that have been
+ * added to it. The Cart object is intended for a purchase that has not yet been completed. See the
+ * Transaction object below for completed orders.
  */
 export interface Cart {
   cartID: string;
@@ -134,8 +138,9 @@ export interface ProductItem {
 }
 
 /**
- * The Transaction object is similar to the Cart object, but represents a completed order. The Transaction object
- * contains analogous sub-objects to the Cart object as well as additional subobjects specific to completed orders.
+ * The Transaction object is similar to the Cart object, but represents a completed order. The
+ * Transaction object contains analogous sub-objects to the Cart object as well as additional
+ * subobjects specific to completed orders.
  */
 export interface Transaction {
   transactionID: string;
@@ -155,11 +160,10 @@ export interface TotalTransactionPrice extends Price {
   transactionTotal: number;
 }
 
-
 /**
- * The Event object collects information about an interaction event by the user. An event might be a button click,
- * the addition of a portal widget, playing a video, adding a product to the shopping cart, etc. Any action on the page
- * could be captured by an Event object.
+ * The Event object collects information about an interaction event by the user. An event might be a
+ * button click, the addition of a portal widget, playing a video, adding a product to the shopping
+ * cart, etc. Any action on the page could be captured by an Event object.
  */
 export interface Event {
   eventInfo: EventInfo;
@@ -182,9 +186,9 @@ export interface EventCategory {
 }
 
 /**
- * The Component object is intended to capture information about a content component included as part of a page, such
- * as a video. Interactions with the component — such as playing the video — would be an Event, captured by the Event
- * object above.
+ * The Component object is intended to capture information about a content component included as
+ * part of a page, such as a video. Interactions with the component — such as playing the
+ * video — would be an Event, captured by the Event object above.
  */
 export interface Component {
   componentInfo: ComponentInfo;
@@ -244,8 +248,8 @@ export interface UserSocial {}
 /**
  * The Privacy object holds the privacy policy settings that could be used to:
  * 1. Capture and enforce site visitor consent to use tracking technologies on the site.
- * 2. Together with Security objects described below, secure access to individual objects within the JSO by categories
- * of tracking technologies.
+ * 2. Together with Security objects described below, secure access to individual objects within the
+ * JSO by categories of tracking technologies.
  */
 export interface Privacy {
   accessCategories: AccessCategory[];
@@ -274,11 +278,11 @@ export const emptyDigitalData = {
       expiryDate: '',
       language: '',
       industryCodes: '',
-      publisher: ''
+      publisher: '',
     },
     category: {
-      primaryCategory: ''
-    }
+      primaryCategory: '',
+    },
   },
   product: [],
   cart: {
@@ -292,17 +296,17 @@ export const emptyDigitalData = {
       shipping: 0,
       shippingMethod: '',
       priceWithTax: 0,
-      cartTotal: 0
+      cartTotal: 0,
     },
     item: [],
-    attributes: {}
+    attributes: {},
   },
   transaction: {
     transactionID: '',
     profile: {
       profileInfo: {
         profileID: '',
-        userName: ''
+        userName: '',
       },
       address: {
         line1: '',
@@ -310,7 +314,7 @@ export const emptyDigitalData = {
         city: '',
         stateProvince: '',
         postalCode: '',
-        country: ''
+        country: '',
       },
       shippingAddress: {
         line1: '',
@@ -318,8 +322,8 @@ export const emptyDigitalData = {
         city: '',
         stateProvince: '',
         postalCode: '',
-        country: ''
-      }
+        country: '',
+      },
     },
     total: {
       basePrice: 0,
@@ -330,22 +334,22 @@ export const emptyDigitalData = {
       shipping: 0,
       shippingMethod: '',
       priceWithTax: 0,
-      transactionTotal: 0
+      transactionTotal: 0,
     },
     attributes: {},
-    item: []
+    item: [],
   },
   event: [],
   component: [],
   user: {
     segment: {},
-    profile: []
+    profile: [],
   },
   privacy: {
-    accessCategories: []
+    accessCategories: [],
   },
-  version: ceddlVersion
-}
+  version: ceddlVersion,
+};
 
 export const basicDigitalData: CEDDL = {
   pageInstanceID: '755ebb86-60b5-451e-92d3-044157d29965',
@@ -365,11 +369,11 @@ export const basicDigitalData: CEDDL = {
       expiryDate: '2021-06-23',
       language: 'en-US',
       industryCodes: '7372',
-      publisher: 'FullStory'
+      publisher: 'FullStory',
     },
     category: {
-      primaryCategory: 'homepage'
-    }
+      primaryCategory: 'homepage',
+    },
   },
   product: [{
     productInfo: {
@@ -382,12 +386,12 @@ export const basicDigitalData: CEDDL = {
       manufacturer: 'Washington State Apple Farm',
       sku: 'cca-1234',
       color: 'red and white',
-      size: 'medium'
+      size: 'medium',
     },
     category: {
-      primaryCategory: 'fruit'
+      primaryCategory: 'fruit',
     },
-    linkedProduct: []
+    linkedProduct: [],
   }],
   cart: {
     cartID: 'cart-1234',
@@ -400,7 +404,7 @@ export const basicDigitalData: CEDDL = {
       shipping: 5.0,
       shippingMethod: 'UPS-Ground',
       priceWithTax: 16.95,
-      cartTotal: 21.95
+      cartTotal: 21.95,
     },
     item: [{
       productInfo: {
@@ -424,20 +428,20 @@ export const basicDigitalData: CEDDL = {
         taxRate: 0.09,
         shipping: 5.0,
         shippingMethod: 'UPS-Ground',
-        priceWithTax: 16.95
+        priceWithTax: 16.95,
       },
       quantity: 1,
       linkedProduct: [],
-      attributes: {}
+      attributes: {},
     }],
-    attributes: {}
+    attributes: {},
   },
   transaction: {
     transactionID: 'tr-235098236',
     profile: {
       profileInfo: {
         profileID: 'pr-12333211',
-        userName: 'JohnyAppleseed'
+        userName: 'JohnyAppleseed',
       },
       address: {
         line1: '123 Easy St.',
@@ -445,7 +449,7 @@ export const basicDigitalData: CEDDL = {
         city: 'Athens',
         stateProvince: 'GA',
         postalCode: '30606',
-        country: 'USA'
+        country: 'USA',
       },
       shippingAddress: {
         line1: '123 Easy St.',
@@ -453,8 +457,8 @@ export const basicDigitalData: CEDDL = {
         city: 'Athens',
         stateProvince: 'GA',
         postalCode: '30606',
-        country: 'USA'
-      }
+        country: 'USA',
+      },
     },
     total: {
       basePrice: 15.55,
@@ -465,7 +469,7 @@ export const basicDigitalData: CEDDL = {
       shipping: 5.0,
       shippingMethod: 'UPS-Ground',
       priceWithTax: 16.95,
-      transactionTotal: 16.95
+      transactionTotal: 16.95,
     },
     attributes: {},
     item: [{
@@ -490,12 +494,12 @@ export const basicDigitalData: CEDDL = {
         taxRate: 0.09,
         shipping: 5.0,
         shippingMethod: 'UPS-Ground',
-        priceWithTax: 16.95
+        priceWithTax: 16.95,
       },
       quantity: 1,
       linkedProduct: [],
-      attributes: {}
-    }]
+      attributes: {},
+    }],
   },
   event: [{
     eventInfo: {
@@ -504,31 +508,31 @@ export const basicDigitalData: CEDDL = {
       eventPoints: 11,
       type: 'cart-modifier',
       timeStamp: new Date(),
-      effect: 'cart has a new item'
+      effect: 'cart has a new item',
     },
     category: {
       primaryCategory: 'cart',
-      attributes: {}
-    }
+      attributes: {},
+    },
   }],
   component: [{
     componentInfo: {
       componentID: 'c-54123',
       componentName: 'Cosmic Crisp Promo Video',
-      description: 'A video showing you just how cosmic and just how crisp is this apple.'
+      description: 'A video showing you just how cosmic and just how crisp is this apple.',
     },
     category: {
       primaryCategory: 'promo-video',
       componentType: 'video',
-      attributes: {}
-    }
+      attributes: {},
+    },
   }],
   user: {
     segment: {},
     profile: [{
       profileInfo: {
         profileID: 'pr-12333211',
-        userName: 'JohnyAppleseed'
+        userName: 'JohnyAppleseed',
       },
       address: {
         line1: '123 Easy St.',
@@ -536,17 +540,17 @@ export const basicDigitalData: CEDDL = {
         city: 'Athens',
         stateProvince: 'GA',
         postalCode: '30606',
-        country: 'USA'
+        country: 'USA',
       },
       social: {},
-      attributes: {}
-    }]
+      attributes: {},
+    }],
   },
   privacy: {
     accessCategories: [{
       categoryName: 'analytics',
-      domains: ['fruitshoppe.firebaseapp.com',]
-    }]
+      domains: ['fruitshoppe.firebaseapp.com'],
+    }],
   },
-  version: ceddlVersion
-}
+  version: ceddlVersion,
+};

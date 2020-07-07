@@ -3,7 +3,7 @@ import 'mocha';
 
 import { DataHandler } from '../src/handler';
 
-import { basicDigitalData, PageInfo, Page } from './mocks';
+import { basicDigitalData, PageInfo, Page } from './mocks/CEDDL';
 import { Operator, OperatorOptions } from '../src/operator';
 import { DataLayerDetail, PropertyDetail } from '../src/event';
 

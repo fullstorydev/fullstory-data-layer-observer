@@ -2,7 +2,8 @@ import { expect } from 'chai';
 import 'mocha';
 
 import { Logger, LogLevel, LogEvent } from '../src/utils/logger';
-import { Console, FullStory } from './mocks';
+import Console from './mocks/console';
+import FullStory from './mocks/fullstory-recording';
 import { expectParams, expectNoCalls } from './utils/mocha';
 
 const originalConsole = globalThis.console;

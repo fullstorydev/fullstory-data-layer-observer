@@ -1,42 +1,10 @@
+/* eslint-disable no-console, max-classes-per-file */
+
 /**
  * A LogAppender simply serializes a LogEvent to a sink.
  */
 export interface LogAppender {
   log(event: LogEvent): void;
-}
-
-/**
- * ConsoleAppender serializes LogEvents to the browser's console.
- */
-class ConsoleAppender implements LogAppender {
-
-  constructor() {
-
-  }
-
-  log(event: LogEvent) {
-    const { datalayer, level, message } = event;
-
-    // example 'Data layer unavailable (digitalData.user)'
-    const consoleMessage = `${message}${datalayer ? ` (${datalayer})` : ''}`;
-
-    switch (level) {
-      case LogLevel.ERROR: return console.error(consoleMessage);
-      case LogLevel.WARN: return console.warn(consoleMessage);
-      case LogLevel.INFO: return console.info(consoleMessage);
-      case LogLevel.DEBUG: return console.debug(consoleMessage);
-    }
-  }
-}
-
-/**
- * LogEvent defines a message to be sent to a sink for a given level.
- * Optionally, the datalayer (e.g. digitalData.user) that generated the message can be provided for traceability.
- */
-export interface LogEvent {
-  datalayer?: string;
-  level: LogLevel;
-  message: string;
 }
 
 export enum LogLevel {
@@ -47,17 +15,49 @@ export enum LogLevel {
 }
 
 /**
+ * ConsoleAppender serializes LogEvents to the browser's console.
+ */
+class ConsoleAppender implements LogAppender {
+  /* eslint-disable class-methods-use-this */
+  log(event: LogEvent): void {
+    const { datalayer, level, message } = event;
+
+    // example 'Data layer unavailable (digitalData.user)'
+    const consoleMessage = `${message}${datalayer ? ` (${datalayer})` : ''}`;
+
+    switch (level) {
+      case LogLevel.ERROR: return console.error(consoleMessage);
+      case LogLevel.WARN: return console.warn(consoleMessage);
+      case LogLevel.INFO: return console.info(consoleMessage);
+      case LogLevel.DEBUG:
+      default:
+        return console.debug(consoleMessage);
+    }
+  }
+}
+
+/**
+ * LogEvent defines a message to be sent to a sink for a given level.
+ * Optionally, the datalayer (e.g. digitalData.user) that generated the message can be provided for
+ * traceability.
+ */
+export interface LogEvent {
+  datalayer?: string;
+  level: LogLevel;
+  message: string;
+}
+
+/**
  * Logger provides a vendor agnostic way to assign and call a logging utility.
  * Custom logging utilities can be registered by assigning a LogAppender to `appender`.
  * Log levels can be controlled by updating `level`.
  */
 export class Logger {
-
   private static instance: Logger;
 
-  private constructor(public appender = new ConsoleAppender(), public level = 1) {
+  appender = new ConsoleAppender();
 
-  }
+  level = 1;
 
   static getInstance(): Logger {
     if (!Logger.instance) {
@@ -79,7 +79,7 @@ export class Logger {
       this.appender.log({
         level,
         message,
-        datalayer
+        datalayer,
       });
     }
   }
