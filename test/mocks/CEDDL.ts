@@ -7,7 +7,8 @@ export const ceddlVersion = '1.0';
 
 /**
  * The root JavaScript Object (JSO) MUST be window.digitalData.
- * All data properties within this specification MUST fall within the hierarchy of the digitalData object.
+ * All data properties within this specification MUST fall within the hierarchy of the digitalData
+ * object.
  */
 export interface CEDDL {
   pageInstanceID: string;
@@ -23,7 +24,8 @@ export interface CEDDL {
 }
 
 /**
- * Because of the wide range of methods for categorization, an object literal is provided for categories.
+ * Because of the wide range of methods for categorization, an object literal is provided for
+ * categories.
  */
 export interface PageCategory {
   primaryCategory: string;
@@ -32,7 +34,8 @@ export interface PageCategory {
 }
 
 /**
- * The Page object carries significant details about the page, and the most commonly used data elements are captured by
+ * The Page object carries significant details about the page, and the most commonly used data
+ * elements are captured by
  * the specification below.
  */
 export interface Page {
@@ -63,9 +66,10 @@ export interface PageInfo {
 }
 
 /**
- * The Product object carries details about a particular product with frequently used properties listed below. This is
- * intended for data about products displayed on pages or other content. For products added to a shopping cart or
- * ordered in a transaction, see the Cart and Transaction objects below.
+ * The Product object carries details about a particular product with frequently used properties
+ * listed below. This is intended for data about products displayed on pages or other content. For
+ * products added to a shopping cart or ordered in a transaction, see the Cart and Transaction
+ * objects below.
  */
 export interface Product {
   productInfo: ProductInfo;
@@ -98,9 +102,9 @@ export interface LinkedProduct {
 }
 
 /**
- * The Cart object carries details about a shopping cart or basket and the products that have been added to it. The Cart
- * object is intended for a purchase that has not yet been completed. See the Transaction object below for completed
- * orders.
+ * The Cart object carries details about a shopping cart or basket and the products that have been
+ * added to it. The Cart object is intended for a purchase that has not yet been completed. See the
+ * Transaction object below for completed orders.
  */
 export interface Cart {
   cartID: string;
@@ -134,8 +138,9 @@ export interface ProductItem {
 }
 
 /**
- * The Transaction object is similar to the Cart object, but represents a completed order. The Transaction object
- * contains analogous sub-objects to the Cart object as well as additional subobjects specific to completed orders.
+ * The Transaction object is similar to the Cart object, but represents a completed order. The
+ * Transaction object contains analogous sub-objects to the Cart object as well as additional
+ * subobjects specific to completed orders.
  */
 export interface Transaction {
   transactionID: string;
@@ -156,9 +161,9 @@ export interface TotalTransactionPrice extends Price {
 }
 
 /**
- * The Event object collects information about an interaction event by the user. An event might be a button click,
- * the addition of a portal widget, playing a video, adding a product to the shopping cart, etc. Any action on the page
- * could be captured by an Event object.
+ * The Event object collects information about an interaction event by the user. An event might be a
+ * button click, the addition of a portal widget, playing a video, adding a product to the shopping
+ * cart, etc. Any action on the page could be captured by an Event object.
  */
 export interface Event {
   eventInfo: EventInfo;
@@ -181,9 +186,9 @@ export interface EventCategory {
 }
 
 /**
- * The Component object is intended to capture information about a content component included as part of a page, such
- * as a video. Interactions with the component — such as playing the video — would be an Event, captured by the Event
- * object above.
+ * The Component object is intended to capture information about a content component included as
+ * part of a page, such as a video. Interactions with the component — such as playing the
+ * video — would be an Event, captured by the Event object above.
  */
 export interface Component {
   componentInfo: ComponentInfo;
@@ -243,8 +248,8 @@ export interface UserSocial {}
 /**
  * The Privacy object holds the privacy policy settings that could be used to:
  * 1. Capture and enforce site visitor consent to use tracking technologies on the site.
- * 2. Together with Security objects described below, secure access to individual objects within the JSO by categories
- * of tracking technologies.
+ * 2. Together with Security objects described below, secure access to individual objects within the
+ * JSO by categories of tracking technologies.
  */
 export interface Privacy {
   accessCategories: AccessCategory[];
