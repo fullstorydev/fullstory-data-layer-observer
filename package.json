@@ -5,10 +5,12 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "nyc mocha -r ts-node/register -r source-map-support/register -r jsdom-global/register test/*.spec.ts test/**/*.spec.ts",
-    "lint": "eslint --ext .ts src/**/* test/**/*",
-    "lint:fix": "eslint --ext .ts --fix src/**/* test/**/*"
+    "lint": "eslint --ext .ts src/** test/**",
+    "lint:fix": "eslint --ext .ts --fix src/** test/**"
   },
-  "pre-commit": [ "lint:fix" ],
+  "pre-commit": [
+    "lint:fix"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/fullstorydev/fullstory-data-layer-observer.git"

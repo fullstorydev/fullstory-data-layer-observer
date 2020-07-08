@@ -1,7 +1,6 @@
+/* eslint-disable class-methods-use-this, @typescript-eslint/no-unused-vars */
 import { MockClass } from './mock';
 
-// NOTE linting is disabled in stubs
-/* eslint-disable class-methods-use-this, @typescript-eslint/no-unused-vars */
 export default class Console extends MockClass {
   log(message: string): void { }
 

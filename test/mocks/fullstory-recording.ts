@@ -1,29 +1,28 @@
+/* eslint-disable class-methods-use-this, @typescript-eslint/no-unused-vars */
 import { MockClass } from './mock';
 
-// NOTE linting is disabled in stubs
-/* eslint-disable class-methods-use-this, @typescript-eslint/no-unused-vars */
 export default class FullStory extends MockClass {
-  consent(userConsents?: boolean): void {}
+  consent(userConsents?: boolean): void { }
 
-  disableConsole(): void {}
+  disableConsole(): void { }
 
-  enableConsole(): void {}
+  enableConsole(): void { }
 
   event(eventName: string, eventProperties: object, source?: string): string | null {
     return null;
   }
 
-  identify(uid: string, customVars?: object): void {}
+  identify(uid: string, customVars?: object): void { }
 
-  anonymize(): void {}
+  anonymize(): void { }
 
-  log(...msg: any[]): void {}
+  log(...msg: any[]): void { }
 
-  restart(): void {}
+  restart(): void { }
 
-  shutdown(): void {}
+  shutdown(): void { }
 
-  setUserVars(customVars: object): void {}
+  setUserVars(customVars: object): void { }
 
   getCurrentSession(): string | null {
     return null;
