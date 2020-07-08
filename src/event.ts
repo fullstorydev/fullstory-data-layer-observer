@@ -1,3 +1,5 @@
+/* eslint-disable max-classes-per-file */
+
 /**
  * Defines CustomEvent types.
  * See https://developer.mozilla.org/en-US/docs/Web/API/Event/type
@@ -11,35 +13,28 @@ export enum DataLayerEventType {
  * DataLayerDetail provides additional metadata about the data layer event to event handlers.
  * See https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail
  */
-export class DataLayerDetail {
+export interface DataLayerDetail {
   value?: object; // value of a property assignment
 
   args?: any[]; // args passed to a function
 
-  /**
-   * Creates a DataLayerDetail
-   * @param target the target object (i.e. data layer) that generated the event
-   * @param path the path to the target (used to disambiguate other events of the same type)
-   */
-  constructor(readonly target: object, readonly path: string) {
-
-  }
+  path: string; // path to the data layer object
 }
 
 /**
  * FunctionDetail provides metadata specific to function invocations.
  */
-export class FunctionDetail extends DataLayerDetail {
-  constructor(target: object, public args: any[], path: string) {
-    super(target, path);
+export class FunctionDetail implements DataLayerDetail {
+  constructor(public target: object, public args: any[], public path: string) {
+    // use constructor params
   }
 }
 
 /**
  * PropertyDetail provides metadata specific to property (i.e. value) changes.
  */
-export class PropertyDetail extends DataLayerDetail {
-  constructor(target: object, public value: object, path: string) {
-    super(target, path);
+export class PropertyDetail implements DataLayerDetail {
+  constructor(public target: object, public value: object, public path: string) {
+    // use constructor params
   }
 }
