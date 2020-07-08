@@ -103,10 +103,6 @@ describe('DataLayerObserver unit tests', () => {
     expectNoCalls(globalMock.console, 'log');
   });
 
-  it('a missing data layer should be retried and fail gracefully', () => {
-
-  });
-
   it('it should allow custom operators to be registered', () => {
     const observer = new DataLayerObserver();
 
@@ -176,10 +172,6 @@ describe('DataLayerObserver unit tests', () => {
     expect(cart).to.eq(globalMock.digitalData.cart);
 
     expectNoCalls(globalMock.console, 'log');
-  });
-
-  it('rule validation can be enabled', () => {
-
   });
 
   it('rules can be previewed before making them live', () => {
