@@ -19,10 +19,9 @@ class ClosureConsole {
 }
 
 describe('logger unit tests', () => {
-
   beforeEach(() => {
     (globalThis as any).console = console;
-    (globalThis as any).testClosure = new ClosureConsole('Hello World')
+    (globalThis as any).testClosure = new ClosureConsole('Hello World');
   });
 
   afterEach(() => {
@@ -32,20 +31,20 @@ describe('logger unit tests', () => {
 
   it('it should validate options', () => {
     expect(() => new FunctionOperator({
-      name: 'function', func: 'console.log'
+      name: 'function', func: 'console.log',
     }).validate()).to.not.throw();
 
     expect(() => new FunctionOperator({
-      name: 'function', func: () =>
-        console.log('Hello World')
+      name: 'function',
+      func: () => console.log('Hello World'),
     }).validate()).to.not.throw();
 
     expect(() => new FunctionOperator({
-      name: 'function', func: () => console.log('Hello World'), thisArg: globalThis
+      name: 'function', func: () => console.log('Hello World'), thisArg: globalThis,
     }).validate()).to.not.throw();
 
     expect(() => new FunctionOperator({
-      name: 'function', func: 'testClosure.log', thisArg: 'testClosure'
+      name: 'function', func: 'testClosure.log', thisArg: 'testClosure',
     }).validate()).to.not.throw();
 
     // @ts-ignore
@@ -55,15 +54,15 @@ describe('logger unit tests', () => {
 
     expect(() => new FunctionOperator({
       // @ts-ignore
-      name: 'function', func: 'testClosure.log', thisArg: 1234
+      name: 'function', func: 'testClosure.log', thisArg: 1234,
     }).validate()).to.throw();
 
     expect(() => new FunctionOperator({
-      name: 'function', func: () => console.log('Hello World'), thisArg: 'testClosure'
+      name: 'function', func: () => console.log('Hello World'), thisArg: 'testClosure',
     }).validate()).to.throw();
 
     expect(() => new FunctionOperator({
-      name: 'function', func: 'testClosure.log', thisArg: globalThis
+      name: 'function', func: 'testClosure.log', thisArg: globalThis,
     }).validate()).to.throw();
   });
 
@@ -101,8 +100,9 @@ describe('logger unit tests', () => {
     expectNoCalls(console, 'log');
 
     const operator = new FunctionOperator({
-      name: 'function', func: (globalThis as any).testClosure.log,
-      thisArg: (globalThis as any).testClosure
+      name: 'function',
+      func: (globalThis as any).testClosure.log,
+      thisArg: (globalThis as any).testClosure,
     });
     operator.handleData([]);
 
@@ -115,7 +115,7 @@ describe('logger unit tests', () => {
 
     const operator = new FunctionOperator({
       // @ts-ignore
-      name: 'function', func: (globalThis as any).testClosure.log, thisArg: 12345
+      name: 'function', func: (globalThis as any).testClosure.log, thisArg: 12345,
     });
     expect(() => operator.handleData([])).to.throw();
 
@@ -129,5 +129,4 @@ describe('logger unit tests', () => {
 
     expect(data).to.be.null;
   });
-
 });

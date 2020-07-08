@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 import { expect } from 'chai';
 import 'mocha';
 
@@ -14,6 +15,7 @@ class EchoOperatorOptions implements OperatorOptions {
 }
 
 class EchoOperator extends Operator<EchoOperatorOptions> {
+  // eslint-disable-next-line class-methods-use-this
   handleData(data: any[]): any[] | null {
     return data;
   }
@@ -34,7 +36,6 @@ interface GlobalMock {
 let globalMock: GlobalMock;
 
 describe('DataLayerObserver unit tests', () => {
-
   beforeEach(() => {
     (globalThis as any).digitalData = basicDigitalData;
     (globalThis as any).console = new Console();
@@ -56,7 +57,7 @@ describe('DataLayerObserver unit tests', () => {
 
   it('it should automatically parse config rules', () => {
     const observer = new DataLayerObserver({
-      rules: [{ source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log' }]
+      rules: [{ source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log' }],
     });
     expect(observer.handlers.length).to.eq(1);
   });
@@ -64,7 +65,7 @@ describe('DataLayerObserver unit tests', () => {
   it('rules without a source and destination are invalid', () => {
     const observer = new DataLayerObserver({
       // @ts-ignore
-      rules: [{ operators: [], destination: 'console.log' }, { source: 'digitalData.page.pageInfo', operators: [] }]
+      rules: [{ operators: [], destination: 'console.log' }, { source: 'digitalData.page.pageInfo', operators: [] }],
     });
     expect(observer.handlers.length).to.eq(0);
   });
@@ -72,13 +73,15 @@ describe('DataLayerObserver unit tests', () => {
   it('it should read a data layer on-load for all rules', () => {
     expectNoCalls(globalMock.console, 'log');
 
-    new DataLayerObserver({
+    const observer = new DataLayerObserver({
       readOnLoad: true,
       rules: [
         { source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log' },
         { source: 'digitalData.product[0].productInfo', operators: [], destination: 'console.log' },
-      ]
+      ],
     });
+
+    expect(observer).to.not.be.undefined;
 
     const [productInfo] = expectParams(globalMock.console, 'log');
     expect(productInfo).to.eq(globalMock.digitalData.product[0].productInfo);
@@ -90,12 +93,16 @@ describe('DataLayerObserver unit tests', () => {
   it('it should read a data layer on-load for specific rules', () => {
     expectNoCalls(globalMock.console, 'log');
 
-    new DataLayerObserver({
+    const observer = new DataLayerObserver({
       rules: [
-        { source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log', readOnLoad: true },
+        {
+          source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log', readOnLoad: true,
+        },
         { source: 'digitalData.product[0].productInfo', operators: [], destination: 'console.log' },
-      ]
+      ],
     });
+
+    expect(observer).to.not.be.undefined;
 
     const [pageInfo] = expectParams(globalMock.console, 'log');
     expect(pageInfo).to.eq(globalMock.digitalData.page.pageInfo);
@@ -113,19 +120,19 @@ describe('DataLayerObserver unit tests', () => {
   it('it should not register operators with the same name', () => {
     const observer = new DataLayerObserver();
     // @ts-ignore TODO (van) how to typecheck this
-    expect(() => { observer.registerOperator('function', FunctionOperator) }).to.throw();
+    expect(() => { observer.registerOperator('function', FunctionOperator); }).to.throw();
   });
 
   it('unknown operators should error and remove the handler', () => {
     const observer = new DataLayerObserver({
       rules: [
         { source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log' },
-      ]
+      ],
     });
 
     expect(() => {
       observer.addOperator(observer.handlers[0],
-        new EchoOperatorOptions())
+        new EchoOperatorOptions());
     }).to.throw();
 
     expect(observer.handlers.length).to.eq(0);
@@ -136,7 +143,7 @@ describe('DataLayerObserver unit tests', () => {
       validateRules: true,
       rules: [
         { source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log' },
-      ]
+      ],
     });
 
     expect(observer.handlers.length).to.eq(1);
@@ -145,7 +152,7 @@ describe('DataLayerObserver unit tests', () => {
 
     expect(() => {
       observer.addOperator(observer.handlers[0],
-        new EchoOperatorOptions())
+        new EchoOperatorOptions());
     }).to.throw();
 
     expect(observer.handlers.length).to.eq(0);
@@ -154,16 +161,19 @@ describe('DataLayerObserver unit tests', () => {
   it('only valid pages should process a rule', () => {
     expectNoCalls(globalMock.console, 'log');
 
-    const urlValidator = (url: string | undefined) =>
-      url ? RegExp(url).test('https://www.fullstory.com/cart') : true;
+    const urlValidator = (url: string | undefined) => (url ? RegExp(url).test('https://www.fullstory.com/cart') : true);
 
     const observer = new DataLayerObserver({
       readOnLoad: true,
       urlValidator,
       rules: [
-        { source: 'digitalData.transaction', operators: [], destination: 'console.log', url: '/checkout$' },
-        { source: 'digitalData.cart', operators: [], destination: 'console.log', url: '/cart$' },
-      ]
+        {
+          source: 'digitalData.transaction', operators: [], destination: 'console.log', url: '/checkout$',
+        },
+        {
+          source: 'digitalData.cart', operators: [], destination: 'console.log', url: '/cart$',
+        },
+      ],
     });
 
     expect(observer.handlers.length).to.eq(1);
@@ -178,7 +188,7 @@ describe('DataLayerObserver unit tests', () => {
     expectNoCalls(globalMock.console, 'log');
     expectNoCalls(globalMock.FS, 'setUserVars');
 
-    new DataLayerObserver({
+    const observer = new DataLayerObserver({
       previewMode: true,
       previewDestination: 'console.debug', // NOTE the default is console.log
       readOnLoad: true,
@@ -186,15 +196,16 @@ describe('DataLayerObserver unit tests', () => {
         {
           source: 'digitalData.user.profile[0].profileInfo',
           operators: [],
-          destination: 'FS.setUserVars'
+          destination: 'FS.setUserVars',
         },
-      ]
+      ],
     });
+
+    expect(observer).to.not.be.undefined;
 
     const [profileInfo] = expectParams(globalMock.console, 'debug');
     expect(profileInfo).to.eq(globalMock.digitalData.user.profile[0].profileInfo);
 
     expectNoCalls(globalMock.FS, 'setUserVars');
   });
-
 });

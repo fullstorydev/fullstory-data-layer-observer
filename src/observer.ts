@@ -1,7 +1,7 @@
-import { OperatorOptions, Operator } from "./operator";
-import { DataHandler } from "./handler";
-import { FunctionOperator } from "./operators";
-import { Logger } from "./utils/logger";
+import { OperatorOptions, Operator } from './operator';
+import DataHandler from './handler';
+import { FunctionOperator } from './operators';
+import { Logger } from './utils/logger';
 
 /**
  * DataLayerConfig provides global settings for a DataLayerObserver.
@@ -24,7 +24,7 @@ export interface DataLayerConfig {
   rules: DataLayerRule[];
   validateRules?: boolean;
   urlValidator?: (url: string | undefined) => boolean;
-};
+}
 
 /**
  * DataLayerRule configures the behavior for a specific data layer target.
@@ -51,7 +51,6 @@ export interface DataLayerRule {
  * programmatically built on a page.
  */
 export class DataLayerObserver {
-
   private operators: { [key: string]: any } = { // TODO (van) type the class value in the map
     function: FunctionOperator,
   };
@@ -126,7 +125,12 @@ export class DataLayerObserver {
    */
   private isUrlValid(url: string | undefined) {
     const { urlValidator } = this.config;
-    return urlValidator ? urlValidator(url) : url ? RegExp(url).test(window.location.href) : true;
+
+    if (urlValidator) {
+      return urlValidator(url);
+    }
+
+    return url ? RegExp(url).test(window.location.href) : true;
   }
 
   /**
@@ -149,7 +153,7 @@ export class DataLayerObserver {
     } = rule;
 
     // rule properties override global ones
-    const readOnLoad = ruleReadOnLoad ? ruleReadOnLoad : globalReadOnLoad;
+    const readOnLoad = ruleReadOnLoad || globalReadOnLoad;
 
     if (!source || !destination) {
       Logger.getInstance().error(`Rule is missing ${source ? 'destination' : 'source'}`, source);
@@ -166,9 +170,9 @@ export class DataLayerObserver {
 
       try {
         // sequentially add the operators to the handler
-        for (const options of operators) {
+        operators.forEach((options) => {
           this.addOperator(handler, options);
-        }
+        });
 
         // optionally perform a final transformation
         // useful if every rule needs the same operator run before the destination
@@ -180,9 +184,8 @@ export class DataLayerObserver {
         const { previewDestination } = this.config;
         const func = previewMode ? previewDestination : destination;
         this.addOperator(handler, { name: 'function', func });
-
       } catch (err) {
-        Logger.getInstance().error(`Failed to create operators`, source);
+        Logger.getInstance().error('Failed to create operators', source);
         console.error(err.message);
 
         this.removeHandler(handler);
@@ -195,11 +198,11 @@ export class DataLayerObserver {
           // this could error if a function is supplied to readOnLoad
           handler.fireEvent();
         } catch (err) {
-          Logger.getInstance().error(`Failed to read on load`, source);
+          Logger.getInstance().error('Failed to read on load', source);
         }
       }
     } catch (err) {
-      Logger.getInstance().error(`Failed to create data handler`, source);
+      Logger.getInstance().error('Failed to create data handler', source);
     }
   }
 
