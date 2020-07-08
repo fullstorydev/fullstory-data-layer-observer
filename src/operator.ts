@@ -2,9 +2,9 @@
  * OperatorOptions define shared properties for all Operators.
  */
 export interface OperatorOptions {
-  name: string;             // the name of the operator
-  index?: number;           // an index if the operation in on a specific object in a list
-  maxDepth?: number;        // the maximum depth to traverse nested objects
+  name: string; // the name of the operator
+  index?: number; // an index if the operation in on a specific object in a list
+  maxDepth?: number; // the maximum depth to traverse nested objects
 }
 
 /**
@@ -28,8 +28,8 @@ export enum OperatorValidationError {
  * An Operator can choose not to pass information to the next operator by returning null.
  */
 export abstract class Operator<O extends OperatorOptions> {
-
   readonly name: string;
+
   readonly index: number; // NB (van) create a member for index because it's optional and this confuses the ts compiler in subclasses
 
   constructor(protected options: O) {

@@ -13,7 +13,8 @@ export enum DataLayerEventType {
  */
 export class DataLayerDetail {
   value?: object; // value of a property assignment
-  args?: any[];   // args passed to a function
+
+  args?: any[]; // args passed to a function
 
   /**
    * Creates a DataLayerDetail

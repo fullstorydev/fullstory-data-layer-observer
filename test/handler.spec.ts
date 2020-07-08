@@ -10,6 +10,7 @@ import { DataLayerDetail, PropertyDetail } from '../src/event';
 // create a mock operators that store something we can check
 class EchoOperatorOptions implements OperatorOptions {
   name = 'echo';
+
   index = 0;
 }
 
@@ -28,6 +29,7 @@ class EchoOperator extends Operator<EchoOperatorOptions> {
 
 class GetterOperatorOptions implements OperatorOptions {
   name = 'getter';
+
   index = 0;
 }
 
@@ -77,7 +79,6 @@ class ThrowOperator extends Operator<ThrowOperatorOptions> {
 }
 
 describe('DataHandler unit tests', () => {
-
   before(() => {
     (globalThis as any).digitalData = basicDigitalData;
   });
@@ -188,10 +189,9 @@ describe('DataHandler unit tests', () => {
     handler.push(echo);
 
     handler.handleEvent(new CustomEvent<DataLayerDetail>('unknownType', {
-      detail: new PropertyDetail(basicDigitalData.page.pageInfo, basicDigitalData.page, 'digitalData.page.pageInfo')
+      detail: new PropertyDetail(basicDigitalData.page.pageInfo, basicDigitalData.page, 'digitalData.page.pageInfo'),
     }));
 
     expect(seen.length).to.eq(0);
   });
-
 });

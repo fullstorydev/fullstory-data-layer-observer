@@ -10,7 +10,6 @@ const originalConsole = globalThis.console;
 const console = new Console();
 
 describe('logger unit tests', () => {
-
   before(() => {
     // @ts-ignore
     globalThis.console = console;
@@ -29,10 +28,10 @@ describe('logger unit tests', () => {
     logger.error('Data layer not found', mockDatalayer);
     logger.warn('Data layer not ready', mockDatalayer);
 
-    const [ error ] = expectParams(console, 'error');
+    const [error] = expectParams(console, 'error');
     expect(error).to.eq(`Data layer not found (${mockDatalayer})`);
 
-    const [ warn ] = expectParams(console, 'warn');
+    const [warn] = expectParams(console, 'warn');
     expect(warn).to.eq(`Data layer not ready (${mockDatalayer})`);
 
     logger.info('Data layer rules loaded', mockDatalayer);
@@ -47,12 +46,12 @@ describe('logger unit tests', () => {
     logger.level = LogLevel.DEBUG;
 
     logger.info('Data layer rules loaded');
-    const [ info ] = expectParams(console, 'info');
-    expect(info).to.eq(`Data layer rules loaded`);
+    const [info] = expectParams(console, 'info');
+    expect(info).to.eq('Data layer rules loaded');
 
     logger.debug('Operator output');
-    const [ debug ] = expectParams(console, 'debug');
-    expect(debug).to.eq(`Operator output`);
+    const [debug] = expectParams(console, 'debug');
+    expect(debug).to.eq('Operator output');
   });
 
   it('it should allow setting a custom appender', () => {
@@ -65,7 +64,7 @@ describe('logger unit tests', () => {
       log(event: LogEvent) {
         const { level: level_int, message: message_str, datalayer: datalayer_str } = event;
         FS.event('Data Layer Observer', { level_int, message_str, datalayer_str }, 'dataLayerObserver');
-      }
+      },
     };
 
     logger.error('Data layer not found', mockDatalayer);
@@ -77,5 +76,4 @@ describe('logger unit tests', () => {
     expect(payload.datalayer_str).to.eq(mockDatalayer);
     expect(source).to.eq('dataLayerObserver');
   });
-
 });
