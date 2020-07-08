@@ -8,7 +8,8 @@ export interface OperatorOptions {
 }
 
 /**
- * Common validation errors, which prevents each Operator from defining their own strings and bloating code.
+ * Common validation errors, which prevents each Operator from defining their own strings and
+ * bloating code.
  */
 export enum OperatorValidationError {
   MISSING = 'is missing or empty',
@@ -18,19 +19,21 @@ export enum OperatorValidationError {
 
 /**
  * An Operator takes a list of data objects emitted from a data layer and performs a transformation.
- * Operators should be atomic - performing a specific and succinct transformation. The transformation should
- * return a result that will be passed to the next operator, and it should not mutate the incoming object.
+ * Operators should be atomic - performing a specific and succinct transformation. The
+ * transformation should return a result that will be passed to the next operator, and it should not
+ * mutate the incoming object.
  *
- * While an Operator will most often transform a single object, the input is always a list of objects.
- * This is because data emitted from the data layer could be a single value or the result of a function call, which
- * emits a list of arguments.
+ * While an Operator will most often transform a single object, the input is always a list of
+ * objects. This is because data emitted from the data layer could be a single value or the result
+ * of a function call, which emits a list of arguments.
  *
  * An Operator can choose not to pass information to the next operator by returning null.
  */
 export abstract class Operator<O extends OperatorOptions> {
   readonly name: string;
 
-  readonly index: number; // NB (van) create a member for index because it's optional and this confuses the ts compiler in subclasses
+  // NOTE (van) member for index because it's optional and this confuses the ts compiler in subclass
+  readonly index: number;
 
   constructor(protected options: O) {
     this.name = options.name;
@@ -45,7 +48,8 @@ export abstract class Operator<O extends OperatorOptions> {
   abstract handleData(data: any[]): any[] | null;
 
   /**
-   * Validates OperatorOptions. If an Operator has an invalid configuration, an Error should be thrown.
+   * Validates OperatorOptions. If an Operator has an invalid configuration, an Error should be
+   * thrown.
    */
   abstract validate(): void;
 
@@ -55,7 +59,8 @@ export abstract class Operator<O extends OperatorOptions> {
    * @param reason a common reason code
    * @param details optional detail message
    */
-  protected throwValidationError(option: string, reason: OperatorValidationError, details?: string) {
+  protected throwValidationError(option: string, reason: OperatorValidationError,
+    details?: string) {
     const message = `${this.name} operator option '${option}' ${reason}`;
     throw new Error(details ? `${message} (${details})` : message);
   }
