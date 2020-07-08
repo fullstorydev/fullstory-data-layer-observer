@@ -3,24 +3,53 @@ import { DataHandler } from "./handler";
 import { FunctionOperator } from "./operators";
 import { Logger } from "./utils/logger";
 
+/**
+ * DataLayerConfig provides global settings for a DataLayerObserver.
+ *
+ * Required
+ *  rules: a list of pre-configured DataLayerRules
+ * Optional
+ *  beforeDestination: OperatorOptions that is always used just before before the destination
+ *  previewMode: redirects output from a destination to previewDestination when testing rules
+ *  previewDestination: output destination using selection syntax for with previewMode
+ *  readOnLoad: when true reads data layer target(s) and emit the initial value(s)
+ *  validateRules: when true validates rules to prevent processing invalid options
+ *  urlValidator: a function used to validate a DataLayerRule's `url`
+ */
 export interface DataLayerConfig {
+  beforeDestination?: OperatorOptions;
   previewDestination?: string;
   previewMode?: boolean;
   readOnLoad?: boolean;
   rules: DataLayerRule[];
-  finalize?: OperatorOptions;
   validateRules?: boolean;
   urlValidator?: (url: string | undefined) => boolean;
 };
 
+/**
+ * DataLayerRule configures the behavior for a specific data layer target.
+ *
+ * Required
+ *  source: data layer target using selector syntax
+ *  destination: destination function using selector syntax
+ * Optional
+ *  operators: list of OperatorOptions to transform data before a destination
+ *  readOnLoad: rule-specific readOnLoad (see DataLayerConfig readOnLoad)
+ *  url: regular expression used to enable the rule when the page URL matches
+ */
 export interface DataLayerRule {
-  source: string | any;
+  source: string;
   operators?: OperatorOptions[];
-  destination: string | Function;
+  destination: string;
   readOnLoad?: boolean;
   url?: string;
 }
 
+/**
+ * DataLayerObserver creates listeners and handlers to process data layer events.
+ * A DataLayerObserver can be pre-configured using a DataLayerConfig with pre-built rules or
+ * programmatically built on a page.
+ */
 export class DataLayerObserver {
 
   private operators: { [key: string]: any } = { // TODO (van) type the class value in the map
@@ -29,6 +58,14 @@ export class DataLayerObserver {
 
   handlers: DataHandler[] = [];
 
+  /**
+   * Creates a DataLayerObserver. If no DataLayerConfig is provided, the following settings will be
+   * used:
+   *  previewMode: false
+   *  readOnLoad: false
+   *  validateRules: true
+   * @param config an optional DataLayerConfig
+   */
   constructor(private config: DataLayerConfig = {
     rules: [],
     previewMode: false,
@@ -41,19 +78,24 @@ export class DataLayerObserver {
     }
   }
 
-  addHandler(path: string): DataHandler {
-    const handler = new DataHandler(path);
+  /**
+   * Creates and adds a DataHandler.
+   * @param selector data layer target selector syntax
+   */
+  addHandler(selector: string): DataHandler {
+    const handler = new DataHandler(selector);
     this.handlers.push(handler);
 
     return handler;
   }
 
   /**
-   * Appends an Operator to the existing list for a given DataHandler.
-   * If an error occurs with creating or adding the operator, the DataHandler will be removed
-   * to prevent unexpected data processing.
+   * Appends an Operator to the existing list for a given DataHandler. Data will be transformed
+   * sequentially by iterating through the list of Operators. If an error occurs when creating or
+   * adding the operator, the DataHandler will be removed to prevent unexpected data processing.
    * @param handler the DataHandler to add the operator to
    * @param options the OperatorOptions used to configure the Operator
+   * @throws an error if ruleValidation is enabled an the OperatorOptions are invalid
    */
   addOperator<O extends OperatorOptions>(handler: DataHandler, options: O) {
     const { name } = options;
@@ -77,13 +119,26 @@ export class DataLayerObserver {
     }
   }
 
+  /**
+   * Checks if a URL (from a rule) is valid. By default, window.location.href is checked, but
+   * this can be overridden by updating `urlValidator` in DataLayerConfig.
+   * @param url the test string (preferably a regular expression)
+   */
   private isUrlValid(url: string | undefined) {
     const { urlValidator } = this.config;
     return urlValidator ? urlValidator(url) : url ? RegExp(url).test(window.location.href) : true;
   }
 
+  /**
+   * Processes a DataLayerRule. Assuming the rule's `url` is valid, this will result in the rule
+   * being parsed, adding a DataHandler with any Operators, and registering a source and
+   * destination. If an error occurs when processing, the DataHandler will be removed
+   * to prevent unexpected data processing.
+   * @param rule the DataLayerRule to parse and process
+   * @throws errors if the rule has missing data or an error occurs during processing
+   */
   processRule(rule: DataLayerRule) {
-    const { finalize, previewMode, readOnLoad: globalReadOnLoad } = this.config;
+    const { beforeDestination, previewMode, readOnLoad: globalReadOnLoad } = this.config;
 
     const {
       source,
@@ -115,10 +170,10 @@ export class DataLayerObserver {
           this.addOperator(handler, options);
         }
 
-        // optionally finalize all rules, which is useful if all data needs conversion before
-        // being sent to a destination
-        if (finalize) {
-          this.addOperator(handler, finalize);
+        // optionally perform a final transformation
+        // useful if every rule needs the same operator run before the destination
+        if (beforeDestination) {
+          this.addOperator(handler, beforeDestination);
         }
 
         // end with destination
@@ -133,7 +188,7 @@ export class DataLayerObserver {
         this.removeHandler(handler);
       }
 
-      // FIXME (van) this will be delegated to PropertyListeners when available
+      // TODO (van) this will be delegated to PropertyListeners when available
       // if the rule creator wants to fire the initial value for a property, do it
       if (readOnLoad) {
         try {
@@ -148,6 +203,11 @@ export class DataLayerObserver {
     }
   }
 
+  /**
+   * Registers a custom Operator.
+   * @param operator the Operator's class
+   * @throws an error if an existing name is used
+   */
   registerOperator(name: string, operator: typeof Operator) {
     if (this.operators[name]) {
       throw new Error(`Operator ${name} already exists`);
@@ -156,6 +216,10 @@ export class DataLayerObserver {
     }
   }
 
+  /**
+   * Removes a previously added DataHandler.
+   * @param handler the DataHandler to be removed
+   */
   removeHandler(handler: DataHandler) {
     const i = this.handlers.indexOf(handler);
     if (i > -1) {
