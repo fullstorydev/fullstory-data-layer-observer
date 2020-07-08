@@ -9,9 +9,14 @@ export interface FunctionOperatorOptions extends OperatorOptions {
 /**
  * FunctionOperator executes a function and returns the result.
  */
-export class FunctionOperator extends Operator<FunctionOperatorOptions> {
+export class FunctionOperator extends Operator {
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+  constructor(options: FunctionOperatorOptions) {
+    super(options);
+  }
+
   handleData(data: any[]): any[] | null {
-    const { func, thisArg } = this.options;
+    const { func, thisArg } = this.options as FunctionOperatorOptions;
 
     let actualThisArg: object = globalThis;
 
@@ -40,7 +45,7 @@ export class FunctionOperator extends Operator<FunctionOperatorOptions> {
   }
 
   validate() {
-    const { func, thisArg } = this.options;
+    const { func, thisArg } = this.options as FunctionOperatorOptions;
     const funcType = typeof func;
     const thisArgType = typeof thisArg;
 

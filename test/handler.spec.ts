@@ -15,7 +15,7 @@ class EchoOperatorOptions implements OperatorOptions {
   index = 0;
 }
 
-class EchoOperator extends Operator<EchoOperatorOptions> {
+class EchoOperator extends Operator {
   constructor(private seen: any[]) {
     super(new EchoOperatorOptions());
   }
@@ -36,7 +36,7 @@ class GetterOperatorOptions implements OperatorOptions {
   index = 0;
 }
 
-class GetterOperator extends Operator<GetterOperatorOptions> {
+class GetterOperator extends Operator {
   constructor(private property: string, private seen: any[]) {
     super(new GetterOperatorOptions());
   }
@@ -55,7 +55,7 @@ class NullOperatorOptions implements OperatorOptions {
   name = 'null';
 }
 
-class NullOperator extends Operator<NullOperatorOptions> {
+class NullOperator extends Operator {
   constructor() {
     super(new NullOperatorOptions());
   }
@@ -74,7 +74,7 @@ class ThrowOperatorOptions implements OperatorOptions {
   name = 'throw';
 }
 
-class ThrowOperator extends Operator<ThrowOperatorOptions> {
+class ThrowOperator extends Operator {
   constructor() {
     super(new ThrowOperatorOptions());
   }

@@ -1,5 +1,5 @@
 import { Logger } from './utils/logger';
-import { Operator, OperatorOptions } from './operator';
+import { Operator } from './operator';
 import { DataLayerEventType, DataLayerDetail, PropertyDetail } from './event';
 import { select } from './selector';
 
@@ -9,7 +9,7 @@ import { select } from './selector';
  * registered operators.
  */
 export default class DataHandler {
-  private operators: Operator<OperatorOptions>[] = [];
+  private operators: Operator[] = [];
 
   readonly target: any;
 
@@ -124,7 +124,7 @@ export default class DataHandler {
    * Adds an operator to the list. Operators will sequentially pass data to the next operator.
    * @param operators Operator(s) to add
    */
-  push(...operators: Operator<OperatorOptions>[]): void {
+  push(...operators: Operator[]): void {
     operators.forEach((operator) => this.operators.push(operator));
   }
 }

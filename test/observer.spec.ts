@@ -14,7 +14,7 @@ class EchoOperatorOptions implements OperatorOptions {
   name = 'echo';
 }
 
-class EchoOperator extends Operator<EchoOperatorOptions> {
+class EchoOperator extends Operator {
   // eslint-disable-next-line class-methods-use-this
   handleData(data: any[]): any[] | null {
     return data;
@@ -113,13 +113,12 @@ describe('DataLayerObserver unit tests', () => {
   it('it should allow custom operators to be registered', () => {
     const observer = new DataLayerObserver();
 
-    // @ts-ignore TODO (van) how to typecheck this
     observer.registerOperator('echo', EchoOperator);
   });
 
   it('it should not register operators with the same name', () => {
     const observer = new DataLayerObserver();
-    // @ts-ignore TODO (van) how to typecheck this
+
     expect(() => { observer.registerOperator('function', FunctionOperator); }).to.throw();
   });
 
@@ -147,7 +146,7 @@ describe('DataLayerObserver unit tests', () => {
     });
 
     expect(observer.handlers.length).to.eq(1);
-    // @ts-ignore TODO (van) how to typecheck this
+
     observer.registerOperator('echo', EchoOperator);
 
     expect(() => {
