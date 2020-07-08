@@ -143,6 +143,7 @@ describe('DataLayerObserver unit tests', () => {
       ]
     });
 
+    expect(observer.handlers.length).to.eq(1);
     // @ts-ignore TODO (van) how to typecheck this
     observer.registerOperator('echo', EchoOperator);
 

@@ -48,6 +48,13 @@ export class DataLayerObserver {
     return handler;
   }
 
+  /**
+   * Appends an Operator to the existing list for a given DataHandler.
+   * If an error occurs with creating or adding the operator, the DataHandler will be removed
+   * to prevent unexpected data processing.
+   * @param handler the DataHandler to add the operator to
+   * @param options the OperatorOptions used to configure the Operator
+   */
   addOperator<O extends OperatorOptions>(handler: DataHandler, options: O) {
     const { name } = options;
 
@@ -55,12 +62,16 @@ export class DataLayerObserver {
       const operator = new this.operators[name](options);
 
       if (this.config.validateRules) {
-        operator.validate();
+        try {
+          operator.validate();
+        } catch (err) {
+          this.removeHandler(handler);
+          throw new Error(`Data handler removed because operator ${name} not found`);
+        }
       }
 
       handler.push(operator);
     } else {
-      // NOTE to be save, remove the handler so incomplete data processing does not occur
       this.removeHandler(handler);
       throw new Error(`Data handler removed because operator ${name} not found`);
     }

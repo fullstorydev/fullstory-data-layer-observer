@@ -3,6 +3,7 @@ import { select } from '../selector';
 
 export interface FunctionOperatorOptions extends OperatorOptions {
   func: string | Function;
+  thisArg?: string | object;
 }
 
 /**
@@ -10,13 +11,28 @@ export interface FunctionOperatorOptions extends OperatorOptions {
  */
 export class FunctionOperator extends Operator<FunctionOperatorOptions> {
   handleData(data: any[]): any[] | null {
-    const { func } = this.options;
+    const { func, thisArg } = this.options;
+
+    let actualThisArg: object = globalThis;
+
+    if (thisArg) {
+      switch (typeof thisArg) {
+        case 'object':
+          actualThisArg = thisArg;
+          break;
+        case 'string':
+          actualThisArg = select(thisArg);
+          break;
+        default:
+          super.throwValidationError('thisArg', OperatorValidationError.UNSUPPORTED);
+      }
+    }
 
     switch (typeof func) {
       case 'function':
-        return [func.apply(globalThis, data)];
+        return [func.apply(actualThisArg, data)];
       case 'string':
-        return select(func).apply(globalThis, data);
+        return select(func).apply(actualThisArg, data);
       default:
         // NOTE this will stop the handler
         return null;
@@ -24,14 +40,28 @@ export class FunctionOperator extends Operator<FunctionOperatorOptions> {
   }
 
   validate() {
-    const { func } = this.options;
+    const { func, thisArg } = this.options;
+    const funcType = typeof func;
+    const thisArgType = typeof thisArg;
 
     if (!func) {
       super.throwValidationError('func', OperatorValidationError.MISSING);
     }
 
-    if (typeof func !== 'string' || typeof func !== 'function') {
+    if (funcType !== 'string' && funcType !== 'function') {
       super.throwValidationError('func', OperatorValidationError.UNSUPPORTED);
+    }
+
+    if (thisArg && thisArgType !== 'string' && thisArgType !== 'object') {
+      super.throwValidationError('thisArg', OperatorValidationError.UNSUPPORTED);
+    }
+
+    if (thisArg && funcType === 'string' && thisArgType !== 'string') {
+      super.throwValidationError('thisArg', OperatorValidationError.MALFORMED);
+    }
+
+    if (thisArg && funcType === 'function' && thisArgType !== 'object') {
+      super.throwValidationError('thisArg', OperatorValidationError.MALFORMED);
     }
   }
 }
