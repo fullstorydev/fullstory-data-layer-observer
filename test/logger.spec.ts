@@ -62,6 +62,7 @@ describe('logger unit tests', () => {
     const logger = Logger.getInstance();
     logger.appender = {
       log(event: LogEvent) {
+        // eslint-disable-next-line camelcase
         const { level: level_int, message: message_str, datalayer: datalayer_str } = event;
         FS.event('Data Layer Observer', { level_int, message_str, datalayer_str }, 'dataLayerObserver');
       },
