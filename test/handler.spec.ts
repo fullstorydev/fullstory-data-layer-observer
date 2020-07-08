@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import 'mocha';
 
-import { DataHandler } from '../src/handler';
+import DataHandler from '../src/handler';
 
 import { basicDigitalData, PageInfo, Page } from './mocks/CEDDL';
 import { Operator, OperatorOptions } from '../src/operator';
