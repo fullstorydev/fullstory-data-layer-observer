@@ -1,4 +1,5 @@
 /* eslint-disable max-classes-per-file */
+/* eslint prefer-destructuring: ["error", {AssignmentExpression: {array: false}}] */
 
 // Memoized Paths or false if the path cannot be parsed
 const parsedPaths: { [path: string]: Path | false } = {};
@@ -115,9 +116,9 @@ class Op {
     const raw = rawProps.trim();
     if (raw.length === 0) throw new Error(`Could not parse operation properties: ${raw}`);
     const tokens = raw.split(',');
-    for (const token of tokens) {
+    tokens.forEach((token) => {
       this.props.push(new OpProp(token));
-    }
+    });
   }
 }
 
@@ -229,12 +230,12 @@ class PathElement {
 
     const results: { [key: string]: any } = {};
     let atLeastOne = false;
-    for (const opProp of this.brackets.op.props) {
+    this.brackets.op.props.forEach((opProp) => {
       if (typeof prop[opProp.name] !== 'undefined') {
         results[opProp.name] = prop[opProp.name];
         atLeastOne = true;
       }
-    }
+    });
     if (atLeastOne === false) return undefined;
     return results;
   }
@@ -249,7 +250,9 @@ class PathElement {
 
     const results: { [key: string]: any } = {};
     let atLeastOne = false;
-    for (const key of Object.getOwnPropertyNames(prop)) {
+    const propNames = Object.getOwnPropertyNames(prop);
+    for (let i = 0; i < propNames.length; i += 1) {
+      const key = propNames[i];
       if (this.brackets.op.propNames.includes(key)) continue;
       results[key] = prop[key];
       atLeastOne = true;
@@ -268,9 +271,12 @@ class PathElement {
 
     const results: { [key: string]: any } = {};
     let atLeastOne = false;
-    for (const key of Object.getOwnPropertyNames(prop)) {
-      for (const propPrefix of this.brackets.op.propNames) {
-        if (key.startsWith(propPrefix)) {
+
+    const propNames = Object.getOwnPropertyNames(prop);
+    for (let i = 0; i < propNames.length; i += 1) {
+      const key = propNames[i];
+      for (let j = 0; j < this.brackets.op.propNames.length; j += 1) {
+        if (key.startsWith(this.brackets.op.propNames[j])) {
           results[key] = prop[key];
           atLeastOne = true;
           break;
@@ -291,9 +297,11 @@ class PathElement {
 
     const results: { [key: string]: any } = {};
     let atLeastOne = false;
-    for (const key of Object.getOwnPropertyNames(prop)) {
-      for (const propPrefix of this.brackets.op.propNames) {
-        if (key.endsWith(propPrefix)) {
+    const propNames = Object.getOwnPropertyNames(prop);
+    for (let i = 0; i < propNames.length; i += 1) {
+      const key = propNames[i];
+      for (let j = 0; j < this.brackets.op.propNames.length; j += 1) {
+        if (key.endsWith(this.brackets.op.propNames[j])) {
           results[key] = prop[key];
           atLeastOne = true;
           break;
@@ -313,10 +321,16 @@ class PathElement {
     if (typeof prop === 'undefined') return undefined;
 
     // Check that all of the filter properties are matched (by existence or value)
-    for (const opProp of this.brackets.op.props) {
+
+    for (let i = 0; i < this.brackets.op.props.length; i += 1) {
+      const opProp = this.brackets.op.props[i];
       if (typeof prop[opProp.name] === 'undefined') return undefined;
       if (opProp.value === null) continue; // Existance is enough
-      if (prop[opProp.name] != opProp.value) return undefined; // Value must loosely match (not ===)
+      /*
+      Values come in as strings so we use loose matching (== not ===) to take advantage of JS's built-in fast parsing and evaluation
+      */
+      /* eslint eqeqeq: "off" */
+      if (prop[opProp.name] != opProp.value) return undefined;
     }
 
     return prop;
@@ -324,7 +338,9 @@ class PathElement {
 
   static sniffKind(raw: string): ElementKind {
     if (raw.length === 0) throw new Error(`Invalid path element: ${raw}`);
-    for (const kind of Object.keys(kindSniffers)) {
+    const snifferKeys = Object.keys(kindSniffers);
+    for (let i = 0; i < snifferKeys.length; i += 1) {
+      const kind = snifferKeys[i];
       if (kindSniffers[kind](raw)) return kind as ElementKind;
     }
     throw new Error(`Could not sniff kind of ${raw}`);
@@ -339,15 +355,15 @@ export class Path {
   constructor(public path: string) {
     this.path = path.trim();
     this.tokens = this.path.split('.');
-    for (const token of this.tokens) {
+    this.tokens.forEach((token) => {
       this.elements.push(new PathElement(token)); // Will throw an exception if it can't parse
-    }
+    });
   }
 
   select(target: object): any | undefined {
     let selection = target;
-    for (const element of this.elements) {
-      selection = element.select(selection);
+    for (let i = 0; i < this.elements.length; i += 1) {
+      selection = this.elements[i].select(selection);
       if (typeof selection === 'undefined') return undefined;
     }
     return selection;
