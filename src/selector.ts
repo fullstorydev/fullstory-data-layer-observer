@@ -17,7 +17,7 @@ const kindSniffers: { [key: string]: any } = {
   pluck: (raw: string): boolean => raw.includes('[') === false && raw.includes('(') === false,
   index: (raw: string): boolean => /.+\[-?\d+\]$/.test(raw),
   pick: (raw: string): boolean => /.+\[\(.*\)\]$/.test(raw),
-  omit: (raw: string): boolean => /.+\[\!\(.*\)\]$/.test(raw),
+  omit: (raw: string): boolean => /.+\[!\(.*\)\]$/.test(raw),
   prefix: (raw: string): boolean => /.+\[\^\(.*\)\]$/.test(raw),
   suffix: (raw: string): boolean => /.+\[\$\(.*\)\]$/.test(raw),
   filter: (raw: string): boolean => /.+\[\?\(.*\)\]$/.test(raw),
@@ -42,16 +42,16 @@ class OpProp {
   value: string | null;
 
   constructor(public raw: string) {
-    raw = raw.trim();
-    const tokens = raw.split('=');
+    this.raw = raw.trim();
+    const tokens = this.raw.split('=');
     if (tokens.length > 2) throw new Error(`Invalid OpProp: ${raw}`);
-    if (raw.includes('=')) {
-      const keyValTokens = raw.split('=');
-      if (keyValTokens.length != 2) throw new Error(`Invalid OpProp: ${raw}`);
+    if (this.raw.includes('=')) {
+      const keyValTokens = this.raw.split('=');
+      if (keyValTokens.length !== 2) throw new Error(`Invalid OpProp: ${raw}`);
       this.name = keyValTokens[0];
       this.value = keyValTokens[1];
     } else {
-      this.name = raw;
+      this.name = this.raw;
       this.value = null;
     }
   }
@@ -72,50 +72,49 @@ class Op {
   propNames: string[]; // Used often when iterating during selection
 
   constructor(public raw: string) {
-    raw = raw.trim();
-    switch (raw[0]) {
+    this.raw = raw.trim();
+    switch (this.raw[0]) {
       case '(':
-        if (raw[raw.length - 1] !== ')') throw new Error(`Could not parse Op: ${raw}`);
+        if (this.raw[this.raw.length - 1] !== ')') throw new Error(`Could not parse Op: ${raw}`);
         this.kind = OpKind.Pick;
-        this.parseProps(raw.substring(1, raw.length - 1));
+        this.parseProps(this.raw.substring(1, this.raw.length - 1));
         break;
       case '!':
-        if (raw[1] !== '(') throw new Error(`Could not parse Op: ${raw}`);
-        if (raw[raw.length - 1] !== ')') throw new Error(`Could not parse Op: ${raw}`);
+        if (this.raw[1] !== '(') throw new Error(`Could not parse Op: ${raw}`);
+        if (this.raw[this.raw.length - 1] !== ')') throw new Error(`Could not parse Op: ${raw}`);
         this.kind = OpKind.Omit;
-        this.parseProps(raw.substring(2, raw.length - 1));
+        this.parseProps(this.raw.substring(2, this.raw.length - 1));
         break;
       case '^':
-        if (raw[1] !== '(') throw new Error(`Could not parse Op: ${raw}`);
-        if (raw[raw.length - 1] !== ')') throw new Error(`Could not parse Op: ${raw}`);
+        if (this.raw[1] !== '(') throw new Error(`Could not parse Op: ${raw}`);
+        if (this.raw[this.raw.length - 1] !== ')') throw new Error(`Could not parse Op: ${raw}`);
         this.kind = OpKind.Prefix;
-        this.parseProps(raw.substring(2, raw.length - 1));
+        this.parseProps(this.raw.substring(2, this.raw.length - 1));
         break;
       case '$':
-        if (raw[1] !== '(') throw new Error(`Could not parse Op: ${raw}`);
-        if (raw[raw.length - 1] !== ')') throw new Error(`Could not parse Op: ${raw}`);
+        if (this.raw[1] !== '(') throw new Error(`Could not parse Op: ${raw}`);
+        if (this.raw[this.raw.length - 1] !== ')') throw new Error(`Could not parse Op: ${raw}`);
         this.kind = OpKind.Suffix;
-        this.parseProps(raw.substring(2, raw.length - 1));
+        this.parseProps(this.raw.substring(2, this.raw.length - 1));
         break;
       case '?':
-        if (raw[1] !== '(') throw new Error(`Could not parse Op: ${raw}`);
-        if (raw[raw.length - 1] !== ')') throw new Error(`Could not parse Op: ${raw}`);
+        if (this.raw[1] !== '(') throw new Error(`Could not parse Op: ${raw}`);
+        if (this.raw[this.raw.length - 1] !== ')') throw new Error(`Could not parse Op: ${raw}`);
         this.kind = OpKind.Filter;
-        this.parseProps(raw.substring(2, raw.length - 1));
+        this.parseProps(this.raw.substring(2, this.raw.length - 1));
         break;
       default:
-        const index = Number.parseInt(raw);
-        if (Number.isNaN(index)) throw new Error(`Could not parse the Op: ${raw}`);
+        this.index = Number.parseInt(this.raw, 10);
+        if (Number.isNaN(this.index)) throw new Error(`Could not parse the Op: ${raw}`);
         this.kind = OpKind.Index;
-        this.index = index;
     }
     this.propNames = this.props.map((op) => op.name);
   }
 
   parseProps(rawProps: string) {
-    rawProps = rawProps.trim();
-    if (rawProps.length === 0) throw new Error(`Could not parse operation properties: ${rawProps}`);
-    const tokens = rawProps.split(',');
+    const raw = rawProps.trim();
+    if (raw.length === 0) throw new Error(`Could not parse operation properties: ${raw}`);
+    const tokens = raw.split(',');
     for (const token of tokens) {
       this.props.push(new OpProp(token));
     }
@@ -131,11 +130,11 @@ class Brackets {
   prop: string; // `foo` from `foo[...]`
 
   constructor(public raw: string) {
-    raw = raw.trim();
-    if (raw.includes('[') === false) throw new Error(`Could not parse brackets: ${raw}`);
-    if (raw.endsWith(']') === false) throw new Error(`Could not parse brackets: ${raw}`);
-    const tokens = raw.split('[');
-    if (tokens.length != 2) throw new Error(`Could not parse brackets: ${raw}`);
+    this.raw = this.raw.trim();
+    if (this.raw.includes('[') === false) throw new Error(`Could not parse brackets: ${this.raw}`);
+    if (this.raw.endsWith(']') === false) throw new Error(`Could not parse brackets: ${this.raw}`);
+    const tokens = this.raw.split('[');
+    if (tokens.length !== 2) throw new Error(`Could not parse brackets: ${this.raw}`);
     this.prop = tokens[0];
     this.op = new Op(tokens[1].substring(0, tokens[1].length - 1));
   }
@@ -162,19 +161,14 @@ class PathElement {
         return this.selectIndex(target);
       case ElementKind.Pick:
         return this.selectPick(target);
-        break;
       case ElementKind.Omit:
         return this.selectOmit(target);
-        break;
       case ElementKind.Prefix:
         return this.selectPrefix(target);
-        break;
       case ElementKind.Suffix:
         return this.selectSuffix(target);
-        break;
       case ElementKind.Filter:
         return this.selectFilter(target);
-        break;
       default:
         throw new Error(`Unknown PathElement.kind: ${this.kind}`);
     }
@@ -203,7 +197,7 @@ class PathElement {
   }
 
   selectIndex(target: any): any | undefined {
-    if (!this.brackets || this.brackets.op.kind != OpKind.Index) {
+    if (!this.brackets || this.brackets.op.kind !== OpKind.Index) {
       throw new Error(`Invalid brackets state!${this}`);
     }
 
@@ -226,7 +220,7 @@ class PathElement {
   }
 
   selectPick(target: any): any | undefined {
-    if (!this.brackets || this.brackets.op.kind != OpKind.Pick) {
+    if (!this.brackets || this.brackets.op.kind !== OpKind.Pick) {
       throw new Error(`Invalid brackets state!${this}`);
     }
 
@@ -246,7 +240,7 @@ class PathElement {
   }
 
   selectOmit(target: any): any | undefined {
-    if (!this.brackets || this.brackets.op.kind != OpKind.Omit) {
+    if (!this.brackets || this.brackets.op.kind !== OpKind.Omit) {
       throw new Error(`Invalid brackets state!${this}`);
     }
 
@@ -265,7 +259,7 @@ class PathElement {
   }
 
   selectPrefix(target: any): any | undefined {
-    if (!this.brackets || this.brackets.op.kind != OpKind.Prefix) {
+    if (!this.brackets || this.brackets.op.kind !== OpKind.Prefix) {
       throw new Error(`Invalid brackets state!${this}`);
     }
 
@@ -288,7 +282,7 @@ class PathElement {
   }
 
   selectSuffix(target: any): any | undefined {
-    if (!this.brackets || this.brackets.op.kind != OpKind.Suffix) {
+    if (!this.brackets || this.brackets.op.kind !== OpKind.Suffix) {
       throw new Error(`Invalid brackets state!${this}`);
     }
 
@@ -311,7 +305,7 @@ class PathElement {
   }
 
   selectFilter(target: any): any | undefined {
-    if (!this.brackets || this.brackets.op.kind != OpKind.Filter) {
+    if (!this.brackets || this.brackets.op.kind !== OpKind.Filter) {
       throw new Error(`Invalid brackets state!${this}`);
     }
 
@@ -329,7 +323,7 @@ class PathElement {
   }
 
   static sniffKind(raw: string): ElementKind {
-    if (raw.length == 0) throw new Error(`Invalid path element: ${raw}`);
+    if (raw.length === 0) throw new Error(`Invalid path element: ${raw}`);
     for (const kind of Object.keys(kindSniffers)) {
       if (kindSniffers[kind](raw)) return kind as ElementKind;
     }
@@ -343,8 +337,8 @@ export class Path {
   elements: PathElement[] = [];
 
   constructor(public path: string) {
-    path = path.trim();
-    this.tokens = path.split('.');
+    this.path = path.trim();
+    this.tokens = this.path.split('.');
     for (const token of this.tokens) {
       this.elements.push(new PathElement(token)); // Will throw an exception if it can't parse
     }
