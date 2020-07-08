@@ -1,7 +1,8 @@
+/* eslint-disable max-classes-per-file */
 import { expect } from 'chai';
 import 'mocha';
 
-import { DataHandler } from '../src/handler';
+import DataHandler from '../src/handler';
 
 import { basicDigitalData, PageInfo, Page } from './mocks/CEDDL';
 import { Operator, OperatorOptions } from '../src/operator';
@@ -10,6 +11,7 @@ import { DataLayerDetail, PropertyDetail } from '../src/event';
 // create a mock operators that store something we can check
 class EchoOperatorOptions implements OperatorOptions {
   name = 'echo';
+
   index = 0;
 }
 
@@ -23,11 +25,14 @@ class EchoOperator extends Operator<EchoOperatorOptions> {
     return data;
   }
 
-  validate() { }
+  validate() {
+    throw new Error(`${this.name} validate not implemented`);
+  }
 }
 
 class GetterOperatorOptions implements OperatorOptions {
   name = 'getter';
+
   index = 0;
 }
 
@@ -41,7 +46,9 @@ class GetterOperator extends Operator<GetterOperatorOptions> {
     return [data[this.index][this.property]];
   }
 
-  validate() { }
+  validate() {
+    throw new Error(`${this.name} validate not implemented`);
+  }
 }
 
 class NullOperatorOptions implements OperatorOptions {
@@ -53,11 +60,14 @@ class NullOperator extends Operator<NullOperatorOptions> {
     super(new NullOperatorOptions());
   }
 
-  handleData(data: any[]): any[] | null {
+  // eslint-disable-next-line class-methods-use-this
+  handleData(): any[] | null {
     return null;
   }
 
-  validate() { }
+  validate() {
+    throw new Error(`${this.name} validate not implemented`);
+  }
 }
 
 class ThrowOperatorOptions implements OperatorOptions {
@@ -69,15 +79,16 @@ class ThrowOperator extends Operator<ThrowOperatorOptions> {
     super(new ThrowOperatorOptions());
   }
 
-  handleData(data: any[]): any[] | null {
-    throw new Error('data processing error');
+  handleData(): any[] | null {
+    throw new Error(`${this.name} data processing error`);
   }
 
-  validate() { }
+  validate() {
+    throw new Error(`${this.name} validate not implemented`);
+  }
 }
 
 describe('DataHandler unit tests', () => {
-
   before(() => {
     (globalThis as any).digitalData = basicDigitalData;
   });
@@ -174,7 +185,7 @@ describe('DataHandler unit tests', () => {
 
   it('objects should only allow manual firing of events', () => {
     // @ts-ignore
-    basicDigitalData.fn = () => console.log('Hello World');
+    basicDigitalData.fn = () => console.log('Hello World'); // eslint-disable-line no-console
     const handler = new DataHandler('digitalData.fn');
     expect(() => handler.fireEvent()).to.throw();
   });
@@ -188,10 +199,9 @@ describe('DataHandler unit tests', () => {
     handler.push(echo);
 
     handler.handleEvent(new CustomEvent<DataLayerDetail>('unknownType', {
-      detail: new PropertyDetail(basicDigitalData.page.pageInfo, basicDigitalData.page, 'digitalData.page.pageInfo')
+      detail: new PropertyDetail(basicDigitalData.page.pageInfo, basicDigitalData.page, 'digitalData.page.pageInfo'),
     }));
 
     expect(seen.length).to.eq(0);
   });
-
 });

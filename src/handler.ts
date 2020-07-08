@@ -1,23 +1,24 @@
-import { Logger } from "./utils/logger";
-import { Operator, OperatorOptions } from "./operator";
-import { DataLayerEventType, DataLayerDetail, PropertyDetail } from "./event";
-import { select } from "./selector";
+import { Logger } from './utils/logger';
+import { Operator, OperatorOptions } from './operator';
+import { DataLayerEventType, DataLayerDetail, PropertyDetail } from './event';
+import { select } from './selector';
 
 /**
- * DataHandler listens for changes from lower level PropertyListeners. Events emitted from PropertyListeners
- * are inspected, and valid event data is transformed through a series of registered operators.
+ * DataHandler listens for changes from lower level PropertyListeners. Events emitted from
+ * PropertyListeners are inspected, and valid event data is transformed through a series of
+ * registered operators.
  */
-export class DataHandler {
-
+export default class DataHandler {
   private operators: Operator<OperatorOptions>[] = [];
 
   readonly target: any;
 
-  debug = false;  // NOTE debugging is done at a rule level, which is why Logger is not used
+  debug = false; // NOTE debugging is done at a rule level, which is why Logger is not used
 
   // external tooling can override the console debugger
-  debugger = (message: string, data?: any, indent?: string) =>
-    console.debug(data ? `${indent}${message}\n${indent}${JSON.stringify(data)}` : `${indent}${message}`);
+  debugger = (message: string, data?: any, indent?: string) => console.debug(
+    data ? `${indent}${message}\n${indent}${JSON.stringify(data)}` : `${indent}${message}`,
+  );
 
   /**
    * Creates a DataHandler.
@@ -44,7 +45,7 @@ export class DataHandler {
 
     if (type === 'object') {
       this.handleEvent(new CustomEvent<DataLayerDetail>(DataLayerEventType.PROPERTY, {
-        detail: new PropertyDetail(this.target, value, this.path)
+        detail: new PropertyDetail(this.target, value, this.path),
       }));
     } else {
       throw new Error(`${this.path} (${type}) is not a supported type`);
@@ -52,15 +53,15 @@ export class DataHandler {
   }
 
   /**
-   * Handles the incoming event. This function implements EventListener to also support addEventListener()
-   * browser APIs and Data Layer Observer events.
+   * Handles the incoming event. This function implements EventListener to also support
+   * addEventListener() browser APIs and Data Layer Observer events.
    * @param event a browser Event or CustomEvent emitted
    */
   handleEvent(event: CustomEvent<DataLayerDetail>): void {
     const { detail: { args, value, path }, type } = event;
 
-    // since window is the event dispatcher, use the path in DataLayerDetail to decide if this DataHandler
-    // should process the data
+    // since window is the event dispatcher, use the path in DataLayerDetail to decide if this
+    // DataHandler should process the data
     if (this.path === path) {
       if (value === undefined && args === undefined) {
         Logger.getInstance().warn(`${this.path} emitted no data`, this.path);
@@ -71,7 +72,7 @@ export class DataHandler {
             break;
           case DataLayerEventType.FUNCTION:
             this.handleData(args || []);
-            break
+            break;
           default:
             Logger.getInstance().warn(`Unknown event type ${type}`);
         }
@@ -86,29 +87,31 @@ export class DataHandler {
   private handleData(data: any[] | null): any[] | null {
     this.runDebugger(`${this.path} handleData entry`, data);
 
-    for (let i = 0; i < this.operators.length; i++) {
+    let handledData = data;
+
+    for (let i = 0; i < this.operators.length; i += 1) {
       const { name } = this.operators[i];
 
       try {
         // if the data is null, it is a signal to stop processing
-        // this can happen if an upstream handler needed to prevent a downstream operator (e.g filter use-case)
-        if (data === null) {
-          this.runDebugger(`[${i}] ${name} halted`, data, '  ');
+        // this can happen if an upstream handler needed to prevent a downstream operator
+        if (handledData === null) {
+          this.runDebugger(`[${i}] ${name} halted`, handledData, '  ');
           return null;
-        } else {
-          data = this.operators[i].handleData(data);
-          this.runDebugger(`[${i}] ${name} output`, data, '  ');
         }
+        handledData = this.operators[i].handleData(handledData);
+        this.runDebugger(`[${i}] ${name} output`, handledData, '  ');
       } catch (err) {
-        Logger.getInstance().error(`Operator ${name} failed for ${this.path} at step ${i}`, this.path);
+        Logger.getInstance().error(`Operator ${name} failed for ${this.path} at step ${i}`,
+          this.path);
         console.error(err.message);
         return null;
       }
     }
 
-    this.runDebugger(`${this.path} handleData exit`, data);
+    this.runDebugger(`${this.path} handleData exit`, handledData);
 
-    return data;
+    return handledData;
   }
 
   private runDebugger(message: string, data?: any, indent = '') {
@@ -122,6 +125,6 @@ export class DataHandler {
    * @param operators Operator(s) to add
    */
   push(...operators: Operator<OperatorOptions>[]): void {
-    operators.forEach(operator => this.operators.push(operator));
+    operators.forEach((operator) => this.operators.push(operator));
   }
 }
