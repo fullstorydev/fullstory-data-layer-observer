@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 import { expect } from 'chai';
 import 'mocha';
 
@@ -24,7 +25,9 @@ class EchoOperator extends Operator<EchoOperatorOptions> {
     return data;
   }
 
-  validate() { }
+  validate() {
+    throw new Error(`${this.name} validate not implemented`);
+  }
 }
 
 class GetterOperatorOptions implements OperatorOptions {
@@ -43,7 +46,9 @@ class GetterOperator extends Operator<GetterOperatorOptions> {
     return [data[this.index][this.property]];
   }
 
-  validate() { }
+  validate() {
+    throw new Error(`${this.name} validate not implemented`);
+  }
 }
 
 class NullOperatorOptions implements OperatorOptions {
@@ -55,11 +60,14 @@ class NullOperator extends Operator<NullOperatorOptions> {
     super(new NullOperatorOptions());
   }
 
-  handleData(data: any[]): any[] | null {
+  // eslint-disable-next-line class-methods-use-this
+  handleData(): any[] | null {
     return null;
   }
 
-  validate() { }
+  validate() {
+    throw new Error(`${this.name} validate not implemented`);
+  }
 }
 
 class ThrowOperatorOptions implements OperatorOptions {
@@ -71,11 +79,13 @@ class ThrowOperator extends Operator<ThrowOperatorOptions> {
     super(new ThrowOperatorOptions());
   }
 
-  handleData(data: any[]): any[] | null {
-    throw new Error('data processing error');
+  handleData(): any[] | null {
+    throw new Error(`${this.name} data processing error`);
   }
 
-  validate() { }
+  validate() {
+    throw new Error(`${this.name} validate not implemented`);
+  }
 }
 
 describe('DataHandler unit tests', () => {
@@ -175,7 +185,7 @@ describe('DataHandler unit tests', () => {
 
   it('objects should only allow manual firing of events', () => {
     // @ts-ignore
-    basicDigitalData.fn = () => console.log('Hello World');
+    basicDigitalData.fn = () => console.log('Hello World'); // eslint-disable-line no-console
     const handler = new DataHandler('digitalData.fn');
     expect(() => handler.fireEvent()).to.throw();
   });
