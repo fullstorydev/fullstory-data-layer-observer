@@ -1,3 +1,5 @@
+/* eslint-disable max-classes-per-file */
+
 // Memoized Paths or false if the path cannot be parsed
 const parsedPaths: { [path: string]: Path | false } = {};
 
@@ -57,7 +59,8 @@ class OpProp {
 
 /**
 Op is an operator inside brackets with a list of properies
-For example: `!(foo=bar, blatz)` where `!` is the kind and `foo=bar` and `blatz` are parsed into OpProps
+For example: `!(foo=bar, blatz)` where `!` is the kind and `foo=bar` and `blatz` are parsed into
+OpProps
 */
 class Op {
   kind: OpKind;
@@ -180,7 +183,7 @@ class PathElement {
   parse() {
     switch (this.kind) {
       case ElementKind.Pluck:
-      /* No-op, we just use `raw` */
+        /* No-op, we just use `raw` */
         break;
       case ElementKind.Index:
       case ElementKind.Pick:
@@ -200,7 +203,9 @@ class PathElement {
   }
 
   selectIndex(target: any): any | undefined {
-    if (!this.brackets || this.brackets.op.kind != OpKind.Index) throw new Error(`Invalid brackets state!${this}`);
+    if (!this.brackets || this.brackets.op.kind != OpKind.Index) {
+      throw new Error(`Invalid brackets state!${this}`);
+    }
 
     const prop = target[this.brackets.prop];
     if (typeof prop === 'undefined') return undefined;
@@ -215,13 +220,15 @@ class PathElement {
     try {
       return prop[index];
     } catch (e) {
-      console.log('Index fail', this.brackets, e);
+      // TODO (van) use Logger console.log('Index fail', this.brackets, e);
       return undefined;
     }
   }
 
   selectPick(target: any): any | undefined {
-    if (!this.brackets || this.brackets.op.kind != OpKind.Pick) throw new Error(`Invalid brackets state!${this}`);
+    if (!this.brackets || this.brackets.op.kind != OpKind.Pick) {
+      throw new Error(`Invalid brackets state!${this}`);
+    }
 
     const prop: any = target[this.brackets.prop];
     if (typeof prop === 'undefined') return undefined;
@@ -239,7 +246,9 @@ class PathElement {
   }
 
   selectOmit(target: any): any | undefined {
-    if (!this.brackets || this.brackets.op.kind != OpKind.Omit) throw new Error(`Invalid brackets state!${this}`);
+    if (!this.brackets || this.brackets.op.kind != OpKind.Omit) {
+      throw new Error(`Invalid brackets state!${this}`);
+    }
 
     const prop: any = target[this.brackets.prop];
     if (typeof prop === 'undefined') return undefined;
@@ -256,7 +265,9 @@ class PathElement {
   }
 
   selectPrefix(target: any): any | undefined {
-    if (!this.brackets || this.brackets.op.kind != OpKind.Prefix) throw new Error(`Invalid brackets state!${this}`);
+    if (!this.brackets || this.brackets.op.kind != OpKind.Prefix) {
+      throw new Error(`Invalid brackets state!${this}`);
+    }
 
     const prop: any = target[this.brackets.prop];
     if (typeof prop === 'undefined') return undefined;
@@ -277,7 +288,9 @@ class PathElement {
   }
 
   selectSuffix(target: any): any | undefined {
-    if (!this.brackets || this.brackets.op.kind != OpKind.Suffix) throw new Error(`Invalid brackets state!${this}`);
+    if (!this.brackets || this.brackets.op.kind != OpKind.Suffix) {
+      throw new Error(`Invalid brackets state!${this}`);
+    }
 
     const prop: any = target[this.brackets.prop];
     if (typeof prop === 'undefined') return undefined;
@@ -298,7 +311,9 @@ class PathElement {
   }
 
   selectFilter(target: any): any | undefined {
-    if (!this.brackets || this.brackets.op.kind != OpKind.Filter) throw new Error(`Invalid brackets state!${this}`);
+    if (!this.brackets || this.brackets.op.kind != OpKind.Filter) {
+      throw new Error(`Invalid brackets state!${this}`);
+    }
 
     const prop: any = target[this.brackets.prop];
     if (typeof prop === 'undefined') return undefined;
