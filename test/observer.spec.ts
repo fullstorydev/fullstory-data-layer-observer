@@ -6,7 +6,7 @@ import { basicDigitalData, CEDDL } from './mocks/CEDDL';
 import Console from './mocks/console';
 import FullStory from './mocks/fullstory-recording';
 import { expectParams, expectNoCalls } from './utils/mocha';
-import { Operator, OperatorOptions } from '../src/operator';
+import { Operator, OperatorOptions, OperatorValidationError } from '../src/operator';
 import { FunctionOperator } from '../src/operators';
 
 class EchoOperatorOptions implements OperatorOptions {
@@ -19,7 +19,7 @@ class EchoOperator extends Operator<EchoOperatorOptions> {
   }
 
   validate() {
-    throw new Error(`${this.name} is not valid`);
+    super.throwValidationError('prop', OperatorValidationError.MISSING, 'this is expected');
   }
 }
 
