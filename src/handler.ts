@@ -16,7 +16,9 @@ export default class DataHandler {
   debug = false; // NOTE debugging is done at a rule level, which is why Logger is not used
 
   // external tooling can override the console debugger
-  debugger = (message: string, data?: any, indent?: string) => console.debug(data ? `${indent}${message}\n${indent}${JSON.stringify(data)}` : `${indent}${message}`);
+  debugger = (message: string, data?: any, indent?: string) => console.debug(
+    data ? `${indent}${message}\n${indent}${JSON.stringify(data)}` : `${indent}${message}`,
+  );
 
   /**
    * Creates a DataHandler.
