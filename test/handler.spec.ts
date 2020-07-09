@@ -5,19 +5,12 @@ import 'mocha';
 import DataHandler from '../src/handler';
 
 import { basicDigitalData, PageInfo, Page } from './mocks/CEDDL';
-import { Operator, OperatorOptions } from '../src/operator';
+import { Operator } from '../src/operator';
 import { DataLayerDetail, PropertyDetail } from '../src/event';
-
-// create a mock operators that store something we can check
-class EchoOperatorOptions implements OperatorOptions {
-  name = 'echo';
-
-  index = 0;
-}
 
 class EchoOperator extends Operator {
   constructor(private seen: any[]) {
-    super(new EchoOperatorOptions());
+    super({ name: 'echo', index: 0 });
   }
 
   handleData(data: any[]): any[] | null {
@@ -30,15 +23,9 @@ class EchoOperator extends Operator {
   }
 }
 
-class GetterOperatorOptions implements OperatorOptions {
-  name = 'getter';
-
-  index = 0;
-}
-
 class GetterOperator extends Operator {
   constructor(private property: string, private seen: any[]) {
-    super(new GetterOperatorOptions());
+    super({ name: 'getter', index: 0 });
   }
 
   handleData(data: any[]): any[] | null {
@@ -51,13 +38,9 @@ class GetterOperator extends Operator {
   }
 }
 
-class NullOperatorOptions implements OperatorOptions {
-  name = 'null';
-}
-
 class NullOperator extends Operator {
   constructor() {
-    super(new NullOperatorOptions());
+    super({ name: 'null' });
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -70,13 +53,9 @@ class NullOperator extends Operator {
   }
 }
 
-class ThrowOperatorOptions implements OperatorOptions {
-  name = 'throw';
-}
-
 class ThrowOperator extends Operator {
   constructor() {
-    super(new ThrowOperatorOptions());
+    super({ name: 'throw' });
   }
 
   handleData(): any[] | null {

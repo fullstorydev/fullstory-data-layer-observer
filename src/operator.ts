@@ -29,7 +29,7 @@ export enum OperatorValidationError {
  *
  * An Operator can choose not to pass information to the next operator by returning null.
  */
-export abstract class Operator implements OperatorOptions {
+export abstract class Operator {
   readonly name: string;
 
   // NOTE (van) member for index because it's optional and this confuses the ts compiler in subclass
