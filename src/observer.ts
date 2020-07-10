@@ -1,5 +1,5 @@
 import { OperatorOptions, Operator } from './operator';
-import { ConfigurableOptions, OperatorFactory } from './factory';
+import { BuiltinOptions, OperatorFactory } from './factory';
 import DataHandler from './handler';
 import { Logger } from './utils/logger';
 import { FunctionOperator } from './operators';
@@ -166,7 +166,7 @@ export class DataLayerObserver {
           // check if this is a generic operator that should be built or a registered one
           const { name } = options;
           const operator = this.customOperators[name] ? this.customOperators[name]
-            : OperatorFactory.create(name, options as ConfigurableOptions);
+            : OperatorFactory.create(name, options as BuiltinOptions);
           this.addOperator(handler, operator);
         });
 
@@ -174,7 +174,7 @@ export class DataLayerObserver {
         // useful if every rule needs the same operator run before the destination
         if (beforeDestination) {
           this.addOperator(handler, OperatorFactory.create(beforeDestination.name,
-            beforeDestination as ConfigurableOptions));
+            beforeDestination as BuiltinOptions));
         }
 
         // end with destination
