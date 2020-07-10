@@ -47,6 +47,14 @@ describe('logger unit tests', () => {
       name: 'function', func: 'testClosure.log', thisArg: 'testClosure',
     }).validate()).to.not.throw();
 
+    expect(() => new FunctionOperator({
+      name: 'function', func: () => console.log('Hello World'), thisArg: 'testClosure',
+    }).validate()).to.not.throw();
+
+    expect(() => new FunctionOperator({
+      name: 'function', func: 'testClosure.log', thisArg: globalThis,
+    }).validate()).to.not.throw();
+
     // @ts-ignore
     expect(() => new FunctionOperator({ name: 'function', func: 1234 }).validate()).to.throw();
     // @ts-ignore
@@ -55,14 +63,6 @@ describe('logger unit tests', () => {
     expect(() => new FunctionOperator({
       // @ts-ignore
       name: 'function', func: 'testClosure.log', thisArg: 1234,
-    }).validate()).to.throw();
-
-    expect(() => new FunctionOperator({
-      name: 'function', func: () => console.log('Hello World'), thisArg: 'testClosure',
-    }).validate()).to.throw();
-
-    expect(() => new FunctionOperator({
-      name: 'function', func: 'testClosure.log', thisArg: globalThis,
     }).validate()).to.throw();
   });
 

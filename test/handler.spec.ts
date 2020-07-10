@@ -5,43 +5,61 @@ import 'mocha';
 import DataHandler from '../src/handler';
 
 import { basicDigitalData, PageInfo, Page } from './mocks/CEDDL';
-import { Operator } from '../src/operator';
+import { Operator, OperatorOptions } from '../src/operator';
 import { DataLayerDetail, PropertyDetail } from '../src/event';
 
-class EchoOperator extends Operator {
+class EchoOperator implements Operator {
+  options: OperatorOptions = {
+    name: 'echo',
+    index: 0,
+    specification: {
+      index: { required: true, type: 'number' },
+    },
+  };
+
   constructor(private seen: any[]) {
-    super({ name: 'echo', index: 0 });
+    // sets this.seen
   }
 
   handleData(data: any[]): any[] | null {
-    this.seen.push(data[this.index]);
+    this.seen.push(data[this.options.index!]);
     return data;
   }
 
+  /* eslint-disable class-methods-use-this */
   validate() {
-    throw new Error(`${this.name} validate not implemented`);
+
   }
 }
 
-class GetterOperator extends Operator {
+class GetterOperator implements Operator {
+  options: OperatorOptions = {
+    name: 'getter',
+    index: 0,
+    specification: {
+      index: { required: true, type: 'number' },
+    },
+  };
+
   constructor(private property: string, private seen: any[]) {
-    super({ name: 'getter', index: 0 });
+    // sets this.property and this.seen
   }
 
   handleData(data: any[]): any[] | null {
-    this.seen.push(data[this.index][this.property]);
-    return [data[this.index][this.property]];
+    this.seen.push(data[this.options.index!][this.property]);
+    return [data[this.options.index!][this.property]];
   }
 
+  /* eslint-disable class-methods-use-this */
   validate() {
-    throw new Error(`${this.name} validate not implemented`);
+
   }
 }
 
-class NullOperator extends Operator {
-  constructor() {
-    super({ name: 'null' });
-  }
+class NullOperator implements Operator {
+  options: OperatorOptions = {
+    name: 'null',
+  };
 
   // eslint-disable-next-line class-methods-use-this
   handleData(): any[] | null {
@@ -49,21 +67,22 @@ class NullOperator extends Operator {
   }
 
   validate() {
-    throw new Error(`${this.name} validate not implemented`);
+
   }
 }
 
-class ThrowOperator extends Operator {
-  constructor() {
-    super({ name: 'throw' });
-  }
+class ThrowOperator implements Operator {
+  options: OperatorOptions = {
+    name: 'throw',
+  };
 
   handleData(): any[] | null {
-    throw new Error(`${this.name} data processing error`);
+    throw new Error(`${this.options.name} data processing error`);
   }
 
+  /* eslint-disable class-methods-use-this */
   validate() {
-    throw new Error(`${this.name} validate not implemented`);
+
   }
 }
 

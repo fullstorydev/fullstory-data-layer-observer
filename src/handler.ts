@@ -90,7 +90,7 @@ export default class DataHandler {
     let handledData = data;
 
     for (let i = 0; i < this.operators.length; i += 1) {
-      const { name } = this.operators[i];
+      const { options: { name } } = this.operators[i];
 
       try {
         // if the data is null, it is a signal to stop processing

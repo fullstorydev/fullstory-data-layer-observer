@@ -7,21 +7,25 @@ import { basicDigitalData, CEDDL } from './mocks/CEDDL';
 import Console from './mocks/console';
 import FullStory from './mocks/fullstory-recording';
 import { expectParams, expectNoCalls } from './utils/mocha';
-import { Operator, OperatorOptions, OperatorValidationError } from '../src/operator';
-import { FunctionOperator } from '../src/operators';
+import { Operator, OperatorOptions } from '../src/operator';
 
-class EchoOperatorOptions implements OperatorOptions {
-  name = 'echo';
-}
+class EchoOperator implements Operator {
+  options: OperatorOptions;
 
-class EchoOperator extends Operator {
-  // eslint-disable-next-line class-methods-use-this
+  constructor(options?: OperatorOptions) {
+    this.options = options || {
+      name: 'echo',
+    };
+  }
+
+  /* eslint-disable-next-line class-methods-use-this */
   handleData(data: any[]): any[] | null {
     return data;
   }
 
+  /* eslint-disable-next-line class-methods-use-this */
   validate() {
-    super.throwValidationError('prop', OperatorValidationError.MISSING, 'this is expected');
+
   }
 }
 
@@ -113,48 +117,13 @@ describe('DataLayerObserver unit tests', () => {
   it('it should allow custom operators to be registered', () => {
     const observer = new DataLayerObserver();
 
-    observer.registerOperator('echo', EchoOperator);
+    observer.registerOperator('echo', new EchoOperator());
   });
 
-  it('it should not register operators with the same name', () => {
+  it('it should not register operators with existing names', () => {
     const observer = new DataLayerObserver();
 
-    expect(() => { observer.registerOperator('function', FunctionOperator); }).to.throw();
-  });
-
-  it('unknown operators should error and remove the handler', () => {
-    const observer = new DataLayerObserver({
-      rules: [
-        { source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log' },
-      ],
-    });
-
-    expect(() => {
-      observer.addOperator(observer.handlers[0],
-        new EchoOperatorOptions());
-    }).to.throw();
-
-    expect(observer.handlers.length).to.eq(0);
-  });
-
-  it('invalid operators should error and remove the handler', () => {
-    const observer = new DataLayerObserver({
-      validateRules: true,
-      rules: [
-        { source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log' },
-      ],
-    });
-
-    expect(observer.handlers.length).to.eq(1);
-
-    observer.registerOperator('echo', EchoOperator);
-
-    expect(() => {
-      observer.addOperator(observer.handlers[0],
-        new EchoOperatorOptions());
-    }).to.throw();
-
-    expect(observer.handlers.length).to.eq(0);
+    expect(() => { observer.registerOperator('function', new EchoOperator()); }).to.throw();
   });
 
   it('only valid pages should process a rule', () => {
@@ -183,13 +152,37 @@ describe('DataLayerObserver unit tests', () => {
     expectNoCalls(globalMock.console, 'log');
   });
 
-  it('rules can be previewed before making them live', () => {
+  it('previewMode defaults to console.log', () => {
     expectNoCalls(globalMock.console, 'log');
     expectNoCalls(globalMock.FS, 'setUserVars');
 
     const observer = new DataLayerObserver({
       previewMode: true,
-      previewDestination: 'console.debug', // NOTE the default is console.log
+      readOnLoad: true,
+      rules: [
+        {
+          source: 'digitalData.user.profile[0].profileInfo',
+          operators: [],
+          destination: 'FS.setUserVars',
+        },
+      ],
+    });
+
+    expect(observer).to.not.be.undefined;
+
+    const [profileInfo] = expectParams(globalMock.console, 'log');
+    expect(profileInfo).to.eq(globalMock.digitalData.user.profile[0].profileInfo);
+
+    expectNoCalls(globalMock.FS, 'setUserVars');
+  });
+
+  it('previewMode can be configured', () => {
+    expectNoCalls(globalMock.console, 'debug');
+    expectNoCalls(globalMock.FS, 'setUserVars');
+
+    const observer = new DataLayerObserver({
+      previewMode: true,
+      previewDestination: 'console.debug',
       readOnLoad: true,
       rules: [
         {
