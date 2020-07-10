@@ -1,16 +1,15 @@
-import * as Operators from './operators';
+import { FunctionOperator, FunctionOperatorOptions } from './operators';
 import { Operator } from './operator';
-import { FunctionOperator } from './operators';
 
 /**
  * Declares known, built-in Operators.
  */
-export type BuiltinOperator = typeof Operators.FunctionOperator;
+export type BuiltinOperator = typeof FunctionOperator;
 
 /**
  * Declares known, built-in OperatorOptions.
  */
-export type BuiltinOptions = Operators.FunctionOperatorOptions;
+export type BuiltinOptions = FunctionOperatorOptions;
 
 /**
  * OperatorFactory creates instances built-in Operators. Since DataLayerRule can define OperatorOptions at runtime,
