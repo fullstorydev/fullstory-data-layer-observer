@@ -103,11 +103,21 @@ export class DataLayerObserver {
         operator.validate();
       } catch (err) {
         this.removeHandler(handler);
-        throw new Error(`Data handler removed because operator ${operator.options.name} not found`);
+        throw new Error(`Data handler removed because ${err.message}`);
       }
     }
 
     handler.push(operator);
+  }
+
+  /**
+   * Gets an Operator if it has already been registered. If not, create the Operator from the factory.
+   * @param options the OperatorOptions used to locate or create the Operator
+   */
+  private getOperator(options: OperatorOptions) {
+    const { name } = options;
+    return this.customOperators[name] ? this.customOperators[name]
+      : OperatorFactory.create(name, options as BuiltinOptions);
   }
 
   /**
@@ -163,18 +173,15 @@ export class DataLayerObserver {
       try {
         // sequentially add the operators to the handler
         operators.forEach((options) => {
-          // check if this is a generic operator that should be built or a registered one
-          const { name } = options;
-          const operator = this.customOperators[name] ? this.customOperators[name]
-            : OperatorFactory.create(name, options as BuiltinOptions);
+          const operator = this.getOperator(options);
           this.addOperator(handler, operator);
         });
 
         // optionally perform a final transformation
         // useful if every rule needs the same operator run before the destination
         if (beforeDestination) {
-          this.addOperator(handler, OperatorFactory.create(beforeDestination.name,
-            beforeDestination as BuiltinOptions));
+          const operator = this.getOperator(beforeDestination);
+          this.addOperator(handler, operator);
         }
 
         // end with destination
@@ -183,8 +190,6 @@ export class DataLayerObserver {
         this.addOperator(handler, new FunctionOperator({ name: 'function', func }));
       } catch (err) {
         Logger.getInstance().error('Failed to create operators', source);
-        console.error(err.message);
-
         this.removeHandler(handler);
       }
 
@@ -209,11 +214,11 @@ export class DataLayerObserver {
    * @throws an error if an existing name is used
    */
   registerOperator(name: string, operator: Operator) {
-    if (OperatorFactory.hasOperator(name)) {
+    if (OperatorFactory.hasOperator(name) || this.customOperators[name]) {
       throw new Error(`Operator ${name} already exists`);
-    } else {
-      this.customOperators[name] = operator;
     }
+
+    this.customOperators[name] = operator;
   }
 
   /**

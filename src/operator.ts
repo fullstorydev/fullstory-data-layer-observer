@@ -54,10 +54,9 @@ export class OperatorValidator {
    * @throws an error if the property has an unsupported type
    */
   checkType(option: string, type: string | string[]) {
-    if (typeof type === 'string' && typeof this.options[option]) {
-      this.throwError(option, `should be type ${type} `);
-    } else if (type.indexOf(typeof this.options[option]) === -1) {
-      this.throwError(option, `should be one of these types ${type.toString()}`);
+    const normalizedType = type.toString().toLowerCase();
+    if (normalizedType.indexOf(typeof this.options[option]) === -1) {
+      this.throwError(option, `is a ${typeof this.options[option]} but should be ${type}`);
     }
   }
 
@@ -70,7 +69,7 @@ export class OperatorValidator {
   checkDependencies(option: string, dependencies: string[]) {
     dependencies.forEach((dependency) => {
       if (!this.options[dependency]) {
-        this.throwError(option, `requires ${dependency}`);
+        this.throwError(option, `requires option ${dependency}`);
       }
     });
   }
@@ -102,27 +101,25 @@ export class OperatorValidator {
   validate(specification: OperatorSpecification) {
     const { name } = this.options;
 
-    if (specification) {
-      Object.getOwnPropertyNames(specification).forEach((key) => {
-        const { required, type, dependencies = [] } = specification[key];
-        if (required) {
-          this.checkRequired(key);
-        }
+    Object.getOwnPropertyNames(specification).forEach((key) => {
+      const { required, type, dependencies = [] } = specification[key];
+      if (required) {
+        this.checkRequired(key);
+      }
 
-        if (this.options[key]) {
-          this.checkType(key, type);
-          this.checkDependencies(key, dependencies);
-        }
-      });
+      if (this.options[key]) {
+        this.checkType(key, type);
+        this.checkDependencies(key, dependencies);
+      }
+    });
 
-      Object.getOwnPropertyNames(this.options).filter(
-        (key) => !OperatorValidator.isReservedProperty(key),
-      ).forEach((key) => {
-        if (!specification[key]) {
-          throw Error(`Operator '${name}' has unknown option ${key}`);
-        }
-      });
-    }
+    Object.getOwnPropertyNames(this.options).filter(
+      (key) => !OperatorValidator.isReservedProperty(key),
+    ).forEach((key) => {
+      if (!specification[key]) {
+        throw Error(`Operator '${name}' has unknown option ${key}`);
+      }
+    });
   }
 }
 

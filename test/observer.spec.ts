@@ -3,20 +3,17 @@ import { expect } from 'chai';
 import 'mocha';
 
 import { DataLayerObserver } from '../src/observer';
-import { basicDigitalData, CEDDL } from './mocks/CEDDL';
+import { basicDigitalData, CEDDL, PageCategory } from './mocks/CEDDL';
 import Console from './mocks/console';
 import FullStory from './mocks/fullstory-recording';
 import { expectParams, expectNoCalls } from './utils/mocha';
 import { Operator, OperatorOptions } from '../src/operator';
 
 class EchoOperator implements Operator {
-  options: OperatorOptions;
-
-  constructor(options?: OperatorOptions) {
-    this.options = options || {
-      name: 'echo',
-    };
-  }
+  options: OperatorOptions = {
+    name: 'echo',
+    fail: false,
+  };
 
   /* eslint-disable-next-line class-methods-use-this */
   handleData(data: any[]): any[] | null {
@@ -25,7 +22,35 @@ class EchoOperator implements Operator {
 
   /* eslint-disable-next-line class-methods-use-this */
   validate() {
+    if (this.options.fail) {
+      throw new Error('EchoOperator was set to fail');
+    }
+  }
+}
 
+class UppercaseOperator implements Operator {
+  options: OperatorOptions = {
+    name: 'toUpper',
+  };
+
+  /* eslint-disable-next-line class-methods-use-this */
+  handleData(data: any[]): any[] | null {
+    const upper: any = {};
+
+    Object.getOwnPropertyNames(data[0]).forEach((key) => {
+      if (typeof data[0][key] === 'string') {
+        upper[key] = (data[0][key] as string).toUpperCase();
+      }
+    });
+
+    return [upper];
+  }
+
+  /* eslint-disable-next-line class-methods-use-this */
+  validate() {
+    if (this.options.fail) {
+      throw new Error();
+    }
   }
 }
 
@@ -120,6 +145,22 @@ describe('DataLayerObserver unit tests', () => {
     observer.registerOperator('echo', new EchoOperator());
   });
 
+  it('invalid operators should remove a handler', () => {
+    const observer = new DataLayerObserver({
+      validateRules: true,
+      rules: [{ source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log' }],
+    });
+
+    expect(observer.handlers.length).to.eq(1);
+
+    const operator = new EchoOperator();
+    operator.options.fail = true;
+
+    expect(() => observer.addOperator(observer.handlers[0], operator)).to.throw();
+
+    expect(observer.handlers.length).to.eq(0);
+  });
+
   it('it should not register operators with existing names', () => {
     const observer = new DataLayerObserver();
 
@@ -199,5 +240,25 @@ describe('DataLayerObserver unit tests', () => {
     expect(profileInfo).to.eq(globalMock.digitalData.user.profile[0].profileInfo);
 
     expectNoCalls(globalMock.FS, 'setUserVars');
+  });
+
+  it('it should register and call an operator before the destination', () => {
+    expectNoCalls(globalMock.console, 'log');
+
+    const observer = new DataLayerObserver({ beforeDestination: { name: 'toUpper' }, rules: [] });
+
+    expect(observer).to.not.be.undefined;
+
+    observer.registerOperator('toUpper', new UppercaseOperator());
+    observer.processRule({ source: 'digitalData.page.category', operators: [], destination: 'console.log' });
+
+    expect(observer.handlers.length).to.eq(1);
+
+    observer.handlers[0].fireEvent();
+
+    const [category] = expectParams(globalMock.console, 'log');
+    expect((category as PageCategory).primaryCategory).to.eq(
+      globalMock.digitalData.page.category.primaryCategory.toUpperCase(),
+    );
   });
 });

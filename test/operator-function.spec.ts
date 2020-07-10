@@ -122,6 +122,17 @@ describe('logger unit tests', () => {
     expectNoCalls(console, 'log');
   });
 
+  it('it should not call a function with missing context', () => {
+    expectNoCalls(console, 'log');
+
+    const operator = new FunctionOperator({
+      name: 'function', func: (globalThis as any).testClosure.log, thisArg: 'unknownThis',
+    });
+    expect(() => operator.handleData([])).to.throw();
+
+    expectNoCalls(console, 'log');
+  });
+
   it('it should return null for invalid functions', () => {
     // @ts-ignore
     const operator = new FunctionOperator({ name: 'function', func: 1234 });

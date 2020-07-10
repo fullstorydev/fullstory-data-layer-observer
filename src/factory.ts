@@ -26,7 +26,7 @@ export class OperatorFactory {
    * @param options OperatorOptions used to configure the Operator
    */
   static create(name: string, options: BuiltinOptions): Operator {
-    if (!OperatorFactory.hasOperator) {
+    if (!OperatorFactory.hasOperator(name)) {
       throw new Error(`Operator ${name} is unknown`);
     }
 
