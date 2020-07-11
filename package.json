@@ -14,8 +14,8 @@
     }
   },
   "lint-staged": {
-    "src/**": "npm run lint:fix",
-    "test/**": "npm run lint:fix"
+    "src/**": "eslint --ext .ts --fix",
+    "test/**": "eslint --ext .ts --fix"
   },
   "repository": {
     "type": "git",
