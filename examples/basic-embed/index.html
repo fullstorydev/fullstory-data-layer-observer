@@ -3,30 +3,60 @@
   <head>
     <title>Data Layer Observer Example: basic embed</title>
     <meta charset="utf-8" />
+    <script>
+      /* These are examples of static data that will be read on load */
+      window.exampleData = {
+        page: {
+          pageName: 'basic embed',
+          pageInfo: {
+            pageID: '1234'
+          }
+        }
+      }
+      window.adInformation = {
+        accountID: 'abcd'
+      }
+      window.ops = {
+        clusterInfo: {
+          id: '444-111-11231',
+          load: 0.4
+        }
+      }
+
+      /* This function will receive information as the DLO rules find it */
+      function ruleDestination(info) {
+        console.log('ruleDestination received:', info);
+      }
+    </script>
   </head>
   <body>
     <h1>Data Layer Observer Example: basic embed</h1>
 
+    <p>Take a look at the source code of this page to see how the DLO reads rules and configuration.</p>
+    <p>The Javascript console will show you output that demonstrates the rules in action.</p>
+
     <script>
-      // If true, output from rules are sent only to `console`
+      // If true, output from rules are sent only to `console` (so, not to `ruleDestination`)
       // Default is false
       window['_dlo_preview'] = false;
 
       // If true, rules will run on page load in addition to when there are changes
       // Default is true
-      window['_dlo_readOnload'] = false;
+      window['_dlo_readOnLoad'] = true;
 
       // Anything on `window` that starts with `_dlo_rules` is read as a rules array
       window['_dlo_rules'] = [
-        // rules can go here
+        { source: 'exampleData.page.pageInfo', operators: [], destination: 'ruleDestination' },
+        /* The following rule has a bogus source so an error will appear in the console */
+        { source: 'exampleData.cart.cartInfo', operators: [], destination: 'ruleDestination' }
       ];
       window['_dlo_rulesFromAdTeam'] = [
-        // rules can also go here
+        { source: 'adInformation', operators: [], destination: 'ruleDestination' }
       ];
       window['_dlo_rulesFromOpsTeam'] = [
-        // rules can also go here
+        { source: 'ops.clusterInfo', operators: [], destination: 'ruleDestination' }
       ];
     </script>
-    <script async="true" src="./dlo-0.1.0.js"></script>
+    <script async="true" src="../../build/dlo.js"></script>
   </body>
 </html>

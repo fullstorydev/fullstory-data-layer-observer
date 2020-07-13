@@ -5,6 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "rollup --config",
+    "watch": "rollup --config -w",
+    "examples": "npm run build && http-server",
     "test": "nyc mocha -r ts-node/register -r source-map-support/register -r jsdom-global/register test/*.spec.ts test/**/*.spec.ts",
     "lint": "eslint --ext .ts src/** test/**",
     "lint:fix": "eslint --ext .ts --fix src/** test/**"
@@ -45,6 +47,7 @@
     "eslint": "^7.4.0",
     "eslint-config-airbnb-base": "^14.2.0",
     "eslint-plugin-import": "^2.22.0",
+    "http-server": "^0.12.3",
     "husky": "^4.2.5",
     "jsdom": "^16.2.2",
     "jsdom-global": "^3.0.2",
