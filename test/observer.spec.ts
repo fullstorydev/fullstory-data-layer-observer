@@ -3,25 +3,54 @@ import { expect } from 'chai';
 import 'mocha';
 
 import { DataLayerObserver } from '../src/observer';
-import { basicDigitalData, CEDDL } from './mocks/CEDDL';
+import { basicDigitalData, CEDDL, PageCategory } from './mocks/CEDDL';
 import Console from './mocks/console';
 import FullStory from './mocks/fullstory-recording';
 import { expectParams, expectNoCalls } from './utils/mocha';
-import { Operator, OperatorOptions, OperatorValidationError } from '../src/operator';
-import { FunctionOperator } from '../src/operators';
+import { Operator, OperatorOptions } from '../src/operator';
 
-class EchoOperatorOptions implements OperatorOptions {
-  name = 'echo';
-}
+class EchoOperator implements Operator {
+  options: OperatorOptions = {
+    name: 'echo',
+    fail: false,
+  };
 
-class EchoOperator extends Operator<EchoOperatorOptions> {
-  // eslint-disable-next-line class-methods-use-this
+  /* eslint-disable-next-line class-methods-use-this */
   handleData(data: any[]): any[] | null {
     return data;
   }
 
+  /* eslint-disable-next-line class-methods-use-this */
   validate() {
-    super.throwValidationError('prop', OperatorValidationError.MISSING, 'this is expected');
+    if (this.options.fail) {
+      throw new Error('EchoOperator was set to fail');
+    }
+  }
+}
+
+class UppercaseOperator implements Operator {
+  options: OperatorOptions = {
+    name: 'toUpper',
+  };
+
+  /* eslint-disable-next-line class-methods-use-this */
+  handleData(data: any[]): any[] | null {
+    const upper: any = {};
+
+    Object.getOwnPropertyNames(data[0]).forEach((key) => {
+      if (typeof data[0][key] === 'string') {
+        upper[key] = (data[0][key] as string).toUpperCase();
+      }
+    });
+
+    return [upper];
+  }
+
+  /* eslint-disable-next-line class-methods-use-this */
+  validate() {
+    if (this.options.fail) {
+      throw new Error();
+    }
   }
 }
 
@@ -113,49 +142,29 @@ describe('DataLayerObserver unit tests', () => {
   it('it should allow custom operators to be registered', () => {
     const observer = new DataLayerObserver();
 
-    // @ts-ignore TODO (van) how to typecheck this
-    observer.registerOperator('echo', EchoOperator);
+    observer.registerOperator('echo', new EchoOperator());
   });
 
-  it('it should not register operators with the same name', () => {
-    const observer = new DataLayerObserver();
-    // @ts-ignore TODO (van) how to typecheck this
-    expect(() => { observer.registerOperator('function', FunctionOperator); }).to.throw();
-  });
-
-  it('unknown operators should error and remove the handler', () => {
-    const observer = new DataLayerObserver({
-      rules: [
-        { source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log' },
-      ],
-    });
-
-    expect(() => {
-      observer.addOperator(observer.handlers[0],
-        new EchoOperatorOptions());
-    }).to.throw();
-
-    expect(observer.handlers.length).to.eq(0);
-  });
-
-  it('invalid operators should error and remove the handler', () => {
+  it('invalid operators should remove a handler', () => {
     const observer = new DataLayerObserver({
       validateRules: true,
-      rules: [
-        { source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log' },
-      ],
+      rules: [{ source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log' }],
     });
 
     expect(observer.handlers.length).to.eq(1);
-    // @ts-ignore TODO (van) how to typecheck this
-    observer.registerOperator('echo', EchoOperator);
 
-    expect(() => {
-      observer.addOperator(observer.handlers[0],
-        new EchoOperatorOptions());
-    }).to.throw();
+    const operator = new EchoOperator();
+    operator.options.fail = true;
+
+    expect(() => observer.addOperator(observer.handlers[0], operator)).to.throw();
 
     expect(observer.handlers.length).to.eq(0);
+  });
+
+  it('it should not register operators with existing names', () => {
+    const observer = new DataLayerObserver();
+
+    expect(() => { observer.registerOperator('function', new EchoOperator()); }).to.throw();
   });
 
   it('only valid pages should process a rule', () => {
@@ -184,13 +193,37 @@ describe('DataLayerObserver unit tests', () => {
     expectNoCalls(globalMock.console, 'log');
   });
 
-  it('rules can be previewed before making them live', () => {
+  it('previewMode defaults to console.log', () => {
     expectNoCalls(globalMock.console, 'log');
     expectNoCalls(globalMock.FS, 'setUserVars');
 
     const observer = new DataLayerObserver({
       previewMode: true,
-      previewDestination: 'console.debug', // NOTE the default is console.log
+      readOnLoad: true,
+      rules: [
+        {
+          source: 'digitalData.user.profile[0].profileInfo',
+          operators: [],
+          destination: 'FS.setUserVars',
+        },
+      ],
+    });
+
+    expect(observer).to.not.be.undefined;
+
+    const [profileInfo] = expectParams(globalMock.console, 'log');
+    expect(profileInfo).to.eq(globalMock.digitalData.user.profile[0].profileInfo);
+
+    expectNoCalls(globalMock.FS, 'setUserVars');
+  });
+
+  it('previewMode can be configured', () => {
+    expectNoCalls(globalMock.console, 'debug');
+    expectNoCalls(globalMock.FS, 'setUserVars');
+
+    const observer = new DataLayerObserver({
+      previewMode: true,
+      previewDestination: 'console.debug',
       readOnLoad: true,
       rules: [
         {
@@ -207,5 +240,25 @@ describe('DataLayerObserver unit tests', () => {
     expect(profileInfo).to.eq(globalMock.digitalData.user.profile[0].profileInfo);
 
     expectNoCalls(globalMock.FS, 'setUserVars');
+  });
+
+  it('it should register and call an operator before the destination', () => {
+    expectNoCalls(globalMock.console, 'log');
+
+    const observer = new DataLayerObserver({ beforeDestination: { name: 'toUpper' }, rules: [] });
+
+    expect(observer).to.not.be.undefined;
+
+    observer.registerOperator('toUpper', new UppercaseOperator());
+    observer.processRule({ source: 'digitalData.page.category', operators: [], destination: 'console.log' });
+
+    expect(observer.handlers.length).to.eq(1);
+
+    observer.handlers[0].fireEvent();
+
+    const [category] = expectParams(globalMock.console, 'log');
+    expect((category as PageCategory).primaryCategory).to.eq(
+      globalMock.digitalData.page.category.primaryCategory.toUpperCase(),
+    );
   });
 });

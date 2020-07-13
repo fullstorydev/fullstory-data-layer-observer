@@ -47,6 +47,14 @@ describe('logger unit tests', () => {
       name: 'function', func: 'testClosure.log', thisArg: 'testClosure',
     }).validate()).to.not.throw();
 
+    expect(() => new FunctionOperator({
+      name: 'function', func: () => console.log('Hello World'), thisArg: 'testClosure',
+    }).validate()).to.not.throw();
+
+    expect(() => new FunctionOperator({
+      name: 'function', func: 'testClosure.log', thisArg: globalThis,
+    }).validate()).to.not.throw();
+
     // @ts-ignore
     expect(() => new FunctionOperator({ name: 'function', func: 1234 }).validate()).to.throw();
     // @ts-ignore
@@ -55,14 +63,6 @@ describe('logger unit tests', () => {
     expect(() => new FunctionOperator({
       // @ts-ignore
       name: 'function', func: 'testClosure.log', thisArg: 1234,
-    }).validate()).to.throw();
-
-    expect(() => new FunctionOperator({
-      name: 'function', func: () => console.log('Hello World'), thisArg: 'testClosure',
-    }).validate()).to.throw();
-
-    expect(() => new FunctionOperator({
-      name: 'function', func: 'testClosure.log', thisArg: globalThis,
     }).validate()).to.throw();
   });
 
@@ -116,6 +116,17 @@ describe('logger unit tests', () => {
     const operator = new FunctionOperator({
       // @ts-ignore
       name: 'function', func: (globalThis as any).testClosure.log, thisArg: 12345,
+    });
+    expect(() => operator.handleData([])).to.throw();
+
+    expectNoCalls(console, 'log');
+  });
+
+  it('it should not call a function with missing context', () => {
+    expectNoCalls(console, 'log');
+
+    const operator = new FunctionOperator({
+      name: 'function', func: (globalThis as any).testClosure.log, thisArg: 'unknownThis',
     });
     expect(() => operator.handleData([])).to.throw();
 

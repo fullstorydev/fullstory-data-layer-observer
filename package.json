@@ -8,9 +8,15 @@
     "lint": "eslint --ext .ts src/** test/**",
     "lint:fix": "eslint --ext .ts --fix src/** test/**"
   },
-  "pre-commit": [
-    "lint:fix"
-  ],
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "src/**": "eslint --ext .ts --fix",
+    "test/**": "eslint --ext .ts --fix"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/fullstorydev/fullstory-data-layer-observer.git"
@@ -37,11 +43,12 @@
     "eslint": "^7.4.0",
     "eslint-config-airbnb-base": "^14.2.0",
     "eslint-plugin-import": "^2.22.0",
+    "husky": "^4.2.5",
     "jsdom": "^16.2.2",
     "jsdom-global": "^3.0.2",
+    "lint-staged": "^10.2.11",
     "mocha": "^8.0.1",
     "nyc": "^15.1.0",
-    "pre-commit": "^1.2.2",
     "source-map-support": "^0.5.19",
     "ts-node": "^8.10.2",
     "typescript": "^3.9.5"
