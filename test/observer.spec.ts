@@ -6,7 +6,7 @@ import { DataLayerObserver } from '../src/observer';
 import { basicDigitalData, CEDDL, PageCategory } from './mocks/CEDDL';
 import Console from './mocks/console';
 import FullStory from './mocks/fullstory-recording';
-import { expectParams, expectNoCalls } from './utils/mocha';
+import { expectParams, expectNoCalls, expectCall } from './utils/mocha';
 import { Operator, OperatorOptions } from '../src/operator';
 
 class EchoOperator implements Operator {
@@ -240,6 +240,25 @@ describe('DataLayerObserver unit tests', () => {
     expect(profileInfo).to.eq(globalMock.digitalData.user.profile[0].profileInfo);
 
     expectNoCalls(globalMock.FS, 'setUserVars');
+  });
+
+  it('debug can be enabled for a specific rule', () => {
+    expectNoCalls(globalMock.console, 'debug');
+
+    const observer = new DataLayerObserver();
+
+    expect(observer).to.not.be.undefined;
+
+    observer.registerOperator('toUpper', new UppercaseOperator());
+    observer.processRule({ source: 'digitalData.page.pageInfo', operators: [{ name: 'toUpper' }], destination: 'console.log', debug: true });
+    observer.processRule({ source: 'digitalData.product[0].productInfo', operators: [{ name: 'toUpper' }], destination: 'console.log' });
+
+    expect(observer.handlers.length).to.eq(2);
+    observer.handlers[0].fireEvent();
+    observer.handlers[1].fireEvent();
+
+    // NOTE there should only be 4 debug statements for the first rule - one each for: entry, toUpper, function (destination), exit
+    expectCall(globalMock.console, 'debug', 4);
   });
 
   it('it should register and call an operator before the destination', () => {
