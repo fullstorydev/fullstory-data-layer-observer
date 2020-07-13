@@ -250,8 +250,19 @@ describe('DataLayerObserver unit tests', () => {
     expect(observer).to.not.be.undefined;
 
     observer.registerOperator('toUpper', new UppercaseOperator());
-    observer.processRule({ source: 'digitalData.page.pageInfo', operators: [{ name: 'toUpper' }], destination: 'console.log', debug: true });
-    observer.processRule({ source: 'digitalData.product[0].productInfo', operators: [{ name: 'toUpper' }], destination: 'console.log' });
+    observer.processRule({
+      source: 'digitalData.page.pageInfo',
+      operators: [
+        { name: 'toUpper' }],
+      destination: 'console.log',
+      debug: true,
+    });
+    observer.processRule({
+      source: 'digitalData.product[0].productInfo',
+      operators: [
+        { name: 'toUpper' }],
+      destination: 'console.log',
+    });
 
     expect(observer.handlers.length).to.eq(2);
     observer.handlers[0].fireEvent();

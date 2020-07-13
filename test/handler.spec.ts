@@ -95,7 +95,6 @@ describe('DataHandler unit tests', () => {
   beforeEach(() => {
     (globalThis as any).digitalData = basicDigitalData;
     (globalThis as any).console = console;
-
   });
 
   afterEach(() => {
@@ -181,7 +180,7 @@ describe('DataHandler unit tests', () => {
 
     const handler = new DataHandler('digitalData.page');
     handler.debug = true;
-    handler.debugger = (message: string, data?: any, indent?: string) => debugMessages.push(message);
+    handler.debugger = (message: string) => debugMessages.push(message);
 
     const getter = new GetterOperator('pageInfo', []);
 
