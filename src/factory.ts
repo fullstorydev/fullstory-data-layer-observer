@@ -1,15 +1,15 @@
-import { FunctionOperator, FunctionOperatorOptions } from './operators';
+import { FunctionOperator, FunctionOperatorOptions, FlattenOperator, FlattenOperatorOptions } from './operators';
 import { Operator } from './operator';
 
 /**
  * Declares known, built-in Operators.
  */
-export type BuiltinOperator = typeof FunctionOperator;
+export type BuiltinOperator = typeof FlattenOperator | typeof FunctionOperator;
 
 /**
  * Declares known, built-in OperatorOptions.
  */
-export type BuiltinOptions = FunctionOperatorOptions;
+export type BuiltinOptions = FlattenOperatorOptions | FunctionOperatorOptions;
 
 /**
  * OperatorFactory creates instances built-in Operators. Since DataLayerRule can define OperatorOptions at runtime,
@@ -17,6 +17,7 @@ export type BuiltinOptions = FunctionOperatorOptions;
  */
 export class OperatorFactory {
   private static operators: { [key: string]: BuiltinOperator } = {
+    flatten: FlattenOperator,
     function: FunctionOperator,
   };
 
@@ -30,7 +31,7 @@ export class OperatorFactory {
       throw new Error(`Operator ${name} is unknown`);
     }
 
-    return new this.operators[name](options);
+    return new (this.operators[name] as any)(options);
   }
 
   /**
