@@ -51,7 +51,6 @@ function _dlo_collectRules(): any[] {
 
     const prop = (window as { [key: string]: any })[propName];
     if (Array.isArray(prop) === false) {
-      /* eslint-disable no-console */
       Logger.getInstance().warn(`window[${propName}] is not an array of Data Layer Observer rules so will be ignored`);
       return;
     }
@@ -74,7 +73,6 @@ function _dlo_initializeFromWindow() {
   // Read rules
   const rules = _dlo_collectRules();
   if (rules.length === 0) {
-    /* eslint-disable no-console */
     Logger.getInstance().warn('No rules for the Data Layer Observer');
   }
 
