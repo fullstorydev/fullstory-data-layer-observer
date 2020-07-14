@@ -1,16 +1,33 @@
 /* eslint-disable no-underscore-dangle, camelcase */
+import { Logger } from '../utils/logger';
 import { DataLayerObserver } from '../observer';
 
 /*
 This is where we initialize the DataLayerObserver from this info:
 
-// If true, output from rules are sent only to `console`
-// Default is false
-window['_dlo_preview'] = false;
+// OperatorOptions that is always used just before before the destination
+// Default is null
+window['_dlo_beforeDestination'] = null;
 
-// If true, rules will run on page load in addition to when there are changes
-// Default is true
-window['_dlo_readOnLoad'] = false;
+// Redirects output from a destination to previewDestination when testing rules
+// Default is false
+window['_dlo_previewMode'] = true;
+
+// The output destination using rule selection syntax for use with previewMode
+// Default is null
+window['_dlo_previewDestination'] = 'console.log';
+
+// When true reads data layer target(s) and emits the initial value(s)
+// Default is false
+window['_dlo_readOnLoad'] = true;
+
+// When true validates rules to prevent processing invalid options
+// Default is false
+window['_dlo_validateRules'] = false;
+
+// A function used to validate a DataLayerRule's `url`
+// Default is null
+window['_dlo_urlValidator'] = null;
 
 // Anything on `window` that starts with `_dlo_rules` is read as a rules array
 window['_dlo_rules'] = [
@@ -35,7 +52,7 @@ function _dlo_collectRules(): any[] {
     const prop = (window as { [key: string]: any })[propName];
     if (Array.isArray(prop) === false) {
       /* eslint-disable no-console */
-      console.warn(`window[${propName}] is not an array so will be ignored`);
+      Logger.getInstance().warn(`window[${propName}] is not an array of Data Layer Observer rules so will be ignored`);
       return;
     }
 
@@ -49,26 +66,25 @@ function _dlo_collectRules(): any[] {
 function _dlo_initializeFromWindow() {
   const win = (window as { [key: string]: any });
 
-  // Read flags
-  let preview = false;
-  if (win._dlo_preview === true) {
-    preview = true;
-  }
-  let readOnLoad = false;
-  if (win._dlo_readOnLoad === true) {
-    readOnLoad = true;
+  if (win._dlo_observer) {
+    Logger.getInstance().error('The Data Layer Observer script is loaded twice! Canceling the second load.');
+    return;
   }
 
   // Read rules
   const rules = _dlo_collectRules();
   if (rules.length === 0) {
     /* eslint-disable no-console */
-    console.warn('No rules for the Data Layer Observer');
+    Logger.getInstance().warn('No rules for the Data Layer Observer');
   }
 
   win._dlo_observer = new DataLayerObserver({
-    previewMode: preview,
-    readOnLoad,
+    beforeDestination: win._dlo_beforeDestination || null,
+    previewMode: win._dlo_previewMode === true,
+    previewDestination: win._dlo_previewDestination || null,
+    readOnLoad: win._dlo_readOnLoad === true,
+    validateRules: win._dlo_validateRules === true,
+    urlValidator: win._dlo_urlValidator || null,
     rules,
   });
 }

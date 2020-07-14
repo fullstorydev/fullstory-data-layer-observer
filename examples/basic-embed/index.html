@@ -36,13 +36,29 @@
     <p>The Javascript console will show you output that demonstrates the rules in action.</p>
 
     <script>
-      // If true, output from rules are sent only to `console` (so, not to `ruleDestination`)
-      // Default is false
-      window['_dlo_preview'] = false;
+      // OperatorOptions that is always used just before before the destination
+      // Default is null
+      window['_dlo_beforeDestination'] = null;
 
-      // If true, rules will run on page load in addition to when there are changes
-      // Default is true
+      // Redirects output from a destination to previewDestination when testing rules
+      // Default is false
+      window['_dlo_previewMode'] = true;
+
+      // The output destination using rule selection syntax for use with previewMode
+      // Default is null
+      window['_dlo_previewDestination'] = 'console.log';
+
+      // When true reads data layer target(s) and emits the initial value(s)
+      // Default is false
       window['_dlo_readOnLoad'] = true;
+
+      // When true validates rules to prevent processing invalid options
+      // Default is false
+      window['_dlo_validateRules'] = false;
+
+      // A function used to validate a DataLayerRule's `url`
+      // Default is null
+      window['_dlo_urlValidator'] = null;
 
       // Anything on `window` that starts with `_dlo_rules` is read as a rules array
       window['_dlo_rules'] = [
