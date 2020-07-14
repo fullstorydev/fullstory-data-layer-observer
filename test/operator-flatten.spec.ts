@@ -5,10 +5,9 @@ import { FlattenOperator } from '../src/operators';
 import { basicDigitalData } from './mocks/CEDDL';
 
 describe('flatten operator unit tests', () => {
-
   it('it should validate options', () => {
     expect(() => new FlattenOperator({
-      name: 'flatten'
+      name: 'flatten',
     }).validate()).to.not.throw();
 
     expect(() => new FlattenOperator({
@@ -35,7 +34,7 @@ describe('flatten operator unit tests', () => {
   it('it should not flatten array contents', () => {
     const userProfile = {
       nicknames: ['Jon', 'Johny'],
-      ...basicDigitalData.user.profile[0]
+      ...basicDigitalData.user.profile[0],
     };
     const operator = new FlattenOperator({ name: 'flatten' });
     const [flatUser] = operator.handleData([userProfile])!;
@@ -62,13 +61,13 @@ describe('flatten operator unit tests', () => {
       nicknames: ['Jon', 'Johny'],
       children: {
         junior: {
-          name: 'Jon Jr.'
+          name: 'Jon Jr.',
         },
         tripp: {
-          name: 'Jon III'
-        }
+          name: 'Jon III',
+        },
       },
-      ...basicDigitalData.user.profile[0]
+      ...basicDigitalData.user.profile[0],
     };
     const operator = new FlattenOperator({ name: 'flatten', maxDepth: 1 });
     const [flatUser] = operator.handleData([userProfile])!;
@@ -81,5 +80,4 @@ describe('flatten operator unit tests', () => {
     expect(flatUser!.junior).to.be.undefined;
     expect(flatUser!.tripp).to.be.undefined;
   });
-
 });

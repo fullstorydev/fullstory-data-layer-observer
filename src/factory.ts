@@ -1,4 +1,6 @@
-import { FunctionOperator, FunctionOperatorOptions, FlattenOperator, FlattenOperatorOptions } from './operators';
+import {
+  FunctionOperator, FunctionOperatorOptions, FlattenOperator, FlattenOperatorOptions,
+} from './operators';
 import { Operator } from './operator';
 
 /**

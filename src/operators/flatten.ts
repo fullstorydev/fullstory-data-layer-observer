@@ -5,13 +5,13 @@ export interface FlattenOperatorOptions extends OperatorOptions {
 }
 
 export class FlattenOperator implements Operator {
-
   static specification = {
     index: { required: false, type: ['number'] },
     maxDepth: { required: false, type: ['number'] },
   };
 
   readonly index: number;
+
   readonly maxDepth: number;
 
   constructor(public options: FlattenOperatorOptions) {
@@ -27,26 +27,32 @@ export class FlattenOperator implements Operator {
    * @param node a child node to flatten
    */
   flattenHelper(root: any, depth = 0, node?: any) {
-    if (!node) {
+    let targetNode = node;
+    let targetRoot = root;
+
+    if (!targetNode) {
       // first time execution
-      node = root;
-      root = {};
+      targetNode = root;
+      targetRoot = {};
     }
 
-    Object.getOwnPropertyNames(node).forEach(prop => {
-      if (typeof node[prop] === 'object' && node[prop] != null && !Array.isArray(node[prop]) && depth < this.maxDepth + 1) {
-        this.flattenHelper(root, depth + 1, node[prop]);
+    Object.getOwnPropertyNames(targetNode).forEach((prop) => {
+      if (typeof targetNode[prop] === 'object' && targetNode[prop] != null
+        && !Array.isArray(targetNode[prop]) && depth < this.maxDepth + 1) {
+        this.flattenHelper(targetRoot, depth + 1, targetNode[prop]);
       } else {
-        root[prop] = node[prop];
+        targetRoot[prop] = targetNode[prop];
       }
     });
 
-    return root;
+    return targetRoot;
   }
 
   handleData(data: any[]): any[] | null {
-    data[this.index] = this.flattenHelper(data[this.index]);
-    return data;
+    const flattenedData = data;
+    flattenedData[this.index] = this.flattenHelper(flattenedData[this.index]);
+
+    return flattenedData;
   }
 
   validate() {
