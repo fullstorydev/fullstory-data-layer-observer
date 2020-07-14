@@ -4,9 +4,14 @@ import 'mocha';
 
 import DataHandler from '../src/handler';
 
+import Console from './mocks/console';
 import { basicDigitalData, PageInfo, Page } from './mocks/CEDDL';
 import { Operator, OperatorOptions } from '../src/operator';
 import { DataLayerDetail, PropertyDetail } from '../src/event';
+import { expectNoCalls, expectParams } from './utils/mocha';
+
+const originalConsole = globalThis.console;
+const console = new Console();
 
 class EchoOperator implements Operator {
   options: OperatorOptions = {
@@ -87,12 +92,14 @@ class ThrowOperator implements Operator {
 }
 
 describe('DataHandler unit tests', () => {
-  before(() => {
+  beforeEach(() => {
     (globalThis as any).digitalData = basicDigitalData;
+    (globalThis as any).console = console;
   });
 
-  after(() => {
+  afterEach(() => {
     delete (globalThis as any).digitalData;
+    (globalThis as any).console = originalConsole;
   });
 
   it('data handlers should find a data layer for a given target and property', () => {
@@ -137,7 +144,9 @@ describe('DataHandler unit tests', () => {
     expect((seen[1] as PageInfo).pageID).to.eq(basicDigitalData.page.pageInfo.pageID);
   });
 
-  it('debug should print operator transformations', () => {
+  it('debug should print operator transformations to console.debug', () => {
+    expectNoCalls(console, 'debug');
+
     const handler = new DataHandler('digitalData.page');
     handler.debug = true;
 
@@ -149,8 +158,36 @@ describe('DataHandler unit tests', () => {
     handler.push(echo, getter);
     handler.fireEvent();
 
+    // NOTE the call queues will be expected in reverse order
+    const [exit] = expectParams(console, 'debug');
+    expect(exit).to.contain(`digitalData.page handleData exit\n[${JSON.stringify(basicDigitalData.page.pageInfo)}]`);
+
+    const [getterOutput] = expectParams(console, 'debug');
+    expect(getterOutput).to.contain(`  [1] getter output\n  [${JSON.stringify(basicDigitalData.page.pageInfo)}]`);
+
+    const [echoOutput] = expectParams(console, 'debug');
+    expect(echoOutput).to.contain(`  [0] echo output\n  [${JSON.stringify(basicDigitalData.page)}]`);
+
+    const [entry] = expectParams(console, 'debug');
+    expect(entry).to.contain(`digitalData.page handleData entry\n[${JSON.stringify(basicDigitalData.page)}]`);
+
     expect((seen[0] as Page).pageInfo.pageID).to.eq(basicDigitalData.page.pageInfo.pageID);
     expect((seen[1] as PageInfo).pageID).to.eq(basicDigitalData.page.pageInfo.pageID);
+  });
+
+  it('debug output function can be configured', () => {
+    const debugMessages: string[] = [];
+
+    const handler = new DataHandler('digitalData.page');
+    handler.debug = true;
+    handler.debugger = (message: string) => debugMessages.push(message);
+
+    const getter = new GetterOperator('pageInfo', []);
+
+    handler.push(getter);
+    handler.fireEvent();
+
+    expect(debugMessages.length).to.eq(3);
   });
 
   it('returning null in an operator should halt data handling', () => {
