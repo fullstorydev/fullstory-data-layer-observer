@@ -13,8 +13,6 @@ export default class DataHandler {
 
   readonly target: any;
 
-  debug = false; // NOTE debugging is done at a rule level, which is why Logger is not used
-
   // external tooling can override the console debugger
   debugger = (message: string, data?: any, indent?: string) => console.debug(
     data ? `${indent}${message}\n${indent}${JSON.stringify(data)}` : `${indent}${message}`,
@@ -23,9 +21,10 @@ export default class DataHandler {
   /**
    * Creates a DataHandler.
    * @param path the string path to the data layer (used to identify which data layer emitted data)
+   * @param debug true optionally enables debugging data transformation (defaults to console.debug)
    * @throws will throw an error if the data layer is not found (i.e. undefined or null)
    */
-  constructor(private readonly path: string) {
+  constructor(private readonly path: string, public debug = false) {
     this.target = select(path);
 
     // guards against trying to register an observer on a non-existent datalayer

@@ -34,11 +34,13 @@ export interface DataLayerConfig {
  *  source: data layer target using selector syntax
  *  destination: destination function using selector syntax
  * Optional
+ *  debug: true if the rule should print debug for each Operator transformation
  *  operators: list of OperatorOptions to transform data before a destination
  *  readOnLoad: rule-specific readOnLoad (see DataLayerConfig readOnLoad)
  *  url: regular expression used to enable the rule when the page URL matches
  */
 export interface DataLayerRule {
+  debug?: boolean;
   source: string;
   operators?: OperatorOptions[];
   destination: string;
@@ -147,6 +149,7 @@ export class DataLayerObserver {
     const { beforeDestination, previewMode, readOnLoad: globalReadOnLoad } = this.config;
 
     const {
+      debug,
       source,
       operators = [],
       destination,
@@ -169,6 +172,7 @@ export class DataLayerObserver {
 
     try {
       const handler = this.addHandler(source);
+      handler.debug = !!debug;
 
       try {
         // sequentially add the operators to the handler
