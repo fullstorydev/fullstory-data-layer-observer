@@ -45,7 +45,7 @@
       window['_dlo_previewMode'] = true;
 
       // The output destination using rule selection syntax for use with previewMode
-      // Default is null
+      // Default is 'console.log'
       window['_dlo_previewDestination'] = 'console.log';
 
       // When true reads data layer target(s) and emits the initial value(s)
@@ -56,8 +56,8 @@
       // Default is false
       window['_dlo_validateRules'] = true;
 
-      // A function used to validate a DataLayerRule's `url`
-      // Default is null
+      // A function used to validate the page URL before executing the rules
+      // Default is no function
       window['_dlo_urlValidator'] = null;
 
       // Anything on `window` that starts with `_dlo_rules` is read as a rules array

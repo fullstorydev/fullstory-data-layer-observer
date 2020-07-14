@@ -25,7 +25,7 @@ window['_dlo_readOnLoad'] = true;
 // Default is false
 window['_dlo_validateRules'] = false;
 
-// A function used to validate a DataLayerRule's `url`
+// A function used to validate the page URL before executing the rules
 // Default is null
 window['_dlo_urlValidator'] = null;
 
@@ -79,12 +79,12 @@ function _dlo_initializeFromWindow() {
   }
 
   win._dlo_observer = new DataLayerObserver({
-    beforeDestination: win._dlo_beforeDestination || null,
+    beforeDestination: win._dlo_beforeDestination || undefined,
     previewMode: win._dlo_previewMode === true,
-    previewDestination: win._dlo_previewDestination || null,
+    previewDestination: win._dlo_previewDestination || undefined,
     readOnLoad: win._dlo_readOnLoad === true,
     validateRules: win._dlo_validateRules === true,
-    urlValidator: win._dlo_urlValidator || null,
+    urlValidator: win._dlo_urlValidator || undefined,
     rules,
   });
 }
