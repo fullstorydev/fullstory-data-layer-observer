@@ -9,13 +9,14 @@ import { Operator } from './operator';
 /**
  * Declares known, built-in Operators.
  */
-export type BuiltinOperator = typeof FlattenOperator | typeof FunctionOperator | typeof InsertOperator 
-| typeof SuffixOperator;
+export type BuiltinOperator = typeof FlattenOperator | typeof FunctionOperator | typeof InsertOperator
+  | typeof SuffixOperator;
 
 /**
  * Declares known, built-in OperatorOptions.
  */
-export type BuiltinOptions = FlattenOperatorOptions | FunctionOperatorOptions | InsertOperatorOptions | SuffixOperatorOptions;
+export type BuiltinOptions = FlattenOperatorOptions | FunctionOperatorOptions | InsertOperatorOptions
+  | SuffixOperatorOptions;
 
 /**
  * OperatorFactory creates instances built-in Operators. Since DataLayerRule can define OperatorOptions at runtime,
