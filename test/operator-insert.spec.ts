@@ -21,6 +21,11 @@ describe('insert operator unit tests', () => {
     expect(() => new InsertOperator({
       name: 'insert', position: 0,
     }).validate()).to.throw();
+
+    // but not both
+    expect(() => new InsertOperator({
+      name: 'insert', select: 'user.profile[0].profileID', value: 'Add to Cart',
+    }).validate()).to.throw();
   });
 
   it('it should insert at the beginning by default', () => {
@@ -70,5 +75,10 @@ describe('insert operator unit tests', () => {
     expect(baz).to.eq('baz');
     expect(foobar).to.eq(data[0]);
     expect(obj).to.eq(data[1]);
+  });
+
+  it('it should error if both select and value options are used together', () => {
+    const operator = new InsertOperator({ name: 'insert', select: 'user.profile[0].profileID', value: 'Add to Cart' });
+    expect(() => operator.handleData([])).to.throw();
   });
 });

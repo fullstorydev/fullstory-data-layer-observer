@@ -34,6 +34,11 @@ export class InsertOperator implements Operator {
 
   handleData(data: any[]): any[] | null {
     const { select: selection, value } = this.options;
+
+    if (selection && value !== undefined) {
+      throw new Error('function operator has both \'select\' and \'value\' options set');
+    }
+
     const insertedValue = value || select(selection!, data[this.index]);
 
     const clone = data.slice();
@@ -48,8 +53,12 @@ export class InsertOperator implements Operator {
 
     // NOTE select and value aren't required, but at least one of them must be specified
     const { select: selection, value } = this.options;
-    if (!selection && !value) {
+    if (!selection && value === undefined) {
       validator.throwError('selection', ' and \'value\' are missing - at least one is required');
+    }
+
+    if (selection && value !== undefined) {
+      validator.throwError('selection', ' and \'value\' are both defined - use only one option');
     }
   }
 }
