@@ -42,7 +42,7 @@ export class OperatorValidator {
    * @throws an error if the property is missing
    */
   checkRequired(option: string) {
-    if (!this.options[option]) {
+    if (this.options[option] === undefined) {
       this.throwError(option, 'is required');
     }
   }
@@ -68,7 +68,7 @@ export class OperatorValidator {
    */
   checkDependencies(option: string, dependencies: string[]) {
     dependencies.forEach((dependency) => {
-      if (!this.options[dependency]) {
+      if (this.options[dependency] === undefined) {
         this.throwError(option, `requires option ${dependency}`);
       }
     });

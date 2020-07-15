@@ -18,7 +18,7 @@ class ClosureConsole {
   }
 }
 
-describe('logger unit tests', () => {
+describe('function operator unit tests', () => {
   beforeEach(() => {
     (globalThis as any).console = console;
     (globalThis as any).testClosure = new ClosureConsole('Hello World');

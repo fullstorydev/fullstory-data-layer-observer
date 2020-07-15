@@ -1,17 +1,22 @@
 import {
-  FunctionOperator, FunctionOperatorOptions, FlattenOperator, FlattenOperatorOptions,
+  FunctionOperator, FunctionOperatorOptions,
+  FlattenOperator, FlattenOperatorOptions,
+  InsertOperator, InsertOperatorOptions,
+  SuffixOperator, SuffixOperatorOptions,
 } from './operators';
 import { Operator } from './operator';
 
 /**
  * Declares known, built-in Operators.
  */
-export type BuiltinOperator = typeof FlattenOperator | typeof FunctionOperator;
+export type BuiltinOperator = typeof FlattenOperator | typeof FunctionOperator | typeof InsertOperator
+  | typeof SuffixOperator;
 
 /**
  * Declares known, built-in OperatorOptions.
  */
-export type BuiltinOptions = FlattenOperatorOptions | FunctionOperatorOptions;
+export type BuiltinOptions = FlattenOperatorOptions | FunctionOperatorOptions | InsertOperatorOptions
+  | SuffixOperatorOptions;
 
 /**
  * OperatorFactory creates instances built-in Operators. Since DataLayerRule can define OperatorOptions at runtime,
@@ -21,6 +26,8 @@ export class OperatorFactory {
   private static operators: { [key: string]: BuiltinOperator } = {
     flatten: FlattenOperator,
     function: FunctionOperator,
+    insert: InsertOperator,
+    suffix: SuffixOperator,
   };
 
   /**
