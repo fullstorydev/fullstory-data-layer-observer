@@ -36,7 +36,7 @@ export class QueryOperator implements Operator {
 
     const { select: selector } = this.options;
     if (selector.charAt(0) !== '$') {
-      validator.throwError('select', 'does not begin with $');
+      validator.throwError('select', 'must begin with $');
     }
   }
 }
