@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import 'mocha';
 
 import { QueryOperator } from '../src/operators';
+import { OperatorFactory } from '../src/factory';
 
 const testData = {
   favorites: {
@@ -27,6 +28,10 @@ describe('query operator unit tests', () => {
       name: 'query', select: '$.profileInfo', index: 1,
     }).validate()).to.not.throw();
 
+    expect(() => new QueryOperator({
+      name: 'query', select: '[profileInfo]',
+    }).validate()).to.throw();
+
     // @ts-ignore
     expect(() => new QueryOperator({
       name: 'query', index: 1,
@@ -34,7 +39,7 @@ describe('query operator unit tests', () => {
   });
 
   it('it should query by selector at the 0 index by default', () => {
-    const operator = new QueryOperator({ name: 'query', select: '$.cities' });
+    const operator = OperatorFactory.create('query', { name: 'query', select: '$.cities' });
     const [selection] = operator.handleData([testData])!;
 
     expect(selection).to.not.be.null;
@@ -42,7 +47,7 @@ describe('query operator unit tests', () => {
   });
 
   it('it should query by selector at a specific index', () => {
-    const operator = new QueryOperator({ name: 'query', select: '$.cities', index: 1 });
+    const operator = OperatorFactory.create('query', { name: 'query', select: '$.cities', index: 1 });
     const [selection] = operator.handleData(['Profile Update', testData])!;
 
     expect(selection).to.not.be.null;
@@ -50,7 +55,7 @@ describe('query operator unit tests', () => {
   });
 
   it('it should pick properties', () => {
-    const operator = new QueryOperator({ name: 'query', select: '$[(color,number,pickle)]' });
+    const operator = OperatorFactory.create('query', { name: 'query', select: '$[(color,number,pickle)]' });
     const [selection] = operator.handleData([testData.favorites])!;
 
     expect(selection).to.not.be.null;

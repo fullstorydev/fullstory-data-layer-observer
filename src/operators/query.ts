@@ -25,6 +25,7 @@ export class QueryOperator implements Operator {
   handleData(data: any[]): any[] | null {
     // NOTE to support selection syntax, we have to start with an object property so use $ as the root
     const { select: selector } = this.options;
+
     const selection = select(selector, { $: data[this.index] });
     return (selection === null || selection === undefined) ? null : [selection];
   }
@@ -32,5 +33,10 @@ export class QueryOperator implements Operator {
   validate() {
     const validator = new OperatorValidator(this.options);
     validator.validate(QueryOperator.specification);
+
+    const { select: selector } = this.options;
+    if (selector.charAt(0) !== '$') {
+      validator.throwError('select', 'does not begin with $');
+    }
   }
 }
