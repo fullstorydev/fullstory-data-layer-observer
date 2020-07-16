@@ -2,7 +2,7 @@ import { Operator, OperatorOptions, OperatorValidator } from '../operator';
 import { select } from '../selector';
 
 export interface QueryOperatorOptions extends OperatorOptions {
-  selector: string; // selection syntax query
+  select: string; // selection syntax query
 }
 
 /**
@@ -12,7 +12,7 @@ export interface QueryOperatorOptions extends OperatorOptions {
 export class QueryOperator implements Operator {
   static specification = {
     index: { required: false, type: ['number'] },
-    selector: { required: true, type: ['string'] },
+    select: { required: true, type: ['string'] },
   };
 
   readonly index: number;
@@ -24,7 +24,7 @@ export class QueryOperator implements Operator {
 
   handleData(data: any[]): any[] | null {
     // NOTE to support selection syntax, we have to start with an object property so use $ as the root
-    const { selector } = this.options;
+    const { select: selector } = this.options;
     const selection = select(selector, { $: data[this.index] });
     return (selection === null || selection === undefined) ? null : [selection];
   }

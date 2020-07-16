@@ -20,11 +20,11 @@ const testData = {
 describe('query operator unit tests', () => {
   it('it should validate options', () => {
     expect(() => new QueryOperator({
-      name: 'query', selector: 'profileInfo',
+      name: 'query', select: '$.profileInfo',
     }).validate()).to.not.throw();
 
     expect(() => new QueryOperator({
-      name: 'query', selector: 'profileInfo', index: 1,
+      name: 'query', select: '$.profileInfo', index: 1,
     }).validate()).to.not.throw();
 
     // @ts-ignore
@@ -34,7 +34,7 @@ describe('query operator unit tests', () => {
   });
 
   it('it should query by selector at the 0 index by default', () => {
-    const operator = new QueryOperator({ name: 'query', selector: '$.cities' });
+    const operator = new QueryOperator({ name: 'query', select: '$.cities' });
     const [selection] = operator.handleData([testData])!;
 
     expect(selection).to.not.be.null;
@@ -42,7 +42,7 @@ describe('query operator unit tests', () => {
   });
 
   it('it should query by selector at a specific index', () => {
-    const operator = new QueryOperator({ name: 'query', selector: '$.cities', index: 1 });
+    const operator = new QueryOperator({ name: 'query', select: '$.cities', index: 1 });
     const [selection] = operator.handleData(['Profile Update', testData])!;
 
     expect(selection).to.not.be.null;
@@ -50,7 +50,7 @@ describe('query operator unit tests', () => {
   });
 
   it('it should pick properties', () => {
-    const operator = new QueryOperator({ name: 'query', selector: '$[(color,number,pickle)]' });
+    const operator = new QueryOperator({ name: 'query', select: '$[(color,number,pickle)]' });
     const [selection] = operator.handleData([testData.favorites])!;
 
     expect(selection).to.not.be.null;
@@ -60,7 +60,7 @@ describe('query operator unit tests', () => {
   });
 
   it('it should return null for empty query results', () => {
-    const operator = new QueryOperator({ name: 'query', selector: '$.missing' });
+    const operator = new QueryOperator({ name: 'query', select: '$.missing' });
     expect(operator.handleData([testData.favorites])).to.be.null;
   });
 });
