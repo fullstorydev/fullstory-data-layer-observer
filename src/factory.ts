@@ -3,6 +3,7 @@ import {
   FlattenOperator, FlattenOperatorOptions,
   InsertOperator, InsertOperatorOptions,
   SuffixOperator, SuffixOperatorOptions,
+  QueryOperator, QueryOperatorOptions,
 } from './operators';
 import { Operator } from './operator';
 
@@ -10,13 +11,13 @@ import { Operator } from './operator';
  * Declares known, built-in Operators.
  */
 export type BuiltinOperator = typeof FlattenOperator | typeof FunctionOperator | typeof InsertOperator
-  | typeof SuffixOperator;
+  | typeof SuffixOperator | typeof QueryOperator;
 
 /**
  * Declares known, built-in OperatorOptions.
  */
 export type BuiltinOptions = FlattenOperatorOptions | FunctionOperatorOptions | InsertOperatorOptions
-  | SuffixOperatorOptions;
+  | SuffixOperatorOptions | QueryOperatorOptions;
 
 /**
  * OperatorFactory creates instances built-in Operators. Since DataLayerRule can define OperatorOptions at runtime,
@@ -28,6 +29,7 @@ export class OperatorFactory {
     function: FunctionOperator,
     insert: InsertOperator,
     suffix: SuffixOperator,
+    query: QueryOperator,
   };
 
   /**
