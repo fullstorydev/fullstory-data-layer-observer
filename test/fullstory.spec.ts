@@ -32,6 +32,8 @@ describe('FullStory example rules unit tests', () => {
   it('it should send any CEDDL user property to FS.setUserVars', () => {
     const { profileInfo, address } = basicDigitalData.user.profile[0];
 
+    (globalThis as any).digitalData.user.profile[0].job = 'developer'; // inject custom property
+
     const observer = new DataLayerObserver({ rules: [rules[0]], readOnLoad: true });
     expect(observer).to.not.be.undefined;
 
@@ -47,6 +49,9 @@ describe('FullStory example rules unit tests', () => {
     expect(payload.segment).to.be.undefined;
     expect(payload.social).to.be.undefined;
     expect(payload.attributes).to.be.undefined;
+    expect(payload.job).to.eq('developer'); // verify custom property
+
+    (globalThis as any).digitalData.user.profile[0].job; // remove custom property
   });
 
   it('it should send any CEDDL user property to FS.identify', () => {
@@ -63,7 +68,7 @@ describe('FullStory example rules unit tests', () => {
   });
 
   it('it should send only allowed CEDDL user properties to FS.identify', () => {
-    (globalThis as any).digitalData.user.profile[0].password = 'sensitive';
+    (globalThis as any).digitalData.user.profile[0].password = 'pa$$w0rd'; // inject sensitive property
 
     const { profileInfo, address } = basicDigitalData.user.profile[0];
 
@@ -76,6 +81,6 @@ describe('FullStory example rules unit tests', () => {
     expect(payload.line1).to.eq(address.line1);
     expect(payload.password).to.be.undefined;
 
-    delete (globalThis as any).digitalData.user.profile[0].password;
+    delete (globalThis as any).digitalData.user.profile[0].password; // remove sensitive property
   });
 });
