@@ -42,7 +42,6 @@
         "select": "profileID"
       }
     ],
-    "destination": "FS.identify",
-    "debug": true
+    "destination": "FS.identify"
   }
 ]
