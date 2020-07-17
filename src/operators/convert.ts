@@ -1,4 +1,5 @@
 import { Operator, OperatorOptions, OperatorValidator } from '../operator';
+import { Logger } from '../utils/logger';
 
 type ConvertibleType = 'bool' | 'int' | 'real' | 'string';
 
@@ -56,7 +57,13 @@ export class ConvertOperator implements Operator {
 
     const converted: { [key: string]: any } = { ...data[this.index] };
     list.forEach((property) => {
-      converted[property] = ConvertOperator.convert(type, data[this.index][property]);
+      const original = data[this.index][property];
+      converted[property] = ConvertOperator.convert(type, original);
+
+      if ((type === 'int' || type === 'real') && Number.isNaN(converted[property])) {
+        Logger.getInstance().error(`Unable to convert ${properties.toString()} to ${type} for value ${original}`);
+        converted[property] = original; // NOTE that we will reset the value back to something other than NaN
+      }
     });
 
     const clone = data.slice();

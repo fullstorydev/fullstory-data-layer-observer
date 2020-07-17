@@ -12,6 +12,7 @@ const item = {
   available: 'true',
   size: 5,
   type: true,
+  empty: '',
 };
 
 describe('convert operator unit tests', () => {
@@ -128,5 +129,25 @@ describe('convert operator unit tests', () => {
     expect(event).to.not.be.null;
     expect(int).to.not.be.null;
     expect(int.quantity).to.eq(10);
+  });
+
+  it('it should not fail if NaN is the result of conversion', () => {
+    let operator = OperatorFactory.create('convert', {
+      name: 'convert', properties: 'empty', type: 'int',
+    });
+
+    const [int] = operator.handleData([item])!;
+
+    expect(int).to.not.be.null;
+    expect(int.empty).to.eq(item.empty);
+
+    operator = OperatorFactory.create('convert', {
+      name: 'convert', properties: 'empty', type: 'real',
+    });
+
+    const [real] = operator.handleData([item])!;
+
+    expect(real).to.not.be.null;
+    expect(real.empty).to.eq(item.empty);
   });
 });
