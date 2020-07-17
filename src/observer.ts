@@ -34,6 +34,8 @@ export interface DataLayerConfig {
  *  source: data layer target using selector syntax
  *  destination: destination function using selector syntax
  * Optional
+ *  id: optional identifier for the rule
+ *  description: optional description of the rule
  *  debug: true if the rule should print debug for each Operator transformation
  *  operators: list of OperatorOptions to transform data before a destination
  *  readOnLoad: rule-specific readOnLoad (see DataLayerConfig readOnLoad)
@@ -46,6 +48,8 @@ export interface DataLayerRule {
   destination: string;
   readOnLoad?: boolean;
   url?: string;
+  id?: string;
+  description?: string;
 }
 
 /**
@@ -149,6 +153,7 @@ export class DataLayerObserver {
     const { beforeDestination, previewMode, readOnLoad: globalReadOnLoad } = this.config;
 
     const {
+      id = '',
       debug,
       source,
       operators = [],
@@ -161,7 +166,7 @@ export class DataLayerObserver {
     const readOnLoad = ruleReadOnLoad || globalReadOnLoad;
 
     if (!source || !destination) {
-      Logger.getInstance().error(`Rule is missing ${source ? 'destination' : 'source'}`, source);
+      Logger.getInstance().error(`Rule ${id} is missing ${source ? 'destination' : 'source'}`, source);
       return;
     }
 
@@ -193,7 +198,7 @@ export class DataLayerObserver {
         const func = previewMode ? previewDestination : destination;
         this.addOperator(handler, new FunctionOperator({ name: 'function', func }));
       } catch (err) {
-        Logger.getInstance().error('Failed to create operators', source);
+        Logger.getInstance().error(`Failed to create operators for rule ${id}`, source);
         this.removeHandler(handler);
       }
 
@@ -204,11 +209,11 @@ export class DataLayerObserver {
           // this could error if a function is supplied to readOnLoad
           handler.fireEvent();
         } catch (err) {
-          Logger.getInstance().error('Failed to read on load', source);
+          Logger.getInstance().error(`Failed to read on load for rule ${id}`, source);
         }
       }
     } catch (err) {
-      Logger.getInstance().error('Failed to create data handler', source);
+      Logger.getInstance().error(`Failed to create data handler for rule ${id}`, source);
     }
   }
 
