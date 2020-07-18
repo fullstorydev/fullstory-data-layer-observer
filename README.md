@@ -1,4 +1,9 @@
 # fullstory-data-layer-observer
+
+[![CircleCI](https://circleci.com/gh/fullstorydev/fullstory-data-layer-observer.svg?style=svg)](https://circleci.com/gh/fullstorydev/fullstory-data-layer-observer)
+
+## Note: This API is currently in private beta.
+
 An API for recording analytics data layer state into FullStory
 
 ## Examples
