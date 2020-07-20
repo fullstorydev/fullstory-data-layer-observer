@@ -1,0 +1,34 @@
+{
+  "rules": [
+    {
+      "id": "fs-event-ceddl-page-omit-convert",
+      "description": "convert and send CEDDL page properties to FS.event as a 'Page' event",
+      "source": "digitalData.page",
+      "operators": [
+        {
+          "name": "flatten"
+        },
+        {
+          "name": "query",
+          "select": "$[!(destinationURL,referringURL)]"
+        },
+        {
+          "name": "convert",
+          "properties": "version",
+          "type": "real"
+        },
+        {
+          "name": "convert",
+          "properties": "issueDate,effectiveDate,expiryDate",
+          "type": "date"
+        },
+        {
+          "name": "insert",
+          "value": "digitalData.page"
+        }
+      ],
+      "destination": "FS.event",
+      "debug": true
+    }
+  ]
+}
