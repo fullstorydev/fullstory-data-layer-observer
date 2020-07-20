@@ -61,7 +61,7 @@ describe('FullStory example rules unit tests', () => {
     expect(payload.attributes).to.be.undefined;
     expect(payload.job).to.eq('developer'); // verify custom property
 
-    (globalThis as any).digitalData.user.profile[0].job; // remove custom property
+    delete (globalThis as any).digitalData.user.profile[0].job; // remove custom property
   });
 
   it('it should send any CEDDL user property to FS.identify', () => {
@@ -108,7 +108,7 @@ describe('FullStory example rules unit tests', () => {
     expect(payload.price).to.eq(price);
     expect(payload.promotion).to.be.undefined;
 
-    (globalThis as any).digitalData.cart.promotion; // remove custom property
+    delete (globalThis as any).digitalData.cart.promotion; // remove custom property
   });
 
   it('it should send all CEDDL cart properties except items to FS.event', () => {
@@ -128,7 +128,7 @@ describe('FullStory example rules unit tests', () => {
     expect(payload.promotion).to.eq('LaborDay2020');
     expect(payload.items).to.be.undefined;
 
-    (globalThis as any).digitalData.cart.promotion; // remove custom property
+    delete (globalThis as any).digitalData.cart.promotion; // remove custom property
   });
 
   it('it should convert strings to reals and send CEDDL cart properties to FS.event', () => {
