@@ -27,8 +27,7 @@
           "value": "digitalData.page"
         }
       ],
-      "destination": "FS.event",
-      "debug": true
+      "destination": "FS.event"
     }
   ]
 }
