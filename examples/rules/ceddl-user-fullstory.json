@@ -1,47 +1,49 @@
-[
-  {
-    "id": "fs-uservars-ceddl-user-all",
-    "description": "send all CEDDL user properties to FS.setUserVars",
-    "source": "digitalData.user.profile[0]",
-    "operators": [
-      {
-        "name": "flatten"
-      }
-    ],
-    "destination": "FS.setUserVars"
-  },
-  {
-    "id": "fs-identify-ceddl-user-all",
-    "description": "send all CEDDL user properties to FS.identify using the profileID as the FullStory uid",
-    "source": "digitalData.user.profile[0]",
-    "operators": [
-      {
-        "name": "flatten"
-      },
-      {
-        "name": "insert",
-        "select": "profileID"
-      }
-    ],
-    "destination": "FS.identify"
-  },
-  {
-    "id": "fs-identify-ceddl-user-allowed",
-    "description": "send only known CEDDL user properties to FS.identify using the profileID as the FullStory uid",
-    "source": "digitalData.user.profile[0]",
-    "operators": [
-      {
-        "name": "flatten"
-      },
-      {
-        "name": "query",
-        "select": "$[(profileID,userName,line1,line2,city,stateProvince,postalCode,country)]"
-      },
-      {
-        "name": "insert",
-        "select": "profileID"
-      }
-    ],
-    "destination": "FS.identify"
-  }
-]
+{
+  "rules": [
+    {
+      "id": "fs-uservars-ceddl-user-all",
+      "description": "send all CEDDL user properties to FS.setUserVars",
+      "source": "digitalData.user.profile[0]",
+      "operators": [
+        {
+          "name": "flatten"
+        }
+      ],
+      "destination": "FS.setUserVars"
+    },
+    {
+      "id": "fs-identify-ceddl-user-all",
+      "description": "send all CEDDL user properties to FS.identify using the profileID as the FullStory uid",
+      "source": "digitalData.user.profile[0]",
+      "operators": [
+        {
+          "name": "flatten"
+        },
+        {
+          "name": "insert",
+          "select": "profileID"
+        }
+      ],
+      "destination": "FS.identify"
+    },
+    {
+      "id": "fs-identify-ceddl-user-allowed",
+      "description": "send only known CEDDL user properties to FS.identify using the profileID as the FullStory uid",
+      "source": "digitalData.user.profile[0]",
+      "operators": [
+        {
+          "name": "flatten"
+        },
+        {
+          "name": "query",
+          "select": "$[(profileID,userName,line1,line2,city,stateProvince,postalCode,country)]"
+        },
+        {
+          "name": "insert",
+          "select": "profileID"
+        }
+      ],
+      "destination": "FS.identify"
+    }
+  ]
+}
