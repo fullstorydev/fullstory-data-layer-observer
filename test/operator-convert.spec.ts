@@ -13,6 +13,7 @@ const item = {
   size: 5,
   type: true,
   empty: '',
+  saleDate: '12-26-2020',
 };
 
 describe('convert operator unit tests', () => {
@@ -85,6 +86,17 @@ describe('convert operator unit tests', () => {
     expect(stringBool.type).to.eq('true');
     expect(stringBool.tax).to.eq('1.99'); // non-converted properties remain
     expect(item.type).to.eq(true); // don't mutate the actual data layer
+  });
+
+  it('it should convert to date', () => {
+    const operator = OperatorFactory.create('convert', { name: 'convert', properties: 'saleDate,tax', type: 'date' });
+    const [date] = operator.handleData([item])!;
+
+    expect(date).to.not.be.null;
+    expect(date!.saleDate.toString()).to.eq(new Date('12-26-2020').toString());
+    expect(date.tax).to.eq(item.tax); // failed conversions should be the original value
+    expect(date.stock).to.eq('10'); // non-converted properties remain
+    expect(item.saleDate).to.eq('12-26-2020'); // don't mutate the actual data layer
   });
 
   it('it should convert CSV input', () => {

@@ -4,6 +4,7 @@ import 'mocha';
 import { DataLayerObserver, DataLayerRule } from '../src/observer';
 import * as userRules from '../examples/rules/ceddl-user-fullstory.json';
 import * as cartRules from '../examples/rules/ceddl-cart-fullstory.json';
+import * as pageRules from '../examples/rules/ceddl-page-fullstory.json';
 
 import { CEDDL, basicDigitalData } from './mocks/CEDDL';
 import Console from './mocks/console';
@@ -18,7 +19,7 @@ interface GlobalMock {
 
 let globalMock: GlobalMock;
 
-const rules = [...cartRules.rules, ...userRules.rules];
+const rules = [...cartRules.rules, ...pageRules.rules, ...userRules.rules];
 
 function getRule(id: string) {
   const rule = rules.find((r: DataLayerRule) => r.id === id);
@@ -158,5 +159,42 @@ describe('FullStory example rules unit tests', () => {
     (globalThis as any).digitalData.cart.price.basePrice = basePrice;
     (globalThis as any).digitalData.cart.price.priceWithTax = priceWithTax;
     (globalThis as any).digitalData.cart.price.cartTotal = cartTotal;
+  });
+
+  it('it should send CEDDL page properties to FS.event', () => {
+    const { pageInfo, category } = basicDigitalData.page;
+
+    (globalThis as any).digitalData.page.framework = 'react'; // inject custom property
+
+    const observer = new DataLayerObserver({ rules: [getRule('fs-event-ceddl-page-omit-convert')], readOnLoad: true });
+    expect(observer).to.not.be.undefined;
+
+    const [eventName, payload] = expectParams(globalMock.FS, 'event');
+    expect(eventName).to.eq('digitalData.page');
+
+    // NOTE these are flattened but you could also simply send digitalData.page
+    expect(payload.pageID).to.eq(pageInfo.pageID);
+    expect(payload.pageName).to.eq(pageInfo.pageName);
+    expect(payload.sysEnv).to.eq(pageInfo.sysEnv);
+    expect(payload.variant).to.eq(pageInfo.variant);
+    expect(payload.breadcrumbs).to.eq(pageInfo.breadcrumbs);
+    expect(payload.author).to.eq(pageInfo.author);
+    expect(payload.language).to.eq(pageInfo.language);
+    expect(payload.industryCodes).to.eq(pageInfo.industryCodes);
+    expect(payload.publisher).to.eq(pageInfo.publisher);
+    expect(payload.primaryCategory).to.eq(category.primaryCategory);
+    expect(payload.framework).to.eq('react'); // verify custom property
+
+    // check converted values
+    expect(payload.version).to.eq(1.14);
+    expect(payload.issueDate.toString()).to.eq(new Date(pageInfo.issueDate).toString());
+    expect(payload.effectiveDate.toString()).to.eq(new Date(pageInfo.effectiveDate).toString());
+    expect(payload.expiryDate.toString()).to.eq(new Date(pageInfo.expiryDate).toString());
+
+    // NOTE we have other ways in FullStory to see these
+    expect(payload.destinationURL).to.be.undefined;
+    expect(payload.referringURL).to.be.undefined;
+
+    delete (globalThis as any).digitalData.page.framework; // remove custom property
   });
 });

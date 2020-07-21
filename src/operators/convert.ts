@@ -1,7 +1,7 @@
 import { Operator, OperatorOptions, OperatorValidator } from '../operator';
 import { Logger } from '../utils/logger';
 
-type ConvertibleType = 'bool' | 'int' | 'real' | 'string';
+type ConvertibleType = 'bool' | 'date' | 'int' | 'real' | 'string';
 
 export interface ConvertOperatorOptions extends OperatorOptions {
   properties: string | string[];
@@ -32,6 +32,7 @@ export class ConvertOperator implements Operator {
   static convert(type: ConvertibleType, value: any) {
     switch (type) {
       case 'bool': return Boolean(value).valueOf();
+      case 'date': return new Date(value);
       case 'int': return parseInt(value, 10);
       case 'real': return parseFloat(value);
       case 'string':
@@ -60,10 +61,7 @@ export class ConvertOperator implements Operator {
       const original = data[this.index][property];
       converted[property] = ConvertOperator.convert(type, original);
 
-      if ((type === 'int' || type === 'real') && Number.isNaN(converted[property])) {
-        Logger.getInstance().error(`Unable to convert ${properties.toString()} to ${type} for value ${original}`);
-        converted[property] = original; // NOTE that we will reset the value back to something other than NaN
-      }
+      ConvertOperator.verifyConversion(type, property, converted, original);
     });
 
     const clone = data.slice();
@@ -79,6 +77,26 @@ export class ConvertOperator implements Operator {
     const { type } = this.options;
     if (type !== 'bool' && type !== 'int' && type !== 'real' && type !== 'string') {
       throw validator.throwError('type', `unknown type '${type}' used`);
+    }
+  }
+
+  private static verifyConversion(type: string, property: string, converted: any, oldValue: any) {
+    let verified = true;
+
+    // verify it's a number
+    if ((type === 'int' || type === 'real') && Number.isNaN(converted[property])) {
+      verified = false;
+    }
+
+    // verify it's a date by checking the epoch
+    if (type === 'date' && Number.isNaN((converted[property] as Date).getTime())) {
+      verified = false;
+    }
+
+    // log error and reset to the original value
+    if (!verified) {
+      Logger.getInstance().error(`Unable to convert ${property} to ${type} for value ${oldValue}`);
+      converted[property] = oldValue; // eslint-disable-line no-param-reassign
     }
   }
 }
