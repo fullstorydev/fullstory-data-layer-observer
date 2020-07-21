@@ -46,7 +46,8 @@ export class SuffixOperator implements Operator {
   readonly maxDepth: number;
 
   constructor(public options: SuffixOperatorOptions) {
-    const { index = 0, maxDepth = 10 } = options;
+    // NOTE the index is -1 because payloads to FS.event or FS.setUserVars are the last in the list of args
+    const { index = -1, maxDepth = 10 } = options;
 
     this.index = index;
     this.maxDepth = maxDepth;
