@@ -1,0 +1,27 @@
+{
+  "rules": [
+    {
+      "id": "fs-event-ceddl-product",
+      "description": "send the latest CEDDL product's primaryCategory, sku, productID, and productName properties to FS.event as a 'View Product' event",
+      "source": "digitalData.product[-1]",
+      "operators": [
+        {
+          "name": "query",
+          "select": "$[(category, productInfo)]"
+        },
+        {
+          "name": "flatten"
+        },
+        {
+          "name": "query",
+          "select": "$[(primaryCategory, sku, productID, productName)]"
+        },
+        {
+          "name": "insert",
+          "value": "View Product"
+        }
+      ],
+      "destination": "FS.event"
+    }
+  ]
+}

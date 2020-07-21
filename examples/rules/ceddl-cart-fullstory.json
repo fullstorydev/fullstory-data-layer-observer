@@ -47,7 +47,7 @@
         }
       ],
       "destination": "FS.event",
-      "debug": true
+      "debug": false
     }
   ]
 }
