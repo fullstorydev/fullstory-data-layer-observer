@@ -2,10 +2,12 @@ import { expect } from 'chai';
 import 'mocha';
 
 import { DataLayerObserver, DataLayerRule } from '../src/observer';
+import * as adobeRules from '../examples/rules/adobe-fullstory.json';
 import * as userRules from '../examples/rules/ceddl-user-fullstory.json';
 import * as cartRules from '../examples/rules/ceddl-cart-fullstory.json';
 import * as pageRules from '../examples/rules/ceddl-page-fullstory.json';
 
+import { basicAppMeasurement, AppMeasurement } from './mocks/adobe';
 import { CEDDL, basicDigitalData } from './mocks/CEDDL';
 import Console from './mocks/console';
 import FullStory from './mocks/fullstory-recording';
@@ -15,11 +17,12 @@ interface GlobalMock {
   digitalData: CEDDL,
   FS: FullStory
   console: Console,
+  s: AppMeasurement,
 }
 
 let globalMock: GlobalMock;
 
-const rules = [...cartRules.rules, ...pageRules.rules, ...userRules.rules];
+const rules = [...adobeRules.rules, ...cartRules.rules, ...pageRules.rules, ...userRules.rules];
 
 function getRule(id: string) {
   const rule = rules.find((r: DataLayerRule) => r.id === id);
@@ -31,12 +34,14 @@ function getRule(id: string) {
 describe('FullStory example rules unit tests', () => {
   beforeEach(() => {
     (globalThis as any).digitalData = basicDigitalData;
+    (globalThis as any).s = basicAppMeasurement;
     (globalThis as any).FS = new FullStory();
     globalMock = globalThis as any;
   });
 
   afterEach(() => {
     delete (globalThis as any).digitalData;
+    delete (globalThis as any).s;
     delete (globalThis as any).FS;
   });
 
@@ -196,5 +201,38 @@ describe('FullStory example rules unit tests', () => {
     expect(payload.referringURL).to.be.undefined;
 
     delete (globalThis as any).digitalData.page.framework; // remove custom property
+  });
+
+  it('it should send just Adobe eVars to FS.event', () => {
+    const {
+      eVar1, eVar10, eVar20, eVar50, eVar60,
+    } = basicAppMeasurement;
+
+    const observer = new DataLayerObserver({ rules: [getRule('fs-event-adobe-evars')], readOnLoad: true });
+    expect(observer).to.not.be.undefined;
+
+    const [eventName, payload] = expectParams(globalMock.FS, 'event');
+    expect(eventName).to.eq('Adobe eVars');
+    expect(payload.eVar1).to.eq(eVar1);
+    expect(payload.eVar10).to.eq(eVar10);
+    expect(payload.eVar20).to.eq(eVar20);
+    expect(payload.eVar50).to.eq(eVar50);
+    expect(payload.eVar60).to.eq(eVar60);
+    expect(payload.prop1).to.be.undefined;
+    expect(payload.pageName).to.be.undefined;
+  });
+
+  it('it should FS.identify using specific Adobe eVars', () => {
+    const { eVar1, eVar10, eVar20 } = basicAppMeasurement;
+
+    const observer = new DataLayerObserver({ rules: [getRule('fs-identify-adobe-evars')], readOnLoad: true });
+    expect(observer).to.not.be.undefined;
+
+    const [uid, payload] = expectParams(globalMock.FS, 'identify');
+    expect(uid).to.eq(eVar1);
+    expect(payload.eVar10).to.eq(eVar10);
+    expect(payload.eVar20).to.eq(eVar20);
+    expect(payload.prop1).to.be.undefined;
+    expect(payload.pageName).to.be.undefined;
   });
 });
