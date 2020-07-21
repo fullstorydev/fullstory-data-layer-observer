@@ -159,8 +159,9 @@ export class SuffixOperator implements Operator {
   }
 
   handleData(data: any[]): any[] | null {
+    const index = this.index >= 0 ? this.index : data.length + this.index;
     const suffixedData = data;
-    suffixedData[this.index] = this.mapToSuffix(suffixedData[this.index]);
+    suffixedData[index] = this.mapToSuffix(suffixedData[index]);
 
     return suffixedData;
   }
