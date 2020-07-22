@@ -6,6 +6,7 @@ import * as adobeRules from '../examples/rules/adobe-fullstory.json';
 import * as userRules from '../examples/rules/ceddl-user-fullstory.json';
 import * as cartRules from '../examples/rules/ceddl-cart-fullstory.json';
 import * as pageRules from '../examples/rules/ceddl-page-fullstory.json';
+import * as productRules from '../examples/rules/ceddl-product-fullstory.json';
 
 import { basicAppMeasurement, AppMeasurement } from './mocks/adobe';
 import { CEDDL, basicDigitalData } from './mocks/CEDDL';
@@ -22,7 +23,7 @@ interface GlobalMock {
 
 let globalMock: GlobalMock;
 
-const rules = [...adobeRules.rules, ...cartRules.rules, ...pageRules.rules, ...userRules.rules];
+const rules = [...adobeRules.rules, ...cartRules.rules, ...pageRules.rules, ...userRules.rules, ...productRules.rules];
 
 function getRule(id: string) {
   const rule = rules.find((r: DataLayerRule) => r.id === id);
@@ -98,6 +99,27 @@ describe('FullStory example rules unit tests', () => {
     expect(payload.password).to.be.undefined;
 
     delete (globalThis as any).digitalData.user.profile[0].password; // remove sensitive property
+  });
+
+  it('it should send latest CEDDL product properties to FS.event', () => {
+    const product = basicDigitalData.product[basicDigitalData.product.length - 1];
+    (product as any).customProp = 'Foo'; // inject custom property
+
+    const { primaryCategory } = product.category;
+    const { sku, productID, productName } = product.productInfo;
+
+    const observer = new DataLayerObserver({ rules: [getRule('fs-event-ceddl-product')], readOnLoad: true });
+    expect(observer).to.not.be.undefined;
+
+    const [eventName, payload] = expectParams(globalMock.FS, 'event');
+    expect(eventName).to.eq('View Product');
+    expect(payload.sku).to.eq(sku);
+    expect(payload.productID).to.eq(productID);
+    expect(payload.productName).to.eq(productName);
+    expect(payload.primaryCategory).to.eq(primaryCategory);
+    expect(payload.customProp).to.be.undefined;
+
+    delete (product as any).customProp; // remove custom property
   });
 
   it('it should send CEDDL cart cartID and price properties to FS.event', () => {
