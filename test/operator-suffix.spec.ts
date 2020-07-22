@@ -235,4 +235,14 @@ describe('suffix operator unit test', () => {
     // @ts-ignore
     expect(suffixedObject.b_obj.a_obj.b_obj.a_obj).to.be.undefined;
   });
+
+  it('it should suffix using a negative index', () => {
+    const message = 'Hello World';
+
+    const operator = new SuffixOperator({ name: 'suffix', index: -1 });
+    const [eventName, suffixedObject] = operator.handleData(['Message Event', { message }])!;
+
+    expect(eventName).to.eq('Message Event');
+    expect(suffixedObject.message_str).to.eq(message);
+  });
 });
