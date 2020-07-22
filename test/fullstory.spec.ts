@@ -7,6 +7,7 @@ import * as userRules from '../examples/rules/ceddl-user-fullstory.json';
 import * as cartRules from '../examples/rules/ceddl-cart-fullstory.json';
 import * as pageRules from '../examples/rules/ceddl-page-fullstory.json';
 import * as productRules from '../examples/rules/ceddl-product-fullstory.json';
+import * as transactionRules from '../examples/rules/ceddl-transaction-fullstory.json';
 
 import { basicAppMeasurement, AppMeasurement } from './mocks/adobe';
 import { CEDDL, basicDigitalData } from './mocks/CEDDL';
@@ -23,7 +24,8 @@ interface GlobalMock {
 
 let globalMock: GlobalMock;
 
-const rules = [...adobeRules.rules, ...cartRules.rules, ...pageRules.rules, ...userRules.rules, ...productRules.rules];
+const rules = [...adobeRules.rules, ...cartRules.rules, ...pageRules.rules, ...userRules.rules, ...productRules.rules,
+  ...transactionRules.rules];
 
 function getRule(id: string) {
   const rule = rules.find((r: DataLayerRule) => r.id === id);
@@ -223,6 +225,40 @@ describe('FullStory example rules unit tests', () => {
     expect(payload.referringURL).to.be.undefined;
 
     delete (globalThis as any).digitalData.page.framework; // remove custom property
+  });
+
+  it('it should send CEDDL transaction transactionID and total properties to FS.event', () => {
+    const {
+      transactionID, total: {
+        basePrice, voucherCode, voucherDiscount, currency, taxRate, shipping,
+        shippingMethod, priceWithTax, transactionTotal,
+      },
+    } = basicDigitalData.transaction;
+
+    (globalThis as any).digitalData.transaction.token = 'a878b8219'; // inject custom property
+
+    const observer = new DataLayerObserver({
+      rules: [getRule('fs-event-ceddl-transaction-id-total')],
+      readOnLoad: true,
+    });
+    expect(observer).to.not.be.undefined;
+
+    const [eventName, payload] = expectParams(globalMock.FS, 'event');
+    expect(eventName).to.eq('Order Completed');
+    expect(payload.transactionID).to.eq(transactionID);
+    expect(payload.basePrice).to.eq(basePrice);
+    expect(payload.voucherCode).to.eq(voucherCode);
+    expect(payload.voucherDiscount).to.eq(voucherDiscount);
+    expect(payload.currency).to.eq(currency);
+    expect(payload.taxRate).to.eq(taxRate);
+    expect(payload.shipping).to.eq(shipping);
+    expect(payload.shippingMethod).to.eq(shippingMethod);
+    expect(payload.priceWithTax).to.eq(priceWithTax);
+    expect(payload.transactionTotal).to.eq(transactionTotal);
+
+    expect(payload.token).to.be.undefined;
+
+    delete (globalThis as any).digitalData.transaction.token; // remove custom property
   });
 
   it('it should send just Adobe eVars to FS.event', () => {
