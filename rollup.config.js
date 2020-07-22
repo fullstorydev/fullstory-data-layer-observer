@@ -5,14 +5,16 @@ export default {
   input: 'src/embed/init.ts',
   output: [
     {
-      format: 'cjs',
+      format: 'iife',
       file: 'build/dlo.js'
     },
     {
       file: 'build/dlo.min.js',
       format: 'cjs',
       name: 'version',
-      plugins: [terser()]
+      plugins: [terser({
+        enclose: true
+      })]
     }
   ],
   plugins: [
