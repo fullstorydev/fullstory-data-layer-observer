@@ -1,0 +1,28 @@
+{
+  "rules": [
+    {
+      "id": "fs-event-adobe-evars",
+      "description": "send only Adobe eVars to FS.event as an 'Adobe eVars' event",
+      "source": "s[^(eVar)]",
+      "operators": [
+        {
+          "name": "insert",
+          "value": "Adobe eVars"
+        }
+      ],
+      "destination": "FS.event"
+    },
+    {
+      "id": "fs-identify-adobe-evars",
+      "description": "send only select Adobe eVars to FS.identify using eVar1 as the uid",
+      "source": "s[(eVar1,eVar10,eVar20)]",
+      "operators": [
+        {
+          "name": "insert",
+          "select": "eVar1"
+        }
+      ],
+      "destination": "FS.identify"
+    }
+  ]
+}
