@@ -6,10 +6,6 @@
       "source": "digitalData.product[-1]",
       "operators": [
         {
-          "name": "query",
-          "select": "$[(category, productInfo)]"
-        },
-        {
           "name": "flatten"
         },
         {
