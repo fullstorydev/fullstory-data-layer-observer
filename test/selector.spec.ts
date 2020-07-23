@@ -14,6 +14,7 @@ const testData = {
       adventure: 'Atomic Blonde',
       'rom com': "Isn't it romantic",
     },
+    bool: false,
   },
   cities: ['Seattle', 'Atlanta', 'San Francisco', 'New York City'],
 };
@@ -161,5 +162,19 @@ describe('test selection paths', () => {
     expect(select('favorites[?(color=red, number=25)]', testData)).to.eq(testData.favorites);
     expect(select('favorites[?(bogus=totally, number=25)]', testData)).to.be.undefined;
     expect(select('favorites[?(color=red, number=pi)]', testData)).to.be.undefined;
+    expect(select('favorites[?(bool=true)]', testData)).to.be.undefined;
+    expect(select('favorites[?(bool=false)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(number=25)]', testData)).to.eq(testData.favorites); // NOTE = is converted to ==
+    expect(select('favorites[?(number==25)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(number===25)]', testData)).to.eq(testData.favorites); // NOTE === is converted to ==
+    expect(select('favorites[?(number>25)]', testData)).to.be.undefined;
+    expect(select('favorites[?(number>20)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(number>=25)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(number<10)]', testData)).to.be.undefined;
+    expect(select('favorites[?(number<30)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(number<=25)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(number!=25)]', testData)).to.be.undefined;
+    expect(select('favorites[?(number!=12)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(number+=25)]', testData)).to.be.undefined;
   });
 });

@@ -42,18 +42,47 @@ class OpProp {
 
   value: string | null;
 
+  operator: string | null;
+
   constructor(public raw: string) {
     this.raw = raw.trim();
-    const tokens = this.raw.split('=');
-    if (tokens.length > 2) throw new Error(`Invalid OpProp: ${raw}`);
-    if (this.raw.includes('=')) {
-      const keyValTokens = this.raw.split('=');
-      if (keyValTokens.length !== 2) throw new Error(`Invalid OpProp: ${raw}`);
-      this.name = keyValTokens[0];
-      this.value = keyValTokens[1];
+
+    let start = 0;
+    let end = 0;
+
+    for (let i = 0; i < raw.length; i += 1) {
+      const codePoint = raw.charCodeAt(i);
+      // the codePoint appears to be some form of comparison operator we support
+      if (codePoint === 33 || (codePoint >= 60 && codePoint <= 62)) {
+        // mark the start pos of the operator
+        if (start === 0) {
+          start = i;
+        }
+      } else {
+        // this is a letter (not a comparison operator at least)
+        // eslint-disable-next-line no-lonely-if
+        if (start > 0) {
+          end = i;
+          // break to mark the end pos of the operator since the rest of raw will be letters/digits
+          break;
+        }
+      }
+    }
+
+    const operator = raw.substring(start, end);
+
+    if (operator.length !== 0) {
+      const tokens = this.raw.split(operator);
+      if (tokens.length > 2) throw new Error(`Invalid OpProp: ${raw}`);
+      if (tokens.length !== 2) throw new Error(`Invalid OpProp: ${raw}`);
+      this.name = tokens[0];
+      this.value = tokens[1];
+      // NOTE use loose equality because opValue is always a string (= can be shorthand for ==)
+      this.operator = (operator === '=' || operator === '===') ? '==' : operator;
     } else {
       this.name = this.raw;
       this.value = null;
+      this.operator = null;
     }
   }
 }
@@ -329,8 +358,33 @@ class PathElement {
       /*
       Values come in as strings so we use loose matching (== not ===) to take advantage of JS's built-in fast parsing and evaluation
       */
-      /* eslint eqeqeq: "off" */
-      if (prop[opProp.name] != opProp.value) return undefined;
+      try {
+        switch (typeof prop[opProp.name]) {
+          case 'boolean':
+            if (prop[opProp.name] !== (opProp.value.toLowerCase() === 'true')) return undefined;
+            break;
+          case 'string':
+            // eslint-disable-next-line eqeqeq
+            if (opProp.operator === '==' && prop[opProp.name] != opProp.value) return undefined;
+            // eslint-disable-next-line eqeqeq
+            if (opProp.operator != '==' && prop[opProp.name] == opProp.value) return undefined;
+            break;
+          case 'number':
+            // eslint-disable-next-line eqeqeq
+            if (opProp.operator === '==' && prop[opProp.name] != opProp.value) return undefined;
+            // eslint-disable-next-line eqeqeq
+            if (opProp.operator === '!=' && prop[opProp.name] == opProp.value) return undefined;
+            if (opProp.operator === '>=' && prop[opProp.name] < opProp.value) return undefined;
+            if (opProp.operator === '<=' && prop[opProp.name] > opProp.value) return undefined;
+            if (opProp.operator === '>' && prop[opProp.name] <= opProp.value) return undefined;
+            if (opProp.operator === '<' && prop[opProp.name] >= opProp.value) return undefined;
+            break;
+          default:
+            throw new Error(`Unsupported comparison ${opProp.raw}`);
+        }
+      } catch (err) {
+        throw new Error(`Failed to compare ${opProp.raw} ${err.message}`);
+      }
     }
 
     return prop;
@@ -393,7 +447,7 @@ Selection path notations:
 - Prefix: object[^(property, ...)]       -> [object] with only properties whose names begin with `property`
 - Suffix: object[$(property, ...)]       -> [object] with only properties whose names end with `property`
 - Filter: object[?(property, ...)]       -> object or null if object does not have property
-- Filter: object[?(property=value, ...)] -> object or null if the object's `property` does not equal `value`
+- Filter: object[?(property=value, ...)] -> object or null if the object's `property` does not compare to `value`
 
 Notations can be chained:
 
