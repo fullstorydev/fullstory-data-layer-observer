@@ -167,9 +167,14 @@ describe('test selection paths', () => {
     expect(select('favorites[?(number=25)]', testData)).to.eq(testData.favorites); // NOTE = is converted to ==
     expect(select('favorites[?(number==25)]', testData)).to.eq(testData.favorites);
     expect(select('favorites[?(number===25)]', testData)).to.eq(testData.favorites); // NOTE === is converted to ==
-    expect(select('favorites[?(number>=25)]', testData)).to.eq(testData.favorites);
-    expect(select('favorites[?(number!=25)]', testData)).to.be.undefined;
     expect(select('favorites[?(number>25)]', testData)).to.be.undefined;
+    expect(select('favorites[?(number>20)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(number>=25)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(number<10)]', testData)).to.be.undefined;
+    expect(select('favorites[?(number<30)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(number<=25)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(number!=25)]', testData)).to.be.undefined;
+    expect(select('favorites[?(number!=12)]', testData)).to.eq(testData.favorites);
     expect(select('favorites[?(number+=25)]', testData)).to.be.undefined;
   });
 });

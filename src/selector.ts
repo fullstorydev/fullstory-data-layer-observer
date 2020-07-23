@@ -364,12 +364,20 @@ class PathElement {
             if (prop[opProp.name] !== (opProp.value.toLowerCase() === 'true')) return undefined;
             break;
           case 'string':
-            // eslint-disable-next-line no-eval
-            if (!eval(`'${prop[opProp.name]}' ${opProp.operator} '${opProp.value}'`)) return undefined;
+            // eslint-disable-next-line eqeqeq
+            if (opProp.operator === '==' && prop[opProp.name] != opProp.value) return undefined;
+            // eslint-disable-next-line eqeqeq
+            if (opProp.operator != '==' && prop[opProp.name] == opProp.value) return undefined;
             break;
           case 'number':
-            // eslint-disable-next-line no-eval
-            if (!eval(`${prop[opProp.name]} ${opProp.operator} '${opProp.value}'`)) return undefined;
+            // eslint-disable-next-line eqeqeq
+            if (opProp.operator === '==' && prop[opProp.name] != opProp.value) return undefined;
+            // eslint-disable-next-line eqeqeq
+            if (opProp.operator === '!=' && prop[opProp.name] == opProp.value) return undefined;
+            if (opProp.operator === '>=' && prop[opProp.name] < opProp.value) return undefined;
+            if (opProp.operator === '<=' && prop[opProp.name] > opProp.value) return undefined;
+            if (opProp.operator === '>' && prop[opProp.name] <= opProp.value) return undefined;
+            if (opProp.operator === '<' && prop[opProp.name] >= opProp.value) return undefined;
             break;
           default:
             throw new Error(`Unsupported comparison ${opProp.raw}`);
