@@ -125,11 +125,21 @@ export default class DataHandler {
     return handledData;
   }
 
-  private static sizeOfPayload(obj: any): number {
-    return JSON.stringify(obj).length * 2;
+  /**
+   * Calculate the size of a JSON.stringified object.
+   * @param obj the object to stringify and calculate
+   * @param stringBytes number of bytes for a string (defaults to UTF16 two bytes)
+   */
+  private static sizeOfPayload(obj: any, stringBytes = 2): number {
+    return JSON.stringify(obj).length * stringBytes;
   }
 
-  private static sizeOfValues(obj: any): number {
+  /**
+   * Calculate the aggregate size of all values within an object.
+   * @param obj the object with values to calculate
+   * @param stringBytes number of bytes for a string (defaults to UTF16 two bytes)
+   */
+  private static sizeOfValues(obj: any, stringBytes = 2): number {
     let size = 0;
 
     if (typeof obj === 'object') {
@@ -142,7 +152,7 @@ export default class DataHandler {
             }
             break;
           case 'string':
-            size += (obj[prop] as string).length * 2;
+            size += (obj[prop] as string).length * stringBytes;
             break;
           case 'number':
             size += 8;
@@ -159,6 +169,11 @@ export default class DataHandler {
     return size;
   }
 
+  /**
+   * Counts the number of properties in an object. Properties that have object values are not counted, but their
+   * children are.
+   * @param obj the object to count all properties
+   */
   private static numProperties(obj: any): number {
     let count = 0;
 
