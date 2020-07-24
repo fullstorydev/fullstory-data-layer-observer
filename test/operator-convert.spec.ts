@@ -154,7 +154,7 @@ describe('convert operator unit tests', () => {
     const [int] = operator.handleData([item])!;
 
     expect(int).to.not.be.null;
-    expect(int.empty).to.eq(item.empty);
+    expect(int.empty).to.eq(0);
 
     operator = OperatorFactory.create('convert', {
       name: 'convert', properties: 'empty', type: 'real',
@@ -163,7 +163,7 @@ describe('convert operator unit tests', () => {
     const [real] = operator.handleData([item])!;
 
     expect(real).to.not.be.null;
-    expect(real.empty).to.eq(item.empty);
+    expect(real.empty).to.eq(0);
   });
 
   it('it should convert null int or real to zero', () => {
@@ -172,13 +172,13 @@ describe('convert operator unit tests', () => {
 
     expect(real).to.not.be.null;
     expect(real!.vat).to.eq(0.0);
-    expect(real!.nothing).to.be.undefined;
+    expect(real!.nothing).to.eq(0.0);
 
     operator = OperatorFactory.create('convert', { name: 'convert', properties: 'vat,nothing', type: 'int' });
     const [int] = operator.handleData([item])!;
 
     expect(int).to.not.be.null;
     expect(int!.vat).to.eq(0);
-    expect(int!.nothing).to.be.undefined;
+    expect(int!.nothing).to.eq(0);
   });
 });
