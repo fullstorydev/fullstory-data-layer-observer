@@ -31,10 +31,20 @@ export class ConvertOperator implements Operator {
 
   static convert(type: ConvertibleType, value: any) {
     switch (type) {
-      case 'bool': return Boolean(value).valueOf();
+      case 'bool': return (value === 'true' || value === 'TRUE' || value === 'True');
       case 'date': return new Date(value);
-      case 'int': return parseInt(value, 10);
-      case 'real': return parseFloat(value);
+      case 'int':
+        if (value === null) {
+          return 0;
+        }
+        return parseInt(value, 10);
+
+      case 'real':
+        if (value === null) {
+          return 0.0;
+        }
+        return parseFloat(value);
+
       case 'string':
         switch (typeof value) {
           case 'boolean': return Boolean(value).toString();

@@ -9,11 +9,12 @@ const item = {
   stock: '10',
   price: '29.99',
   tax: '1.99',
-  available: 'true',
+  available: 'false',
   size: 5,
   type: true,
   empty: '',
   saleDate: '12-26-2020',
+  vat: null,
 };
 
 describe('convert operator unit tests', () => {
@@ -66,9 +67,9 @@ describe('convert operator unit tests', () => {
     const [bool] = operator.handleData([item])!;
 
     expect(bool).to.not.be.null;
-    expect(bool!.available).to.eq(true);
+    expect(bool!.available).to.eq(false);
     expect(bool.stock).to.eq('10'); // non-converted properties remain
-    expect(item.available).to.eq('true'); // don't mutate the actual data layer
+    expect(item.available).to.eq('false'); // don't mutate the actual data layer
   });
 
   it('it should convert to string', () => {
@@ -161,5 +162,21 @@ describe('convert operator unit tests', () => {
 
     expect(real).to.not.be.null;
     expect(real.empty).to.eq(item.empty);
+  });
+
+  it('it should convert null int or real to zero', () => {
+    let operator = OperatorFactory.create('convert', { name: 'convert', properties: 'vat,nothing', type: 'real' });
+    const [real] = operator.handleData([item])!;
+
+    expect(real).to.not.be.null;
+    expect(real!.vat).to.eq(0.0);
+    expect(real!.nothing).to.be.undefined;
+
+    operator = OperatorFactory.create('convert', { name: 'convert', properties: 'vat,nothing', type: 'int' });
+    const [int] = operator.handleData([item])!;
+
+    expect(int).to.not.be.null;
+    expect(int!.vat).to.eq(0);
+    expect(int!.nothing).to.be.undefined;
   });
 });
