@@ -34,13 +34,13 @@ export class ConvertOperator implements Operator {
       case 'bool': return (value === 'true' || value === 'TRUE' || value === 'True');
       case 'date': return new Date(value);
       case 'int':
-        if (value === null) {
+        if (!value) {
           return 0;
         }
         return parseInt(value, 10);
 
       case 'real':
-        if (value === null) {
+        if (!value) {
           return 0.0;
         }
         return parseFloat(value);
