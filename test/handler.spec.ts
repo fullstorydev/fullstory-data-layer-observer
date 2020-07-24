@@ -163,10 +163,12 @@ describe('DataHandler unit tests', () => {
     expect(exit).to.contain(`digitalData.page handleData exit\n[${JSON.stringify(basicDigitalData.page.pageInfo)}]`);
 
     const [getterOutput] = expectParams(console, 'debug');
-    expect(getterOutput).to.contain(`  [1] getter output\n  [${JSON.stringify(basicDigitalData.page.pageInfo)}]`);
+    expect(getterOutput).to.contain('  [1] getter output');
+    expect(getterOutput).to.contain(`[${JSON.stringify(basicDigitalData.page.pageInfo)}]`);
 
     const [echoOutput] = expectParams(console, 'debug');
-    expect(echoOutput).to.contain(`  [0] echo output\n  [${JSON.stringify(basicDigitalData.page)}]`);
+    expect(echoOutput).to.contain('  [0] echo output');
+    expect(echoOutput).to.contain(`[${JSON.stringify(basicDigitalData.page)}]`);
 
     const [entry] = expectParams(console, 'debug');
     expect(entry).to.contain(`digitalData.page handleData entry\n[${JSON.stringify(basicDigitalData.page)}]`);

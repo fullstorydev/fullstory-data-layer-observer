@@ -99,7 +99,19 @@ export default class DataHandler {
           return null;
         }
         handledData = this.operators[i].handleData(handledData);
-        this.runDebugger(`[${i}] ${name} output`, handledData, '  ');
+
+        let stats = ''; // debug stats (only compute if debug is enabled)
+        if (this.debug && handledData !== null && handledData[0] !== null && typeof handledData[0] === 'object') {
+          // the handler most often operates on the head so calculate this as a best estimate for each step
+          const [head] = handledData;
+          const keys = DataHandler.numProperties(head);
+          const valueSz = DataHandler.sizeOfValues(head);
+          const payloadSz = DataHandler.sizeOfPayload(head);
+
+          stats = `(numKeys=${keys} sizeOfValues=${valueSz} sizeOfPayload=${payloadSz})`;
+        }
+
+        this.runDebugger(`[${i}] ${name} output ${stats}`, handledData, '  ');
       } catch (err) {
         Logger.getInstance().error(`Operator ${name} failed for ${this.path} at step ${i}`,
           this.path);
@@ -111,6 +123,56 @@ export default class DataHandler {
     this.runDebugger(`${this.path} handleData exit`, handledData);
 
     return handledData;
+  }
+
+  private static sizeOfPayload(obj: any): number {
+    return JSON.stringify(obj).length * 2;
+  }
+
+  private static sizeOfValues(obj: any): number {
+    let size = 0;
+
+    if (typeof obj === 'object') {
+      // eslint-disable-next-line no-restricted-syntax
+      Object.getOwnPropertyNames(obj).forEach((prop) => {
+        switch (typeof obj[prop]) {
+          case 'object':
+            if (obj[prop] != null && !Array.isArray(obj[prop])) {
+              size += this.sizeOfValues(obj[prop]);
+            }
+            break;
+          case 'string':
+            size += (obj[prop] as string).length * 2;
+            break;
+          case 'number':
+            size += 8;
+            break;
+          case 'boolean':
+            size += 2;
+            break;
+          default:
+          // unsupported type
+        }
+      });
+    }
+
+    return size;
+  }
+
+  private static numProperties(obj: any): number {
+    let count = 0;
+
+    if (typeof obj === 'object') {
+      Object.getOwnPropertyNames(obj).forEach((prop) => {
+        if (typeof obj[prop] === 'object' && obj[prop] != null && !Array.isArray(obj[prop])) {
+          count += this.numProperties(obj[prop]);
+        } else {
+          count += 1;
+        }
+      });
+    }
+
+    return count;
   }
 
   private runDebugger(message: string, data?: any, indent = '') {
