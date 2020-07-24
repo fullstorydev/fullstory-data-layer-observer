@@ -137,11 +137,13 @@ describe('convert operator unit tests', () => {
     const operator = OperatorFactory.create('convert', {
       name: 'convert', properties: 'quantity', type: 'int', index: 1,
     });
-    const [event, int] = operator.handleData(['Product View', item])!;
+    const [event, int, last, rest] = operator.handleData(['Product View', item, 'dlo'])!;
 
     expect(event).to.not.be.null;
     expect(int).to.not.be.null;
     expect(int.quantity).to.eq(10);
+    expect(last).to.eq('dlo');
+    expect(rest).to.be.undefined;
   });
 
   it('it should not fail if NaN is the result of conversion', () => {

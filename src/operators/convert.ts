@@ -75,7 +75,7 @@ export class ConvertOperator implements Operator {
     });
 
     const clone = data.slice();
-    clone.splice(this.index, 0, converted);
+    clone.splice(this.index, 1, converted);
 
     return clone;
   }
