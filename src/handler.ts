@@ -99,7 +99,19 @@ export default class DataHandler {
           return null;
         }
         handledData = this.operators[i].handleData(handledData);
-        this.runDebugger(`[${i}] ${name} output`, handledData, '  ');
+
+        let stats = ''; // debug stats (only compute if debug is enabled)
+        if (this.debug && handledData !== null && handledData[0] !== null && typeof handledData[0] === 'object') {
+          // the handler most often operates on the head so calculate this as a best estimate for each step
+          const [head] = handledData;
+          const keys = DataHandler.numProperties(head);
+          const valueSz = DataHandler.sizeOfValues(head);
+          const payloadSz = DataHandler.sizeOfPayload(head);
+
+          stats = `(numKeys=${keys} sizeOfValues=${valueSz} sizeOfPayload=${payloadSz})`;
+        }
+
+        this.runDebugger(`[${i}] ${name} output ${stats}`, handledData, '  ');
       } catch (err) {
         Logger.getInstance().error(`Operator ${name} failed for ${this.path} at step ${i}`,
           this.path);
@@ -111,6 +123,71 @@ export default class DataHandler {
     this.runDebugger(`${this.path} handleData exit`, handledData);
 
     return handledData;
+  }
+
+  /**
+   * Calculate the size of a JSON.stringified object.
+   * @param obj the object to stringify and calculate
+   * @param stringBytes number of bytes for a string (defaults to UTF16 two bytes)
+   */
+  private static sizeOfPayload(obj: any, stringBytes = 2): number {
+    return JSON.stringify(obj).length * stringBytes;
+  }
+
+  /**
+   * Calculate the aggregate size of all values within an object.
+   * @param obj the object with values to calculate
+   * @param stringBytes number of bytes for a string (defaults to UTF16 two bytes)
+   */
+  private static sizeOfValues(obj: any, stringBytes = 2): number {
+    let size = 0;
+
+    if (typeof obj === 'object') {
+      // eslint-disable-next-line no-restricted-syntax
+      Object.getOwnPropertyNames(obj).forEach((prop) => {
+        switch (typeof obj[prop]) {
+          case 'object':
+            if (obj[prop] != null && !Array.isArray(obj[prop])) {
+              size += this.sizeOfValues(obj[prop]);
+            }
+            break;
+          case 'string':
+            size += (obj[prop] as string).length * stringBytes;
+            break;
+          case 'number':
+            size += 8;
+            break;
+          case 'boolean':
+            size += 2;
+            break;
+          default:
+          // unsupported type
+        }
+      });
+    }
+
+    return size;
+  }
+
+  /**
+   * Counts the number of properties in an object. Properties that have object values are not counted, but their
+   * children are.
+   * @param obj the object to count all properties
+   */
+  private static numProperties(obj: any): number {
+    let count = 0;
+
+    if (typeof obj === 'object') {
+      Object.getOwnPropertyNames(obj).forEach((prop) => {
+        if (typeof obj[prop] === 'object' && obj[prop] != null && !Array.isArray(obj[prop])) {
+          count += this.numProperties(obj[prop]);
+        } else {
+          count += 1;
+        }
+      });
+    }
+
+    return count;
   }
 
   private runDebugger(message: string, data?: any, indent = '') {

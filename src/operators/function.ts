@@ -45,7 +45,7 @@ export class FunctionOperator implements Operator {
       case 'function':
         return [func.apply(actualThisArg, data)];
       case 'string':
-        return select(func).apply(actualThisArg, data);
+        return [select(func).apply(actualThisArg, data)];
       default:
         // NOTE this will stop the handler
         return null;
