@@ -5,6 +5,10 @@ import { DataLayerObserver } from '../observer';
 /*
 This is where we initialize the DataLayerObserver from this info:
 
+// A custom log appender; a console appender is used if one is not specified
+// Default is null
+window['_dlo_appender'] = null;
+
 // OperatorOptions that is always used just before before the destination
 // Default is null
 window['_dlo_beforeDestination'] = null;
@@ -77,6 +81,7 @@ function _dlo_initializeFromWindow() {
   }
 
   win._dlo_observer = new DataLayerObserver({
+    appender: win._dlo_appender || undefined,
     beforeDestination: win._dlo_beforeDestination || undefined,
     previewMode: win._dlo_previewMode === true,
     previewDestination: win._dlo_previewDestination || undefined,

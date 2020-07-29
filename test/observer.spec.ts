@@ -8,6 +8,7 @@ import Console from './mocks/console';
 import FullStory from './mocks/fullstory-recording';
 import { expectParams, expectNoCalls, expectCall } from './utils/mocha';
 import { Operator, OperatorOptions } from '../src/operator';
+import { LogEvent } from '../src/utils/logger';
 
 class EchoOperator implements Operator {
   options: OperatorOptions = {
@@ -290,5 +291,36 @@ describe('DataLayerObserver unit tests', () => {
     expect((category as PageCategory).primaryCategory).to.eq(
       globalMock.digitalData.page.category.primaryCategory.toUpperCase(),
     );
+  });
+
+  it('it should register a custom log appender', () => {
+    expectNoCalls(globalMock.FS, 'event');
+
+    class FullStoryAppender {
+      constructor(private fs: FullStory) {
+        // sets this.fs
+      }
+
+      log(event: LogEvent) {
+        // eslint-disable-next-line camelcase
+        const { level: level_int, message: message_str, datalayer: datalayer_str } = event;
+        this.fs.event('Data Layer Observer', { level_int, message_str, datalayer_str }, 'dataLayerObserver');
+      }
+    }
+
+    const observer = new DataLayerObserver({
+      appender: new FullStoryAppender(globalMock.FS),
+      readOnLoad: true,
+      rules: [
+        { source: 'digitalData.nonExistent', operators: [], destination: 'console.log' },
+      ],
+    });
+
+    expect(observer).to.not.be.undefined;
+
+    const [eventName, event, source] = expectParams(globalMock.FS, 'event');
+    expect(eventName).to.eq('Data Layer Observer');
+    expect(event).to.not.be.undefined;
+    expect(source).to.eq('dataLayerObserver');
   });
 });

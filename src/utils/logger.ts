@@ -55,7 +55,7 @@ export interface LogEvent {
 export class Logger {
   private static instance: Logger;
 
-  appender = new ConsoleAppender();
+  appender: LogAppender = new ConsoleAppender();
 
   level = 1;
 

@@ -1,7 +1,7 @@
 import { OperatorOptions, Operator } from './operator';
 import { BuiltinOptions, OperatorFactory } from './factory';
 import DataHandler from './handler';
-import { Logger } from './utils/logger';
+import { Logger, LogAppender } from './utils/logger';
 import { FunctionOperator } from './operators';
 
 /**
@@ -10,6 +10,7 @@ import { FunctionOperator } from './operators';
  * Required
  *  rules: a list of pre-configured DataLayerRules
  * Optional
+ *  appender: a custom log appender
  *  beforeDestination: OperatorOptions that is always used just before before the destination
  *  previewMode: redirects output from a destination to previewDestination when testing rules
  *  previewDestination: output destination using selection syntax for with previewMode
@@ -18,6 +19,7 @@ import { FunctionOperator } from './operators';
  *  urlValidator: a function used to validate a DataLayerRule's `url`
  */
 export interface DataLayerConfig {
+  appender?: LogAppender;
   beforeDestination?: OperatorOptions;
   previewDestination?: string;
   previewMode?: boolean;
@@ -78,7 +80,11 @@ export class DataLayerObserver {
     readOnLoad: false,
     validateRules: true,
   }) {
-    const { rules } = config;
+    const { appender, rules } = config;
+    if (appender) {
+      Logger.getInstance().appender = appender;
+    }
+
     if (rules) {
       rules.forEach((rule: DataLayerRule) => this.processRule(rule));
     }
