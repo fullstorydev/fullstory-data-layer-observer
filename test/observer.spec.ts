@@ -296,14 +296,20 @@ describe('DataLayerObserver unit tests', () => {
   it('it should register a custom log appender', () => {
     expectNoCalls(globalMock.FS, 'event');
 
+    class FullStoryAppender {
+      constructor(private fs: FullStory) {
+        // sets this.fs
+      }
+
+      log(event: LogEvent) {
+        // eslint-disable-next-line camelcase
+        const { level: level_int, message: message_str, datalayer: datalayer_str } = event;
+        this.fs.event('Data Layer Observer', { level_int, message_str, datalayer_str }, 'dataLayerObserver');
+      }
+    }
+
     const observer = new DataLayerObserver({
-      appender: {
-        log: (event: LogEvent) => {
-          // eslint-disable-next-line camelcase
-          const { level: level_int, message: message_str, datalayer: datalayer_str } = event;
-          globalMock.FS.event('Data Layer Observer', { level_int, message_str, datalayer_str }, 'dataLayerObserver');
-        },
-      },
+      appender: new FullStoryAppender(globalMock.FS),
       readOnLoad: true,
       rules: [
         { source: 'digitalData.nonExistent', operators: [], destination: 'console.log' },
