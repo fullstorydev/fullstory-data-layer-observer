@@ -13,6 +13,8 @@ Something that describes getting started quickly and links to pre-built rule set
 
 Before using DLO, it’s important to understand what’s in your data layer.  This can be as simple as visiting a web page in a browser like Chrome and opening the [JavaScript Console](https://developers.google.com/web/tools/chrome-devtools/console#javascript) (`option` + `cmd` + `j`).  Try typing `digitalData` or `dataLayer` or `s` in the text field next to the caret and hit `return`.  If something is printed that does not look like an error, that’s the data layer.  You can click the small triangle twistie to further explore what’s in the data layer.
 
+![Viewing a Data Layer](./images/view_data_layer.png)
+
 More sophisticated websites will often have a dictionary of what’s in a data layer and the meaning of the data.  Always consult your analytics team before using data found in a data layer.
 
 ## Data Privacy
@@ -24,7 +26,7 @@ Sensitive, private, and confidential information should never be added to a data
 
 ## Deployment
 
-DLO is a JavaScript asset that is included on a web page.  FullStory hosts versions of DLO on our CDN.  Versioned releases have the naming convention `dlo-<version>.js`, and the most recent version is named `dlo-latest.js`.  If you would like the most update to date version of DLO on your site always, use `dlo-latest.js`.  If you'd rather stable releases and perform manual upgrades, use `dlo-<version>.js`.
+DLO is a JavaScript asset that is included on a web page.  FullStory hosts versions of DLO on our CDN.  Versioned releases have the naming convention `dlo-<version>.js`, and the most recent version is named `dlo-latest.js`.  If you would like the most update to date version of DLO on your site always, use `dlo-latest.js`.  If you'd rather stable releases and perform manual upgrades, use `dlo-<version>.js`.  See the [CHANGELOG](./CHANGELOG.md) for features and fixes.
 
 To include DLO on a webpage, simply add the following script to source code or load the script dynamically using a tag manager.  The DLO asset should be loaded after the [FullStory recording snippet](https://help.fullstory.com/hc/en-us/articles/360020623514-How-do-I-get-FullStory-up-and-running-on-my-site-) has been added to the page.
 
@@ -138,48 +140,26 @@ Each rule provides a set of options for configuration.  Options with an asterisk
 
 In version 1.0.x, data from a data layer is evaluated when DLO loads on the page.  The configuration option `window['_dlo_readOnLoad'] = true;` should be used for static data layers, which should exist on the page prior to loading DLO.  In the very near future, monitoring of dynamic changes in a data layer will be introduced.
 
-## Preview and Debugging Rules
-
-Rule writing can sometimes take a few attempts to get it right.  Fortunately, the following two options can help.
-
-- When the configuration option `_dlo_previewMode` is set to `true`, output will be written to `console.log` rather than the `destination`.
-- When a particular rule's `debug` property is set to `true`, the incremental transformations performed by `operators` and additional logging will be written to `console.debug`.
-
-Viewing the JavaScript console with the above option set to `true` prints the following example.
-
-```javascript
-dataLayer.transaction[!(items)] handleData entry
-[{'transactionID':'2325112','total':{'grandTotal':'45.59','subTotal':'37.02','shippingTotal':'5.99','totalTax':'2.58','promotionCodes':[],'selectedPayment':'VISA'}}]
-dlo-debug.js:1136   [0] flatten output (numKeys=7 sizeOfValues=94 sizeOfPayload=342)
-  [{'transactionID':'2325112','grandTotal':'45.59','subTotal':'37.02','shippingTotal':'5.99','totalTax':'2.58','promotionCodes':[],'selectedPayment':'VISA'}]
-dlo-debug.js:1136   [1] convert output (numKeys=10 sizeOfValues=114 sizeOfPayload=434)
-  [{'transactionID':'2325112','grandTotal':45.59,'subTotal':37.02,'shippingTotal':5.99,'totalTax':2.58,'promotionCodes':[],'selectedPayment':'VISA','deliveryTotal':0,'shippingTax':0,'totalAdjustment':0}]
-dlo-debug.js:1136   [2] insert output (numKeys=0 sizeOfValues=0 sizeOfPayload=34)
-  ['Order Completed',{'transactionID':'2325112','grandTotal':45.59,'subTotal':37.02,'shippingTotal':5.99,'totalTax':2.58,'promotionCodes':[],'selectedPayment':'VISA','deliveryTotal':0,'shippingTax':0,'totalAdjustment':0}]
-dlo-debug.js:1136   [3] suffix output (numKeys=0 sizeOfValues=0 sizeOfPayload=34)
-  ['Order Completed',{'transactionID_str':'2325112','grandTotal_real':45.59,'subTotal_real':37.02,'shippingTotal_real':5.99,'totalTax_real':2.58,'promotionCodes_strs':[],'selectedPayment_str':'VISA','deliveryTotal_int':0,'shippingTax_int':0,'totalAdjustment_int':0}]
-
-Order Completed {transactionID_str: '2325112', grandTotal_real: 45.59, subTotal_real: 37.02, shippingTotal_real: 5.99, totalTax_real: 2.58, …}
-```
-
 ## Source Selection
 
 As mentioned, `source` is an important aspect of a rule: it defines which data layer to observe or read an initial value from.   In version 1.0.x, every `source` must be a JavaScript object with name value pairs - for example `digitalData.user`.
 
 The `source` property uses a custom selector syntax.  It’s most often seen as dot notation such as `digitalData.cart`, which can be read as, "Find the cart object inside the digitalData object that exists on the page."  Selector syntax is however much more expressive to allow a variety of common use cases.
 
-| Use Case | Sample | Description |
+| Selector | Example | Description |
 | -------- | ------ | ----------- |
-| Pluck | parent.child.grandchild | Returns the `grandchild` object. |
-| Index | object[index] | Returns the object at `index` (a negative index steps back from the end, so -1 is the last item in an array). |
-| Pick | object[(property, ...)] | Returns an object with only the listed properties. |
-| Omit | object[!(property, ...)] | Returns an object with the listed properties removed. |
-| Prefix | object[^(property, ...)] | Returns an object with properties whose names begin with `property`. |
-| Suffix | object[$(property, ...)] | Returns an object with properties whose names end with `property`. |
-| Filter | object[?(property, ...)] | Returns the object or null if the object does not have property. |
-| Filter | object[?(property=value, ...)] | Returns the object or null if the object's `property` does not compare to `value`. Comparison can be `=`, `<=`, `>=`, `<`, `>`, and `!=`. |
+| parent.child.grandchild | `digitalData.user` | Returns the last object from dot notation. |
+| object[index] | `digitalData.product[-1]` | Returns the object at `index` (a negative index steps back from the end, so -1 is the last item in an array). |
+| object[(property, ...)] | `digitalData.cart[(cartID,price)]` | Returns an object with only the listed properties. |
+| object[!(property, ...)] | `digitalData.page.pageInfo[!(destinationURL,referringURL)]` | Returns an object with the listed properties removed. |
+| object[^(property, ...)] | `digitalData.cart.price[^(shipping)]` | Returns an object with properties whose names begin with `property`. |
+| object[$(property, ...)] | `digitalData.page.pageInfo[$(Date)]` | Returns an object with properties whose names end with `property`. |
+| object[?(property, ...)] | `digitalData.cart[?(cartID)]` | Returns the object or null if the object does not have property. |
+| object[?(property=value, ...)] | `digitalData.cart.price[?(basePrice>=10)]` | Returns the object or null if the object's `property` does not compare to `value`. Comparison can be `=`, `<=`, `>=`, `<`, `>`, and `!=`. |
 
-Selector syntax can be combined to create sophisticated queries to the data layer.  For example, `digitalData.products[-1].attributes.availability[?(pickup)]` can be read as, "From the products list, return the last product if it has the `attributes.availability.pickup` property."  This usage of selection can be helpful to record only significant events and disregard others.
+Selector syntax can be combined to create sophisticated queries to the data layer.  For example, `digitalData.products[-1].attributes.availability[?(pickup)]` can be read as, "From the products list, return the last product's availability if it has the `pickup` property."  This usage of selection can be helpful to record only significant events and disregard others.
+
+> **Tip:** A selector returns the object from the lowest level. For example, `digitalData.cart.price[?(basePrice>=10)]` returns the `price` object - not `cart`. If you need `cart` returned, use `digitalData.cart` as the selector and the use the query operator.
 
 ## Destination Selection
 
@@ -211,6 +191,36 @@ See the [Operator Tutorial](https://github.com/fullstorydev/fullstory-data-layer
 Every operator requires the `name` property.  Additional options can be found by viewing an operator's documentation.
 
 > **Tip:** If an operator is required every time, use the `window['_dlo_beforeDestination']` configuration option.  This will define an operator that is always run just prior to a destination.  This can make rule writing less tedious and is applicable to scenarios like `suffix` where a `FS` destination always requires a suffixed payload.
+
+## Preview and Debugg Rules
+
+Rule writing can sometimes take a few attempts to get it right.  Fortunately, the following two options can help.
+
+- When the configuration option `_dlo_previewMode` is set to `true`, output will be written to `console.log` rather than the `destination`.
+- When a particular rule's `debug` property is set to `true`, the incremental transformations performed by `operators` and additional logging will be written to `console.debug`.
+
+Viewing the JavaScript console with the above option set to `true` prints the following example.
+
+```javascript
+dataLayer.transaction[!(items)] handleData entry
+[{'transactionID':'2325112','total':{'grandTotal':'45.59','subTotal':'37.02','shippingTotal':'5.99','totalTax':'2.58','promotionCodes':[],'selectedPayment':'VISA'}}]
+dlo-debug.js:1136   [0] flatten output (numKeys=7 sizeOfValues=94 sizeOfPayload=342)
+  [{'transactionID':'2325112','grandTotal':'45.59','subTotal':'37.02','shippingTotal':'5.99','totalTax':'2.58','promotionCodes':[],'selectedPayment':'VISA'}]
+dlo-debug.js:1136   [1] convert output (numKeys=10 sizeOfValues=114 sizeOfPayload=434)
+  [{'transactionID':'2325112','grandTotal':45.59,'subTotal':37.02,'shippingTotal':5.99,'totalTax':2.58,'promotionCodes':[],'selectedPayment':'VISA','deliveryTotal':0,'shippingTax':0,'totalAdjustment':0}]
+dlo-debug.js:1136   [2] insert output (numKeys=0 sizeOfValues=0 sizeOfPayload=34)
+  ['Order Completed',{'transactionID':'2325112','grandTotal':45.59,'subTotal':37.02,'shippingTotal':5.99,'totalTax':2.58,'promotionCodes':[],'selectedPayment':'VISA','deliveryTotal':0,'shippingTax':0,'totalAdjustment':0}]
+dlo-debug.js:1136   [3] suffix output (numKeys=0 sizeOfValues=0 sizeOfPayload=34)
+  ['Order Completed',{'transactionID_str':'2325112','grandTotal_real':45.59,'subTotal_real':37.02,'shippingTotal_real':5.99,'totalTax_real':2.58,'promotionCodes_strs':[],'selectedPayment_str':'VISA','deliveryTotal_int':0,'shippingTax_int':0,'totalAdjustment_int':0}]
+
+Order Completed {transactionID_str: '2325112', grandTotal_real: 45.59, subTotal_real: 37.02, shippingTotal_real: 5.99, totalTax_real: 2.58, …}
+```
+
+In addition to showing the data conversions, debug includes the following statistics.
+
+- The number of properties in the object shown as `numKeys`.
+- The size (assuming UTF16) of the values in the object shown as `sizeOfValues`.
+- The size (assuming UTF16) of the object when it is stringified shown as `sizeOfPayload`.
 
 ## Deploying Rules
 
