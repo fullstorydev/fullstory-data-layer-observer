@@ -12,22 +12,6 @@
       "browserName" : "Chrome",
       "browserVersion" : "83.0",
       "resolution" : "1024x768"
-    },
-    {
-      "name": "Desktop Firefox 1",
-      "os": "Windows",
-      "osVersion": "10",
-      "browserName": "Firefox",
-      "browserVersion": "77",
-      "resolution": "1024x768"
-    },
-    {
-      "name": "Desktop Safari 1",
-      "os" : "OS X",
-      "os_version" : "Catalina",
-      "browserName" : "Safari",
-      "browser_version" : "13.1",
-      "resolution": "1024x768"
     }
   ],
   "test-runs": [
