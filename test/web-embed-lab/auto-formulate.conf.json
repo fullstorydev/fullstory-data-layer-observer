@@ -13,8 +13,37 @@
       "sites": [
         {
           "name": "basic-embed",
-          "url": "https://tfs.ngrok.io/examples/basic-embed/",
-          "close-pause": 10
+          "url": "https://dlowel.ngrok.io/examples/basic-embed/",
+          "close-pause": 5,
+          "modifiers": [
+            {
+              "mime-type-selectors": ["text/html"],
+              "replacements": [
+                {
+                  "selector": "<script async=\"true\" src=\"../../build/dlo.js\">(?s:.*)</script>",
+                  "replacement": "<!-- removed original script -->",
+                  "all": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ceddl-fs",
+          "url": "https://dlowel.ngrok.io/examples/ceddl-fs/",
+          "close-pause": 5,
+          "modifiers": [
+            {
+              "mime-type-selectors": ["text/html"],
+              "replacements": [
+                {
+                  "selector": "<script async=\"true\" src=\"../../build/dlo.js\">(?s:.*)</script>",
+                  "replacement": "<!-- removed original script -->",
+                  "all": true
+                }
+              ]
+            }
+          ]
         }
       ]
     }
@@ -26,8 +55,26 @@
       "probe-basis": {
         "dom-shape": {
           "relative": {
-            "depth": [-5, 5],
-            "width": [-5, 5]
+            "depth": 0,
+            "width": 0
+          }
+        },
+        "exceptions": {
+          "relative": {
+            "comment": "this is 1 because one of the rules is bogus",
+            "count": 1
+          }
+        }
+      }
+    },
+    {
+      "capture-name": "ceddl-fs",
+      "formula-name": "ceddl-fs",
+      "probe-basis": {
+        "dom-shape": {
+          "relative": {
+            "depth": 0,
+            "width": 0
           }
         },
         "exceptions": {
