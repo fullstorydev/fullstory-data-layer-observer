@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Data Layer Observer Example: basic embed</title>
+    <meta charset="utf-8" />
+    <script>
+      /* These are examples of static data that will be read on load */
+      window.exampleData = {
+        page: {
+          pageName: 'basic embed',
+          pageInfo: {
+            pageID: '1234'
+          }
+        }
+      }
+      window.adInformation = {
+        accountID: 'abcd'
+      }
+      window.ops = {
+        clusterInfo: {
+          id: '444-111-11231',
+          load: 0.4
+        }
+      }
+
+      /* This function will receive information as the DLO rules find it */
+      function ruleDestination(info) {
+        console.log('ruleDestination received:', info);
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Data Layer Observer Example: basic embed</h1>
+
+    <p>Take a look at the source code of this page to see how the DLO reads rules and configuration.</p>
+    <p>The Javascript console will show you output that demonstrates the rules in action.</p>
+
+    <script>
+      window['_dlo_previewMode'] = true;
+      window['_dlo_readOnLoad'] = true;
+      window['_dlo_validateRules'] = true;
+
+      window['_dlo_rules'] = [
+        {
+          "id": "fs-event-ceddl-cart",
+          "description": "send CEDDL cart's cartID and price properties to FS.event as a 'View Cart' event",
+          "source": "digitalData.cart[(cartID,price)]",
+          "operators": [
+            {
+              "name": "insert",
+              "value": "View Cart"
+            }
+          ],
+          "destination": "FS.event"
+        },
+        {
+          "id": "fs-event-ceddl-cart-not-items",
+          "description": "send CEDDL cart properties except items list to FS.event as a 'View Cart' event",
+          "source": "digitalData.cart",
+          "operators": [
+            {
+              "name": "query",
+              "select": "$[!(items)]"
+            },
+            {
+              "name": "insert",
+              "value": "View Cart"
+            }
+          ],
+          "destination": "FS.event"
+        },
+        {
+          "id": "fs-event-ceddl-cart-convert",
+          "description": "converts and sends CEDDL cart properties to FS.event as a 'View Cart' event",
+          "source": "digitalData.cart",
+          "operators": [
+            {
+              "name": "flatten"
+            },
+            {
+              "name": "convert",
+              "properties": "basePrice,priceWithTax,cartTotal",
+              "type": "real"
+            },
+            {
+              "name": "insert",
+              "value": "View Cart"
+            }
+          ],
+          "destination": "FS.event"
+        },
+        {
+          "id": "fs-event-ceddl-page-omit-convert",
+          "description": "convert and send CEDDL page properties to FS.event as a 'Page' event",
+          "source": "digitalData.page",
+          "operators": [
+            {
+              "name": "flatten"
+            },
+            {
+              "name": "query",
+              "select": "$[!(destinationURL,referringURL)]"
+            },
+            {
+              "name": "convert",
+              "properties": "version",
+              "type": "real"
+            },
+            {
+              "name": "convert",
+              "properties": "issueDate,effectiveDate,expiryDate",
+              "type": "date"
+            },
+            {
+              "name": "insert",
+              "value": "digitalData.page"
+            }
+          ],
+          "destination": "FS.event"
+        },
+        {
+          "id": "fs-event-ceddl-product",
+          "description": "send the latest CEDDL product's primaryCategory, sku, productID, and productName properties to FS.event as a 'View Product' event",
+          "source": "digitalData.product[-1]",
+          "operators": [
+            {
+              "name": "flatten"
+            },
+            {
+              "name": "query",
+              "select": "$[(primaryCategory, sku, productID, productName)]"
+            },
+            {
+              "name": "insert",
+              "value": "View Product"
+            }
+          ],
+          "destination": "FS.event"
+        },
+        {
+          "id": "fs-event-ceddl-transaction-id-total",
+          "description": "send CEDDL transaction's transactionID and total properties to FS.event as a 'Order Completed' event",
+          "source": "digitalData.transaction[(transactionID,total)]",
+          "operators": [
+            {
+              "name": "flatten"
+            },
+            {
+              "name": "insert",
+              "value": "Order Completed"
+            }
+          ],
+          "destination": "FS.event"        
+        },
+        {
+          "id": "fs-uservars-ceddl-user-all",
+          "description": "send all CEDDL user properties to FS.setUserVars",
+          "source": "digitalData.user.profile[0]",
+          "operators": [
+            {
+              "name": "flatten"
+            }
+          ],
+          "destination": "FS.setUserVars"
+        },
+        {
+          "id": "fs-identify-ceddl-user-all",
+          "description": "send all CEDDL user properties to FS.identify using the profileID as the FullStory uid",
+          "source": "digitalData.user.profile[0]",
+          "operators": [
+            {
+              "name": "flatten"
+            },
+            {
+              "name": "insert",
+              "select": "profileID"
+            }
+          ],
+          "destination": "FS.identify"
+        },
+        {
+          "id": "fs-identify-ceddl-user-allowed",
+          "description": "send only known CEDDL user properties to FS.identify using the profileID as the FullStory uid",
+          "source": "digitalData.user.profile[0]",
+          "operators": [
+            {
+              "name": "flatten"
+            },
+            {
+              "name": "query",
+              "select": "$[(profileID,userName,line1,line2,city,stateProvince,postalCode,country)]"
+            },
+            {
+              "name": "insert",
+              "select": "profileID"
+            }
+          ],
+          "destination": "FS.identify"
+        }
+      ];
+    </script>
+    <script async="true" src="../../build/dlo.js"></script>
+
+    <script>
+      // Set up the CEDDL data
+      window.digitalData = {
+        pageInstanceID: '755ebb86-60b5-451e-92d3-044157d29965',
+        page: {
+          pageInfo: {
+            pageID: '1745',
+            pageName: 'The Fruit Shoppe',
+            destinationURL: 'https://fruitshoppe.firebaseapp.com/',
+            referringURL: 'https://www.google.com/url?&q=The%20Fruit%20Shoppe',
+            sysEnv: 'desktop',
+            variant: '2',
+            version: '1.14',
+            breadcrumbs: ['home', 'Products'],
+            author: 'D Falco',
+            issueDate: '2020-06-23',
+            effectiveDate: '2020-07-23',
+            expiryDate: '2021-06-23',
+            language: 'en-US',
+            industryCodes: '7372',
+            publisher: 'FullStory',
+          },
+          category: {
+            primaryCategory: 'homepage',
+          },
+        },
+        product: [{
+          productInfo: {
+            productID: '668ebb86-60b5-451e-92d3-044157d27823',
+            productName: 'Cosmic Crisp Apple',
+            description: 'A crisp and cosmic apple',
+            productURL: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823',
+            productImage: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/image',
+            productThumbnail: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/thumbnail',
+            manufacturer: 'Washington State Apple Farm',
+            sku: 'cca-1234',
+            color: 'red and white',
+            size: 'medium',
+          },
+          category: {
+            primaryCategory: 'fruit',
+          },
+          linkedProduct: [],
+        }],
+        cart: {
+          cartID: 'cart-1234',
+          price: {
+            basePrice: 15.55,
+            voucherCode: '',
+            voucherDiscount: 0,
+            currency: 'USD',
+            taxRate: 0.09,
+            shipping: 5.0,
+            shippingMethod: 'UPS-Ground',
+            priceWithTax: 16.95,
+            cartTotal: 21.95,
+          },
+          item: [{
+            productInfo: {
+              productID: '668ebb86-60b5-451e-92d3-044157d27823',
+              productName: 'Cosmic Crisp Apple',
+              description: 'A crisp and cosmic apple',
+              productURL: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823',
+              productImage: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/image',
+              productThumbnail: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/thumbnail',
+              manufacturer: 'Washington State Apple Farm',
+              sku: 'cca-1234',
+              color: 'red and white',
+              size: 'medium',
+            },
+            category: { primaryCategory: 'fruit' },
+            price: {
+              basePrice: 15.55,
+              voucherCode: '',
+              voucherDiscount: 0,
+              currency: 'USD',
+              taxRate: 0.09,
+              shipping: 5.0,
+              shippingMethod: 'UPS-Ground',
+              priceWithTax: 16.95,
+            },
+            quantity: 1,
+            linkedProduct: [],
+            attributes: {},
+          }],
+          attributes: {},
+        },
+        transaction: {
+          transactionID: 'tr-235098236',
+          profile: {
+            profileInfo: {
+              profileID: 'pr-12333211',
+              userName: 'JohnyAppleseed',
+            },
+            address: {
+              line1: '123 Easy St.',
+              line2: '',
+              city: 'Athens',
+              stateProvince: 'GA',
+              postalCode: '30606',
+              country: 'USA',
+            },
+            shippingAddress: {
+              line1: '123 Easy St.',
+              line2: '',
+              city: 'Athens',
+              stateProvince: 'GA',
+              postalCode: '30606',
+              country: 'USA',
+            },
+          },
+          total: {
+            basePrice: 15.55,
+            voucherCode: '',
+            voucherDiscount: 0,
+            currency: 'USD',
+            taxRate: 0.09,
+            shipping: 5.0,
+            shippingMethod: 'UPS-Ground',
+            priceWithTax: 16.95,
+            transactionTotal: 16.95,
+          },
+          attributes: {},
+          item: [{
+            productInfo: {
+              productID: '668ebb86-60b5-451e-92d3-044157d27823',
+              productName: 'Cosmic Crisp Apple',
+              description: 'A crisp and cosmic apple',
+              productURL: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823',
+              productImage: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/image',
+              productThumbnail: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/thumbnail',
+              manufacturer: 'Washington State Apple Farm',
+              sku: 'cca-1234',
+              color: 'red and white',
+              size: 'medium',
+            },
+            category: { primaryCategory: 'fruit' },
+            price: {
+              basePrice: 15.55,
+              voucherCode: '',
+              voucherDiscount: 0,
+              currency: 'USD',
+              taxRate: 0.09,
+              shipping: 5.0,
+              shippingMethod: 'UPS-Ground',
+              priceWithTax: 16.95,
+            },
+            quantity: 1,
+            linkedProduct: [],
+            attributes: {},
+          }],
+        },
+        event: [{
+          eventInfo: {
+            eventName: 'Cart Item Added',
+            eventAction: 'cart-item-added',
+            eventPoints: 11,
+            type: 'cart-modifier',
+            timeStamp: new Date(),
+            effect: 'cart has a new item',
+          },
+          category: {
+            primaryCategory: 'cart',
+            attributes: {},
+          },
+        }],
+        component: [{
+          componentInfo: {
+            componentID: 'c-54123',
+            componentName: 'Cosmic Crisp Promo Video',
+            description: 'A video showing you just how cosmic and just how crisp is this apple.',
+          },
+          category: {
+            primaryCategory: 'promo-video',
+            componentType: 'video',
+            attributes: {},
+          },
+        }],
+        user: {
+          segment: {},
+          profile: [{
+            profileInfo: {
+              profileID: 'pr-12333211',
+              userName: 'JohnyAppleseed',
+            },
+            address: {
+              line1: '123 Easy St.',
+              line2: '',
+              city: 'Athens',
+              stateProvince: 'GA',
+              postalCode: '30606',
+              country: 'USA',
+            },
+            social: {},
+            attributes: {},
+          }],
+        },
+        privacy: {
+          accessCategories: [{
+            categoryName: 'analytics',
+            domains: ['fruitshoppe.firebaseapp.com'],
+          }],
+        },
+        version: "1.0",
+      };
+
+    </script>
+  </body>
+</html>
