@@ -6,3 +6,4 @@ FRONT_END_DIST=../../node_modules/web-embed-lab/static/ runner ./page-formulas/ 
 
 set +e
 killall ngrok
+echo "Finished test"
