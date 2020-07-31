@@ -90,8 +90,8 @@ Additional configuration can be added using the below options.
 
 To observe a data layer, DLO uses rules to define what to observe and how to handle data.  A rule is composed of three primary pieces of information:
 
-- `source` defines a data layer to be observed.
-- `destination` declares a function, which acts as a destination for data.
+- `source` targets an object in the data layer using a selector.  The selector can also be used to choose which data in an object is recorded.
+- `destination` declares a function, which acts as a destination for data.  The function is an API that already exists on the page - like `FS.event`.
 - `operators` provide intermediate transformations of the data between the source and destination.
 
 A rule is expressed as JSON and multiple rules are included in a `_dlo_rules` list.
@@ -182,7 +182,7 @@ See the [Operator Tutorial](https://github.com/fullstorydev/fullstory-data-layer
 | Name | Doc Link | Description |
 | ---- | -------- | ----------- |
 | convert | Doc | Formats a value to a bool, int, real, or string. |
-| flatten | Doc | Recursively flattens all properties into an object. |
+| flatten | [Doc](./docs/operator_flatten.md) | Recursively flattens all properties into an object. |
 | function | Doc | Executes a function and returns the result. |
 | insert | Doc | Inserts a value into a list at a specified position. |
 | query | Doc | Executes queries using selector syntax to return specific data within an object. |
