@@ -15,10 +15,22 @@ Options with an asterisk are required.
 
 ## Usage
 
+## Flatten user properties
+
+### Rule
+
+```javascript
+{
+ source: "digitalData.user.profile[0]",
+ operators: [ { name: "flatten" } ],
+ destination: "FS.setUserVars"
+}
+```
+
 ### Input
 
 ```javascript
-user: {
+[{
  segment: {},
  profile: [{
   profileInfo: {
@@ -36,13 +48,13 @@ user: {
    social: {},
    attributes: {},
   }],
-}
+}]
 ```
 
 ### Output
 
 ```javascript
-user: {
+[{
  profileID: 'pr-12333211',
  userName: 'JohnyAppleseed',
  line1: '123 Easy St.',
@@ -51,5 +63,5 @@ user: {
  stateProvince: 'GA',
  postalCode: '30606',
  country: 'USA',
-}
+}]
 ```
