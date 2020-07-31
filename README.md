@@ -192,7 +192,7 @@ Every operator requires the `name` property.  Additional options can be found by
 
 > **Tip:** If an operator is required every time, use the `window['_dlo_beforeDestination']` configuration option.  This will define an operator that is always run just prior to a destination.  This can make rule writing less tedious and is applicable to scenarios like `suffix` where a `FS` destination always requires a suffixed payload.
 
-## Preview and Debugg Rules
+## Preview and Debug Rules
 
 Rule writing can sometimes take a few attempts to get it right.  Fortunately, the following two options can help.
 
