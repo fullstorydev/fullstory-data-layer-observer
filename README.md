@@ -203,18 +203,24 @@ Viewing the JavaScript console with the above option set to `true` prints the fo
 
 ```javascript
 dataLayer.transaction[!(items)] handleData entry
-[{'transactionID':'2325112','total':{'grandTotal':'45.59','subTotal':'37.02','shippingTotal':'5.99','totalTax':'2.58','promotionCodes':[],'selectedPayment':'VISA'}}]
-dlo-debug.js:1136   [0] flatten output (numKeys=7 sizeOfValues=94 sizeOfPayload=342)
-  [{'transactionID':'2325112','grandTotal':'45.59','subTotal':'37.02','shippingTotal':'5.99','totalTax':'2.58','promotionCodes':[],'selectedPayment':'VISA'}]
-dlo-debug.js:1136   [1] convert output (numKeys=10 sizeOfValues=114 sizeOfPayload=434)
-  [{'transactionID':'2325112','grandTotal':45.59,'subTotal':37.02,'shippingTotal':5.99,'totalTax':2.58,'promotionCodes':[],'selectedPayment':'VISA','deliveryTotal':0,'shippingTax':0,'totalAdjustment':0}]
-dlo-debug.js:1136   [2] insert output (numKeys=0 sizeOfValues=0 sizeOfPayload=34)
-  ['Order Completed',{'transactionID':'2325112','grandTotal':45.59,'subTotal':37.02,'shippingTotal':5.99,'totalTax':2.58,'promotionCodes':[],'selectedPayment':'VISA','deliveryTotal':0,'shippingTax':0,'totalAdjustment':0}]
-dlo-debug.js:1136   [3] suffix output (numKeys=0 sizeOfValues=0 sizeOfPayload=34)
-  ['Order Completed',{'transactionID_str':'2325112','grandTotal_real':45.59,'subTotal_real':37.02,'shippingTotal_real':5.99,'totalTax_real':2.58,'promotionCodes_strs':[],'selectedPayment_str':'VISA','deliveryTotal_int':0,'shippingTax_int':0,'totalAdjustment_int':0}]
+[{"transactionID":"6691791616826663170","total":{"grandTotal":"45.59", ... }}]
+  [0] flatten output (numKeys=7 sizeOfValues=94 sizeOfPayload=342)
+  [{"transactionID":"6691791616826663170","grandTotal":"45.59", ... }]
+  [1] convert output (numKeys=10 sizeOfValues=114 sizeOfPayload=434)
+  [{"transactionID":"6691791616826663170","grandTotal":45.59, ... }]
+  [2] insert output
+  ["Order Completed",{"transactionID":"6691791616826663170","grandTotal":45.59, ... }]
+  [3] suffix output
+  ["Order Completed",{"transactionID_str":"6691791616826663170","grandTotal_real":45.59, ... }]
+  [4] function output
+  [null]
+dataLayer.transaction[!(items)] handleData exit
+[null]
 
-Order Completed {transactionID_str: '2325112', grandTotal_real: 45.59, subTotal_real: 37.02, shippingTotal_real: 5.99, totalTax_real: 2.58, …}
+Order Completed {transactionID_str: "6691791616826663170", grandTotal_real: 45.59, ... }
 ```
+
+The data emitted from a data layer can be seen below the `handleData entry` line.  Each operator will print its respective output.  The order of operators is denoted by `[n]` just before the operator's name.  Eventually `[null]` is printed because this is the result of the function call.  The `Order Completed` line with the corresponding object is the console log showing the arguments that were sent to the function call.
 
 In addition to showing the data conversions, debug includes the following statistics.
 
@@ -237,9 +243,10 @@ Below is an example of adding a custom FullStory log appender. (Be aware of [rat
 ```javascript
 window['_dlo_appender'] = {
  log: ({ level: level_int, message: message_str, datalayer: datalayer_str }) => {
-  const FS = window[window['_fs_namespace']];
-  if (FS) FS.event('Data Layer Observer', { level_int, message_str, datalayer_str }, 'dataLayerObserver')
+  if (window[window['_fs_namespace']]) {
+  window[window['_fs_namespace']].event('Data Layer Observer', { level_int, message_str, datalayer_str }, 'dataLayerObserver');
   }
+ }
 };
 ```
 

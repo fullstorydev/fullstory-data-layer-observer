@@ -78,7 +78,7 @@ To fix this problem, the **flatten** operator is used to copy all properties at 
      source: "digitalData.user.profile[0]",
      operators: [ { name: "flatten" } ],
      destination: "FS.setUserVars"
-   }```
+   }
 ```
 
 ```javascript
@@ -206,4 +206,4 @@ The result of this rule is a call to `FS.identify` with only the desired propert
 
 ## Next Steps
 
-A full list of the available operators and how to configure them is found in the Operator Reference.  Many examples also exist in the rules directory of this repository.
+A full list of the available operators and how to configure them is found in the [Operator Reference](https://github.com/fullstorydev/fullstory-data-layer-observer/tree/main#operator-reference).  Many examples also exist in the rules directory of this repository.
