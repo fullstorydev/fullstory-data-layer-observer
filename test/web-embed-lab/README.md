@@ -6,7 +6,7 @@ Web Embed Lab (WEL) is an [open source tool](https://github.com/fullstorydev/web
 
 WEL uses Browserstack and ngrok so you'll need to set up a `.env` configuration file or environment variables to give WEL the information it needs.  Read the [environment vars doc](https://github.com/fullstorydev/web-embed-lab/blob/master/docs/ENVIRONMENT_VARS.md) in the WEL repo for details.
 
-You'll also need to copy the `ngrok-auto-formulate-config.yml.example` into `ngrok-auto-formulate-config.yml.example`
+You'll also need to copy the `ngrok-auto-formulate-config.yml.example` into `ngrok-auto-formulate-config.yml.example` and update it with your ngrok API key.
 
 To test the DLO with WEL, there are two npm targets:
 
