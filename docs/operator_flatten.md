@@ -2,16 +2,18 @@
 
 The flatten operator recursively copies all properties up to a desired depth into an object with a single depth.  Properties with empty objects as values will be removed from the flattened object.
 
-Flatten is most useful when paired with `FS.setUserVars` but can be used to simplify an object's structure prior to using `FS.event`.
+Flatten is most useful when paired with `FS.setUserVars` and `FS.identify` but can be used to simplify an object's structure prior to using `FS.event`.
+
+> **Tip:**  Property names may overlap between parent and child objects. Flatten will overwrite any same-named properties with the value from the last property seen.  To prevent overwriting data, consider creating multiple rules to select individual objects or picking specific, unique properties.
 
 ## Options
 
-| Option | Default | Description |
-| ------ | ------- | ----------- |
-| index  | `0` | Position of the object to flatten in the operator input list. |
-| maxDepth | `10` | Maximum depth to search for properties to be flattened. |
-
 Options with an asterisk are required.
+
+| Option | Type | Default | Description |
+| ------ | ---- | ------- | ----------- |
+| `index`  | `number` | `0` | Position of the object to flatten in the operator input list. |
+| `maxDepth` | `number` | `10` | Maximum depth to search for properties to be flattened. |
 
 ## Usage
 
