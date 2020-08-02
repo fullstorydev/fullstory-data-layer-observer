@@ -38,7 +38,10 @@ The option `value` or `select` is required and are mutually exclusive.
 
 ```javascript
 [
- { profileID: 'pr-12333211', userName: 'JohnyAppleseed' }
+ {
+  profileID: 'pr-12333211',
+  userName: 'JohnyAppleseed'
+ }
 ]
 ```
 
@@ -47,7 +50,10 @@ The option `value` or `select` is required and are mutually exclusive.
 ```javascript
 [
  'pr-12333211',
- { profileID: 'pr-12333211', userName: 'JohnyAppleseed' }
+ {
+  profileID: 'pr-12333211',
+  userName: 'JohnyAppleseed'
+ }
 ]
 ```
 
