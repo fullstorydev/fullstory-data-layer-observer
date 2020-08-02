@@ -11,14 +11,16 @@ Insert is most useful when paired with `FS.identify` and `FS.event`.
 
 ## Options
 
-| Option | Default | Description |
-| ------ | ------- | ----------- |
-| index  | `0` | Index of the object from the operator input list to apply `select` on. |
-| position | `0` | The position of insertion in the output list, a negative position will insert from the end. |
-| select | `undefined` | Value inserted, which is found using selector syntax. |
-| value  | `undefined` | Literal value to insert. |
+Options with an asterisk are required.
 
-The option `value` or `select` is required and are mutually exclusive.
+| Option | Type | Default | Description |
+| ------ | ---- | ------- | ----------- |
+| `index`  | `number` | `0` | Index of the object from the operator input list to apply `select` on. |
+| `position` | `number` | `0` | Where to insert in the output list, negative position will insert from the end. |
+| `select`* | `string` |  `undefined` | Value inserted, which is found using selector syntax. |
+| `value`*  | `any` | `undefined` | Literal value to insert. |
+
+The options `value` and `select` are required but are mutually exclusive.
 
 ## Usage
 
