@@ -4,6 +4,8 @@
 
 FullStory Data Layer Observer (DLO) is a small but powerful JavaScript utility that makes integrating analytics data easier.  Through a flexible syntax and rules-driven approach, you can reference data from a data layer, perform intermediate changes, and send the result to FullStory - all without writing any custom JavaScript.
 
+**Data Layer Observer is currently in a private beta.**
+
 ## Quick Start
 
 ### Snippet
@@ -60,27 +62,11 @@ Sensitive, private, and confidential information should never be added to a data
 
 ## Deployment
 
+**Private beta customers should work directly with FullStory to obtain access to the script.**
+
 DLO is a JavaScript asset that is included on a web page.  FullStory hosts versions of DLO on our CDN.  Versioned releases have the naming convention `dlo-<version>.js`, and the most recent version is named `dlo-latest.js`.  If you would like the most update to date version of DLO on your site always, use `dlo-latest.js`.  If you'd rather stable releases and perform manual upgrades, use `dlo-<version>.js`.  See the [CHANGELOG](./CHANGELOG.md) for features and fixes.
 
-To include DLO on a webpage, simply add the following script to source code or load the script dynamically using a tag manager.  The DLO asset should be loaded after the [FullStory recording snippet](https://help.fullstory.com/hc/en-us/articles/360020623514-How-do-I-get-FullStory-up-and-running-on-my-site-) has been added to the page.
-
-### Current Stable Version
-
-```html
-<script async='true' src='https://edge.fullstory.com/datalayer/dlo-1.0.0.js'></script>
-```
-
-### Latest Version
-
-```html
-<script async='true' src='https://edge.fullstory.com/datalayer/dlo-latest.js'></script>
-```
-
-### Latest Debug Version
-
-```html
-<script async='true' src='https://edge.fullstory.com/datalayer/dlo-debug.js'></script>
-```
+To include DLO on a webpage, simply add the script to source code or load the script dynamically using a tag manager.  The DLO asset should be loaded after the [FullStory recording snippet](https://help.fullstory.com/hc/en-us/articles/360020623514-How-do-I-get-FullStory-up-and-running-on-my-site-) has been added to the page.
 
 If you would prefer to self-host the asset, use the `npm run build` command to create `dlo.js` and `dlo.min.js` files.  The latter is a minified script suitable for production.  You should also gzip compress the asset and set appropriate `Cache-Control` headers when self-hosting.
 
@@ -213,14 +199,16 @@ See the [Operator Tutorial](https://github.com/fullstorydev/fullstory-data-layer
 
 ### Operator Reference
 
-| Name | Doc Link | Description |
-| ---- | -------- | ----------- |
-| convert | Doc | Formats a value to a bool, int, real, or string. |
-| flatten | [Doc](./docs/operator_flatten.md) | Recursively flattens all properties into an object. |
-| function | Doc | Executes a function and returns the result. |
-| insert | Doc | Inserts a value into a list at a specified position. |
-| query | Doc | Executes queries using selector syntax to return specific data within an object. |
-| suffix | Doc | Infers and appends a type suffix to an object’s properties. |
+Click an operator name for additional documentation.
+
+| Name | Description |
+| ---- | ----------- |
+| [convert](./docs/operator_convert.md) | Formats a value to a bool, int, real, or string. |
+| [flatten](./docs/operator_flatten.md) | Recursively flattens all properties into an object. |
+| [function](./docs/operator_function.md) | Executes a function and returns the result. |
+| [insert](./docs/operator_insert.md) | Inserts a value into a list at a specified position. |
+| [query](./docs/operator_query.md) | Executes queries using selector syntax to return specific data within an object. |
+| [suffix](./docs/operator_suffix.md) | Infers and appends a type suffix to an object’s properties. |
 
 Every operator requires the `name` property.  Additional options can be found by viewing an operator's documentation.
 
