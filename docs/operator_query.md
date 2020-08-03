@@ -50,7 +50,7 @@ Options with an asterisk are required.
   social: {
    twitter: 'fsjonapples'
   }
- }],
+ }]
 }]
 ```
 
@@ -62,4 +62,54 @@ Options with an asterisk are required.
  userName: 'JohnyAppleseed',
  twitter: 'fsjonapples'
 }]
+```
+
+## Filtering and omitting properties
+
+### Rule
+
+```javascript
+{
+ source: 'digitalData.user.profile[0].address',
+ operators: [
+  { name: 'query', select: '$[?(country=USA)]' },
+  { name: 'query', select: '$[!(line1,line2)]' }
+ ],
+ destination: 'FS.setUserVars'
+}
+```
+
+### Input
+
+```javascript
+[{
+ profile: [{
+  profileInfo: {
+   profileID: 'pr-12333211',
+   userName: 'JohnyAppleseed',
+  },
+  address: {
+   line1: '123 Easy St.',
+   line2: '',
+   city: 'Athens',
+   stateProvince: 'GA',
+   postalCode: '30606',
+   country: 'USA',
+  },
+  social: {
+   twitter: 'fsjonapples'
+  }
+ }]
+}]
+```
+
+### Output
+
+```javascript
+{
+ city: 'Athens',
+ stateProvince: 'GA',
+ postalCode: '30606',
+ country: 'USA'
+}
 ```
