@@ -64,13 +64,13 @@ Sensitive, private, and confidential information should never be added to a data
 
 **Private beta customers should work directly with FullStory to obtain access to the script.**
 
-DLO is a JavaScript asset that is included on a web page.  FullStory hosts versions of DLO on our CDN.  Versioned releases have the naming convention `dlo-<version>.js`, and the most recent version is named `dlo-latest.js`.  If you would like the most update to date version of DLO on your site always, use `dlo-latest.js`.  If you'd rather stable releases and perform manual upgrades, use `dlo-<version>.js`.  See the [CHANGELOG](./CHANGELOG.md) for features and fixes.
+DLO is a JavaScript asset that is included on a web page.  FullStory hosts versions of DLO on our CDN.  Versioned releases have the naming convention `dlo-<version>.js`, and the most recent version is named `dlo-latest.js`.  If you would like the most up to date version of DLO on your site always, use `dlo-latest.js`.  If you'd rather use stable releases and perform manual upgrades, use `dlo-<version>.js`.  See the [CHANGELOG](./CHANGELOG.md) for features and fixes.
 
 To include DLO on a webpage, simply add the script to source code or load the script dynamically using a tag manager.  The DLO asset should be loaded after the [FullStory recording snippet](https://help.fullstory.com/hc/en-us/articles/360020623514-How-do-I-get-FullStory-up-and-running-on-my-site-) has been added to the page.
 
 If you would prefer to self-host the asset, use the `npm run build` command to create `dlo.js` and `dlo.min.js` files.  The latter is a minified script suitable for production.  You should also gzip compress the asset and set appropriate `Cache-Control` headers when self-hosting.
 
-FullStory’s hosted asset is ~6KB minified, compressed and has `Cache-Control` set to one month.
+FullStory’s hosted asset is roughly 6KB minified, compressed and has `Cache-Control` set to one month.
 
 ## Configuration
 
@@ -108,7 +108,9 @@ Additional configuration can be added using the below options.
 
 ## Data Layer Rules
 
-To observe a data layer, DLO uses rules to define what to observe and how to handle data.  A rule is composed of three primary pieces of information:
+To observe a data layer, DLO uses rules to define what to observe and how to handle data.  A variety of sample rules that are compatible with existing data layers can be found in the [examples/rules](./examples/rules) folder.
+
+A rule is composed of three primary pieces of information:
 
 - `source` targets an object in the data layer using a selector.  The selector can also be used to choose which data in an object is recorded.
 - `destination` declares a function, which acts as a destination for data.  The function is an API that already exists on the page - like `FS.event`.
