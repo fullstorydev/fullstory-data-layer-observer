@@ -45,30 +45,22 @@ If a selector is used with `func` or `thisArg`, the selector will be evaluated t
   item: [{
    productInfo: {
      productID: '668ebb86-60b5-451e-92d3-044157d27823',
-     productName: 'Cosmic Crisp Apple',
-     description: 'A crisp and cosmic apple',
-     productURL: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823',
-     productImage: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/image',
-     productThumbnail: 'https://fruitshoppe.firebaseapp.com/product/668ebb86-60b5-451e-92d3-044157d27823/thumbnail',
-     manufacturer: 'Washington State Apple Farm',
      sku: 'cca-1234',
      color: 'red and white',
      size: 'medium',
    },
    category: { primaryCategory: 'fruit' },
-   price: {
-     basePrice: 15.55,
-     voucherCode: '',
-     voucherDiscount: 0,
-     currency: 'USD',
-     taxRate: 0.09,
-     shipping: 5.0,
-     shippingMethod: 'UPS-Ground',
-     priceWithTax: 16.95,
-   },
    quantity: 1,
-   linkedProduct: [],
-   attributes: {},
+  },
+  {
+   productInfo: {
+     productID: 'f98bd034-33c7-4f7f-be55-31bb7f84214b',
+     sku: 'cca-5678',
+     color: 'green and white',
+     size: 'small',
+   },
+   category: { primaryCategory: 'fruit' },
+   quantity: 2,
   }]
  }
 ]
@@ -79,6 +71,6 @@ If a selector is used with `func` or `thisArg`, the selector will be evaluated t
 ```javascript
 [
  'Products Purchased',
- { productIDs:['668ebb86-60b5-451e-92d3-044157d27823'] }
+ { productIDs:['668ebb86-60b5-451e-92d3-044157d27823', 'f98bd034-33c7-4f7f-be55-31bb7f84214b'] }
 ]
 ```
