@@ -1,0 +1,5 @@
+ngrok-auto-formulate-config.yml
+/page-formulas/
+/captures/
+/certs/
+.env
