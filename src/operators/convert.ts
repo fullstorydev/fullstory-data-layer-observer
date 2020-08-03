@@ -85,7 +85,7 @@ export class ConvertOperator implements Operator {
     validator.validate(ConvertOperator.specification);
 
     const { type } = this.options;
-    if (type !== 'bool' && type !== 'int' && type !== 'real' && type !== 'string') {
+    if (type !== 'bool' && type !== 'int' && type !== 'real' && type !== 'string' && type !== 'date') {
       throw validator.throwError('type', `unknown type '${type}' used`);
     }
   }
