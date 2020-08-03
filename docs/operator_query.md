@@ -2,7 +2,7 @@
 
 The query operator executes a selector to return an object.  While a `source` selector can be used to also query an object, there are times when subsequent queries are needed.  One example is when picking or omitting properties must also accompany a filter.
 
-The query operator has one slight difference when compared to a `source` selector: it must begin with `$`.  The `$` denotes the object from the operator input list at a given `index`.
+The query operator has one slight difference when compared to a `source` selector: it must begin with `$`.  The `$` references the object from the operator input list at a given `index`.
 
 ## Options
 
