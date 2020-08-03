@@ -1,0 +1,88 @@
+{
+  "captures": [
+    {
+      "browser-configuration":     {
+        "name": "Chrome 75",
+        "os": "Windows",
+        "osVersion": "10",
+        "browserName": "Chrome",
+        "browserVersion": "75.0",
+        "resolution": "1024x768",
+        "browserstack.console": "verbose"
+      },
+      "sites": [
+        {
+          "name": "basic-embed",
+          "url": "https://dlowel.ngrok.io/examples/basic-embed/",
+          "close-pause": 5,
+          "modifiers": [
+            {
+              "mime-type-selectors": ["text/html"],
+              "replacements": [
+                {
+                  "selector": "<script async=\"true\" src=\"../../build/dlo.js\">(?s:.*)</script>",
+                  "replacement": "<!-- removed original script -->",
+                  "all": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ceddl-fs",
+          "url": "https://dlowel.ngrok.io/examples/ceddl-fs/",
+          "close-pause": 5,
+          "modifiers": [
+            {
+              "mime-type-selectors": ["text/html"],
+              "replacements": [
+                {
+                  "selector": "<script async=\"true\" src=\"../../build/dlo.js\">(?s:.*)</script>",
+                  "replacement": "<!-- removed original script -->",
+                  "all": true
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "formulations": [
+    {
+      "capture-name": "basic-embed",
+      "formula-name": "basic-embed",
+      "probe-basis": {
+        "dom-shape": {
+          "relative": {
+            "depth": 0,
+            "width": 0
+          }
+        },
+        "exceptions": {
+          "relative": {
+            "comment": "this is 1 because one of the rules is bogus",
+            "count": 1
+          }
+        }
+      }
+    },
+    {
+      "capture-name": "ceddl-fs",
+      "formula-name": "ceddl-fs",
+      "probe-basis": {
+        "dom-shape": {
+          "relative": {
+            "depth": 0,
+            "width": 0
+          }
+        },
+        "exceptions": {
+          "relative": {
+            "count": 0
+          }
+        }
+      }
+    }
+  ]
+}
