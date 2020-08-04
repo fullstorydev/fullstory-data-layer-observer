@@ -147,8 +147,8 @@ Each rule provides a set of options for configuration.  Options with an asterisk
 
 | Option | Default | Description |
 | ------ | ------- | ----------- |
-| `source` * | `undefined` | Data layer source object using selector syntax. |
-| `destination` * | `undefined` | Destination function using selector syntax. |
+| `source`* | `undefined` | Data layer source object using selector syntax. |
+| `destination`* | `undefined` | Destination function using selector syntax. |
 | `debug` | `false` | Set to true if the rule should print debug for each operator transformation. |
 | `description` | `undefined` | Text description of the rule. |
 | `id` | `undefined` | Unique identifier for the rule. |
