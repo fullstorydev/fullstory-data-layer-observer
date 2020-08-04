@@ -8,8 +8,8 @@ Options with an asterisk are required.
 
 | Option | Type | Default | Description |
 | ------ | ---- | ------- | ----------- |
-| `func`* | `string | function` | `undefined` | Function to apply on the operator input list. |
-| `thisArg` | `string | object` | `globalThis` | Object or selector used as the `this` context with the function. |
+| `func`* | `string` or `function` | `undefined` | Function to apply on the operator input list. |
+| `thisArg` | `string` or `object` | `globalThis` | Object or selector used as the `this` context with the function. |
 
 If a selector is used with `func` or `thisArg`, the selector will be evaluated to find the function or object.
 

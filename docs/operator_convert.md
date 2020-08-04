@@ -11,7 +11,7 @@ Options with an asterisk are required.
 | Option | Type | Default | Description |
 | ------ | ---- | ------- | ----------- |
 | `index` | `number` | `0` | Position of the object to convert in the operator input list. |
-| `properties`* | `string | string[]` | `undefined` | List of properties to convert. |
+| `properties`* | `string` or `string[]` | `undefined` | List of properties to convert. |
 | `type`* | `string` | `undefined` | The desired type to convert properties to. |
 
 > **Tip:** Set the `properties` option to the string `*` to convert *all* properties in an object to a desired type.
