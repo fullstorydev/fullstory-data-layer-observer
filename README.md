@@ -30,7 +30,6 @@ Add Data Layer Observer to your web site or web app by including the following s
   }
  };
  </script>
- <script async='true' src='https://edge.fullstory.com/datalayer/dlo-1.0.0.js'></script>
 ```
 
 ### Examples
@@ -90,7 +89,6 @@ DLO is configurable by adding relevant options as `window` properties to the pag
   destination: 'FS.event'
  }];
  </script>
- <script async='true' src='https://edge.fullstory.com/datalayer/dlo-1.0.0.js'></script>
  ```
 
 Additional configuration can be added using the below options.
