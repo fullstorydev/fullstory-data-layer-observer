@@ -12,7 +12,7 @@ export class RenameOperator implements Operator {
 
   readonly index: number;
 
-  readonly properties: object;
+  readonly properties: { [key: string]: string };
 
   constructor(public options: RenameOperatorOptions) {
     const { index = 0, properties = {} } = options;
@@ -20,15 +20,14 @@ export class RenameOperator implements Operator {
     this.properties = properties;
   }
 
-  handleRename(data: { [key: string]: any }) {
+  handleRename(data: { [key: string]: string }) {
     const props = Object.getOwnPropertyNames(this.properties);
     for (let i = 0; i < props.length; i += 1) {
-      const key = props[i];
-      const val = data[key];
-      /* eslint-disable no-param-reassign */
-      delete data[key];
-      // @ts-ignore
-      data[this.properties[key]] = val;
+      const oldKey = props[i];
+      const newKey = this.properties[oldKey];
+      const val = data[oldKey];
+      delete data[oldKey]; // eslint-disable-line no-param-reassign
+      data[newKey] = val; // eslint-disable-line no-param-reassign
     }
   }
 
