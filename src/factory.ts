@@ -5,6 +5,7 @@ import {
   SuffixOperator, SuffixOperatorOptions,
   ConvertOperator, ConvertOperatorOptions,
   QueryOperator, QueryOperatorOptions,
+  RenameOperator, RenameOperatorOptions,
 } from './operators';
 import { Operator } from './operator';
 
@@ -12,13 +13,13 @@ import { Operator } from './operator';
  * Declares known, built-in Operators.
  */
 export type BuiltinOperator = typeof ConvertOperator | typeof FlattenOperator | typeof FunctionOperator |
-  typeof InsertOperator | typeof SuffixOperator | typeof QueryOperator;
+  typeof InsertOperator | typeof SuffixOperator | typeof QueryOperator | typeof RenameOperator;
 
 /**
  * Declares known, built-in OperatorOptions.
  */
 export type BuiltinOptions = ConvertOperatorOptions | FlattenOperatorOptions | FunctionOperatorOptions
-  | InsertOperatorOptions | SuffixOperatorOptions | QueryOperatorOptions;
+  | InsertOperatorOptions | SuffixOperatorOptions | QueryOperatorOptions | RenameOperatorOptions;
 
 /**
  * OperatorFactory creates instances built-in Operators. Since DataLayerRule can define OperatorOptions at runtime,
@@ -32,6 +33,7 @@ export class OperatorFactory {
     insert: InsertOperator,
     suffix: SuffixOperator,
     query: QueryOperator,
+    rename: RenameOperator,
   };
 
   /**
