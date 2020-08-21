@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import deepcopy from 'deepcopy';
 import 'mocha';
 
 import { DataLayerEventType } from '../src/event';
@@ -15,7 +16,7 @@ let globalMock: GlobalMock;
 
 describe('ShimMonitor unit tests', () => {
   beforeEach(() => {
-    (globalThis as any).digitalData = { ...basicDigitalData };
+    (globalThis as any).digitalData = deepcopy(basicDigitalData); // NOTE copy so mutations don't pollute tests
     globalMock = globalThis as any;
   });
 
@@ -61,9 +62,42 @@ describe('ShimMonitor unit tests', () => {
   });
 
   it('it should remove a monitor and reassign the original value', () => {
-    const cartMonitor = new ShimMonitor(globalMock.digitalData.cart, 'cartID', 'digitalData.cart');
-    expect(cartMonitor).to.not.be.undefined;
+    const o = { message: 'Hello World' };
 
-    // TODO once we solve the timing getter/setter bug
+    let descriptor = Object.getOwnPropertyDescriptor(o, 'message');
+    expect(descriptor).to.not.be.undefined;
+
+    const { configurable, enumerable, writable } = descriptor!;
+
+    const monitor = new ShimMonitor(o, 'message', 'o');
+    expect(monitor).to.not.be.undefined;
+
+    descriptor = Object.getOwnPropertyDescriptor(o, 'message');
+    expect(descriptor).to.not.be.undefined;
+
+    expect(descriptor!.get).to.not.be.undefined;
+    expect(descriptor!.set).to.not.be.undefined;
+
+    monitor.remove();
+
+    descriptor = Object.getOwnPropertyDescriptor(o, 'message');
+
+    expect(descriptor).to.not.be.undefined;
+    expect(descriptor!.get).to.be.undefined;
+    expect(descriptor!.set).to.be.undefined;
+    expect(descriptor!.configurable).to.eq(configurable);
+    expect(descriptor!.enumerable).to.eq(enumerable);
+    expect(descriptor!.writable).to.eq(writable);
   });
+});
+
+it('it should throw an error for sealed and frozen objects', () => {
+  const f = { message: 'Hello World' };
+  Object.freeze(f);
+
+  const s = { message: 'Hello World' };
+  Object.seal(s);
+
+  expect(() => new ShimMonitor(f, 'message', 'f')).to.throw();
+  expect(() => new ShimMonitor(s, 'message', 's')).to.throw();
 });

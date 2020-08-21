@@ -1,5 +1,6 @@
 /* eslint-disable max-classes-per-file */
 import { expect } from 'chai';
+import deepcopy from 'deepcopy';
 import 'mocha';
 
 import { DataLayerObserver } from '../src/observer';
@@ -69,7 +70,7 @@ let globalMock: GlobalMock;
 
 describe('DataLayerObserver unit tests', () => {
   beforeEach(() => {
-    (globalThis as any).digitalData = { ...basicDigitalData }; // NOTE copy so mutations don't pollute tests
+    (globalThis as any).digitalData = deepcopy(basicDigitalData); // NOTE copy so mutations don't pollute tests
     (globalThis as any).console = new Console();
     (globalThis as any).FS = new FullStory();
     globalMock = globalThis as any;

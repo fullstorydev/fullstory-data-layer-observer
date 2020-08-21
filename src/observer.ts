@@ -214,7 +214,8 @@ export class DataLayerObserver {
             // find the path to the actual reference in the data layer by selecting with a path
             const path = source.substring(0, braketPos === -1 ? source.length : braketPos);
             const ref = select(path);
-
+            const frozen = Object.isFrozen(ref);
+            console.log(frozen);
             Object.getOwnPropertyNames(target).forEach((property) => this.addMonitor(ref, property, source));
 
             window.addEventListener(DataLayerEventType.PROPERTY, (e: Event) => handler.handleEvent(e as CustomEvent));
