@@ -14,7 +14,7 @@ export enum DataLayerEventType {
  * See https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/detail
  */
 export interface DataLayerDetail {
-  value?: object; // value of a property assignment
+  value?: any; // value of a property assignment
 
   args?: any[]; // args passed to a function
 
@@ -34,7 +34,7 @@ export class FunctionDetail implements DataLayerDetail {
  * PropertyDetail provides metadata specific to property (i.e. value) changes.
  */
 export class PropertyDetail implements DataLayerDetail {
-  constructor(public target: object, public value: object, public path: string) {
+  constructor(public target: object, public value: any, public path: string) {
     // use constructor params
   }
 }

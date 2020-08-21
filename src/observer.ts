@@ -3,6 +3,10 @@ import { BuiltinOptions, OperatorFactory } from './factory';
 import DataHandler from './handler';
 import { Logger, LogAppender } from './utils/logger';
 import { FunctionOperator } from './operators';
+import Monitor from './monitor';
+import ShimMonitor from './monitor-shim';
+import { select } from './selector';
+import { DataLayerEventType } from './event';
 
 /**
  * DataLayerConfig provides global settings for a DataLayerObserver.
@@ -52,6 +56,7 @@ export interface DataLayerRule {
   url?: string;
   id?: string;
   description?: string;
+  monitor?: boolean;
 }
 
 /**
@@ -63,6 +68,8 @@ export class DataLayerObserver {
   private customOperators: { [key: string]: Operator } = {};
 
   handlers: DataHandler[] = [];
+
+  monitors: Monitor[] = [];
 
   /**
    * Creates a DataLayerObserver. If no DataLayerConfig is provided, the following settings will be
@@ -99,6 +106,13 @@ export class DataLayerObserver {
     this.handlers.push(handler);
 
     return handler;
+  }
+
+  addMonitor(target: any, property: string, source: string): Monitor {
+    const monitor = new ShimMonitor(target, property, source);
+    this.monitors.push(monitor);
+
+    return monitor;
   }
 
   /**
@@ -166,6 +180,7 @@ export class DataLayerObserver {
       destination,
       readOnLoad: ruleReadOnLoad,
       url,
+      monitor = true,
     } = rule;
 
     // rule properties override global ones
@@ -181,9 +196,37 @@ export class DataLayerObserver {
       return;
     }
 
+    const monitors: Monitor[] = [];
+
     try {
       const handler = this.addHandler(source);
       handler.debug = !!debug;
+
+      try {
+        if (monitor) {
+          // use select to get the target with the desired properties
+          // NOTE using [()] to pick, etc returns a copy and not the actual data layer reference
+          const target = select(source);
+
+          if (target) {
+            const braketPos = source.lastIndexOf('[(');
+
+            // find the path to the actual reference in the data layer by selecting with a path
+            const path = source.substring(0, braketPos === -1 ? source.length : braketPos);
+            const ref = select(path);
+
+            Object.getOwnPropertyNames(target).forEach((property) => this.addMonitor(ref, property, source));
+
+            window.addEventListener(DataLayerEventType.PROPERTY, (e: Event) => handler.handleEvent(e as CustomEvent));
+            window.addEventListener(DataLayerEventType.FUNCTION, (e: Event) => handler.handleEvent(e as CustomEvent));
+          } else {
+            // if the target isn't found, it could simply be a mistake with the rule
+            Logger.getInstance().warn(`Unable to create property monitors for rule ${id}`, source);
+          }
+        }
+      } catch (err) {
+        Logger.getInstance().error(`Failed to create monitors for rule ${id}`, source);
+      }
 
       try {
         // sequentially add the operators to the handler
@@ -206,9 +249,9 @@ export class DataLayerObserver {
       } catch (err) {
         Logger.getInstance().error(`Failed to create operators for rule ${id}`, source);
         this.removeHandler(handler);
+        monitors.forEach((m: Monitor) => { this.removeMonitor(m); });
       }
 
-      // TODO (van) this will be delegated to PropertyListeners when available
       // if the rule creator wants to fire the initial value for a property, do it
       if (readOnLoad) {
         try {
@@ -244,6 +287,14 @@ export class DataLayerObserver {
     const i = this.handlers.indexOf(handler);
     if (i > -1) {
       this.handlers.splice(i, 1);
+    }
+  }
+
+  removeMonitor(monitor: Monitor) {
+    const i = this.monitors.indexOf(monitor);
+    if (i > -1) {
+      this.handlers.splice(i, 1);
+      monitor.remove();
     }
   }
 }

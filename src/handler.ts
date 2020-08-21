@@ -67,7 +67,8 @@ export default class DataHandler {
       } else {
         switch (type) {
           case DataLayerEventType.PROPERTY:
-            this.handleData([value]);
+            // NOTE even though the data layer emitted a changed value, run the selector and pass off to handler
+            this.handleData([select(path)]);
             break;
           case DataLayerEventType.FUNCTION:
             this.handleData(args || []);

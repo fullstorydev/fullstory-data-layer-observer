@@ -3,7 +3,9 @@ import { expect } from 'chai';
 import 'mocha';
 
 import { DataLayerObserver } from '../src/observer';
-import { basicDigitalData, CEDDL, PageCategory } from './mocks/CEDDL';
+import {
+  basicDigitalData, CEDDL, PageCategory, Cart, TotalCartPrice,
+} from './mocks/CEDDL';
 import Console from './mocks/console';
 import FullStory from './mocks/fullstory-recording';
 import { expectParams, expectNoCalls, expectCall } from './utils/mocha';
@@ -67,7 +69,7 @@ let globalMock: GlobalMock;
 
 describe('DataLayerObserver unit tests', () => {
   beforeEach(() => {
-    (globalThis as any).digitalData = basicDigitalData;
+    (globalThis as any).digitalData = { ...basicDigitalData }; // NOTE copy so mutations don't pollute tests
     (globalThis as any).console = new Console();
     (globalThis as any).FS = new FullStory();
     globalMock = globalThis as any;
@@ -87,15 +89,21 @@ describe('DataLayerObserver unit tests', () => {
 
   it('it should automatically parse config rules', () => {
     const observer = new DataLayerObserver({
-      rules: [{ source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log' }],
+      rules: [{
+        source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log', monitor: false,
+      }],
     });
     expect(observer.handlers.length).to.eq(1);
   });
 
   it('rules without a source and destination are invalid', () => {
     const observer = new DataLayerObserver({
-      // @ts-ignore
-      rules: [{ operators: [], destination: 'console.log' }, { source: 'digitalData.page.pageInfo', operators: [] }],
+      rules: [
+        // @ts-ignore
+        { operators: [], destination: 'console.log' },
+        // @ts-ignore
+        { source: 'digitalData.page.pageInfo', operators: [], monitor: false },
+      ],
     });
     expect(observer.handlers.length).to.eq(0);
   });
@@ -106,8 +114,12 @@ describe('DataLayerObserver unit tests', () => {
     const observer = new DataLayerObserver({
       readOnLoad: true,
       rules: [
-        { source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log' },
-        { source: 'digitalData.product[0].productInfo', operators: [], destination: 'console.log' },
+        {
+          source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log', monitor: false,
+        },
+        {
+          source: 'digitalData.product[0].productInfo', operators: [], destination: 'console.log', monitor: false,
+        },
       ],
     });
 
@@ -126,9 +138,15 @@ describe('DataLayerObserver unit tests', () => {
     const observer = new DataLayerObserver({
       rules: [
         {
-          source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log', readOnLoad: true,
+          source: 'digitalData.page.pageInfo',
+          operators: [],
+          destination: 'console.log',
+          readOnLoad: true,
+          monitor: false,
         },
-        { source: 'digitalData.product[0].productInfo', operators: [], destination: 'console.log' },
+        {
+          source: 'digitalData.product[0].productInfo', operators: [], destination: 'console.log', monitor: false,
+        },
       ],
     });
 
@@ -149,7 +167,9 @@ describe('DataLayerObserver unit tests', () => {
   it('invalid operators should remove a handler', () => {
     const observer = new DataLayerObserver({
       validateRules: true,
-      rules: [{ source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log' }],
+      rules: [{
+        source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log', monitor: false,
+      }],
     });
 
     expect(observer.handlers.length).to.eq(1);
@@ -178,10 +198,14 @@ describe('DataLayerObserver unit tests', () => {
       urlValidator,
       rules: [
         {
-          source: 'digitalData.transaction', operators: [], destination: 'console.log', url: '/checkout$',
+          source: 'digitalData.transaction',
+          operators: [],
+          destination: 'console.log',
+          url: '/checkout$',
+          monitor: false,
         },
         {
-          source: 'digitalData.cart', operators: [], destination: 'console.log', url: '/cart$',
+          source: 'digitalData.cart', operators: [], destination: 'console.log', url: '/cart$', monitor: false,
         },
       ],
     });
@@ -206,6 +230,7 @@ describe('DataLayerObserver unit tests', () => {
           source: 'digitalData.user.profile[0].profileInfo',
           operators: [],
           destination: 'FS.setUserVars',
+          monitor: false,
         },
       ],
     });
@@ -231,6 +256,7 @@ describe('DataLayerObserver unit tests', () => {
           source: 'digitalData.user.profile[0].profileInfo',
           operators: [],
           destination: 'FS.setUserVars',
+          monitor: false,
         },
       ],
     });
@@ -257,12 +283,14 @@ describe('DataLayerObserver unit tests', () => {
         { name: 'toUpper' }],
       destination: 'console.log',
       debug: true,
+      monitor: false,
     });
     observer.processRule({
       source: 'digitalData.product[0].productInfo',
       operators: [
         { name: 'toUpper' }],
       destination: 'console.log',
+      monitor: false,
     });
 
     expect(observer.handlers.length).to.eq(2);
@@ -281,7 +309,12 @@ describe('DataLayerObserver unit tests', () => {
     expect(observer).to.not.be.undefined;
 
     observer.registerOperator('toUpper', new UppercaseOperator());
-    observer.processRule({ source: 'digitalData.page.category', operators: [], destination: 'console.log' });
+    observer.processRule({
+      source: 'digitalData.page.category',
+      operators: [],
+      destination: 'console.log',
+      monitor: false,
+    });
 
     expect(observer.handlers.length).to.eq(1);
 
@@ -312,7 +345,9 @@ describe('DataLayerObserver unit tests', () => {
       appender: new FullStoryAppender(globalMock.FS),
       readOnLoad: true,
       rules: [
-        { source: 'digitalData.nonExistent', operators: [], destination: 'console.log' },
+        {
+          source: 'digitalData.nonExistent', operators: [], destination: 'console.log', monitor: false,
+        },
       ],
     });
 
@@ -322,5 +357,69 @@ describe('DataLayerObserver unit tests', () => {
     expect(eventName).to.eq('Data Layer Observer');
     expect(event).to.not.be.undefined;
     expect(source).to.eq('dataLayerObserver');
+  });
+
+  it('updating properties should trigger the data handler', () => {
+    const observer = new DataLayerObserver({
+      rules: [
+        {
+          source: 'digitalData.cart[(cartID,price)]',
+          operators: [],
+          destination: 'console.log',
+          readOnLoad: true,
+          // monitor: true, // NOTE the default is true
+        },
+      ],
+    });
+
+    expect(observer).to.not.be.undefined;
+    expect(globalMock.digitalData.cart).to.not.be.undefined;
+
+    // check the readOnLoad
+    const [cart] = expectParams(globalMock.console, 'log');
+    expect(cart.cartID).to.eq(globalMock.digitalData.cart.cartID);
+
+    globalMock.digitalData.cart.cartID = 'cart-5678';
+
+    // check the assignment
+    const [reassigned] = expectParams(globalMock.console, 'log');
+    expect(reassigned.cartID).to.eq('cart-5678');
+    expect((reassigned as Cart).item).to.be.undefined; // ensure selector picked
+
+    const updatedPrice: TotalCartPrice = {
+      basePrice: 15.55,
+      voucherCode: '',
+      voucherDiscount: 0,
+      currency: 'USD',
+      taxRate: 0.09,
+      shipping: 5.0,
+      shippingMethod: 'LTL',
+      priceWithTax: 16.95,
+      cartTotal: 21.95,
+    };
+
+    globalMock.digitalData.cart.price = updatedPrice;
+
+    const [shippingChange] = expectParams(globalMock.console, 'log');
+    expect(shippingChange.cartID).to.eq('cart-5678');
+    expect((shippingChange as Cart).price).to.eq(updatedPrice);
+    expect((shippingChange as Cart).item).to.be.undefined; // ensure selector picked
+  });
+
+  it('it should not add monitors for an invalid rule', () => {
+    const observer = new DataLayerObserver({
+      rules: [
+        {
+          source: 'digitalData.cart[(cartID,price)]',
+          operators: [],
+          destination: 'console.log',
+          readOnLoad: true,
+          // monitor: true, // NOTE the default is true
+        },
+      ],
+    });
+
+    expect(observer).to.not.be.undefined;
+    expect(globalMock.digitalData.cart).to.not.be.undefined;
   });
 });
