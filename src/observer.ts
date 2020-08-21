@@ -43,6 +43,7 @@ export interface DataLayerConfig {
  *  id: optional identifier for the rule
  *  description: optional description of the rule
  *  debug: true if the rule should print debug for each Operator transformation
+ *  monitor: true if property changes or function calls should rerun the operators
  *  operators: list of OperatorOptions to transform data before a destination
  *  readOnLoad: rule-specific readOnLoad (see DataLayerConfig readOnLoad)
  *  url: regular expression used to enable the rule when the page URL matches
@@ -290,6 +291,10 @@ export class DataLayerObserver {
     }
   }
 
+  /**
+   * Removes a monitor from watching property changes or function calls.
+   * @param monitor
+   */
   removeMonitor(monitor: Monitor) {
     const i = this.monitors.indexOf(monitor);
     if (i > -1) {
