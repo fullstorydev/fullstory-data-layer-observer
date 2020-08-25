@@ -4,7 +4,7 @@
 // Memoized Paths or false if the path cannot be parsed
 const parsedPaths: { [path: string]: Path | false } = {};
 
-enum ElementKind {
+export enum ElementKind {
   Pluck = 'pluck', // color
   Index = 'index', // colors[-2]
   Pick = 'pick', // colors[(favorite, hated, ...)]
@@ -425,7 +425,7 @@ export class Path {
 }
 
 // Parses and then memoizes a path for future calls
-function parsePath(path: string): Path | false {
+export function parsePath(path: string): Path | false {
   if (typeof parsedPaths[path] === 'undefined') {
     try {
       parsedPaths[path] = new Path(path);

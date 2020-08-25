@@ -5,7 +5,7 @@ import { Logger, LogAppender } from './utils/logger';
 import { FunctionOperator } from './operators';
 import Monitor from './monitor';
 import ShimMonitor from './monitor-shim';
-import { select } from './selector';
+import { select, parsePath, ElementKind } from './selector';
 import { DataLayerEventType } from './event';
 
 /**
@@ -205,21 +205,38 @@ export class DataLayerObserver {
 
       try {
         if (monitor) {
-          // use select to get the target with the desired properties
-          // NOTE using [()] to pick, etc returns a copy and not the actual data layer reference
           const target = select(source);
+          const parsedPath = parsePath(source);
 
-          if (target) {
-            const braketPos = source.lastIndexOf('[(');
+          // a valid target exists and there is a known path to get to it
+          if (target && parsedPath) {
+            const { elements } = parsedPath;
 
-            // find the path to the actual reference in the data layer by selecting with a path
-            const path = source.substring(0, braketPos === -1 ? source.length : braketPos);
-            const ref = select(path);
+            // NOTE using brackets [()] to pick, omit, etc returns a copy and not the actual data layer reference
+            // so find the path to the actual reference in the data layer just prior to the brackets
+            let ref: any;
 
-            Object.getOwnPropertyNames(target).forEach((property) => this.addMonitor(ref, property, source));
+            for (let i = 0; i < elements.length; i += 1) {
+              const { kind, raw, brackets } = elements[i];
+              // traverse the path elements to the point where a copy would otherwise be returned
+              if (kind !== ElementKind.Pluck && kind !== ElementKind.Index) {
+                if (brackets) {
+                  ref = select(source.substring(0, source.indexOf(`[${brackets.op.raw}]`)));
+                  break;
+                } else {
+                  Logger.getInstance().error(`Brackets expected in ${raw} but not found in rule ${id}`, source);
+                }
+              }
+            }
 
-            window.addEventListener(DataLayerEventType.PROPERTY, (e: Event) => handler.handleEvent(e as CustomEvent));
-            window.addEventListener(DataLayerEventType.FUNCTION, (e: Event) => handler.handleEvent(e as CustomEvent));
+            if (ref) {
+              Object.getOwnPropertyNames(target).forEach((property) => this.addMonitor(ref, property, source));
+
+              window.addEventListener(DataLayerEventType.PROPERTY, (e: Event) => handler.handleEvent(e as CustomEvent));
+              window.addEventListener(DataLayerEventType.FUNCTION, (e: Event) => handler.handleEvent(e as CustomEvent));
+            } else {
+              Logger.getInstance().error(`Failed to create monitors on missing reference in rule ${id}`, source);
+            }
           } else {
             // if the target isn't found, it could simply be a mistake with the rule
             Logger.getInstance().warn(`Unable to create property monitors for rule ${id}`, source);
