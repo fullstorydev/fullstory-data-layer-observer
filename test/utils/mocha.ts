@@ -54,6 +54,9 @@ export function expectEventListener(type: DataLayerEventType, expectedValue: any
   expect(expectedValue).to.not.be.undefined;
 
   const listener = (event: Event) => {
+    // remove the listener to clean up for the next test
+    window.removeEventListener(type, listener);
+
     expect(event).to.not.be.undefined;
     expect(event.type).to.eq(type);
 
@@ -71,8 +74,6 @@ export function expectEventListener(type: DataLayerEventType, expectedValue: any
       customEvent.detail.args!.forEach((arg: any, i: number) => expect(expectedValue[i] === arg));
     }
 
-    // remove the listener to clean up for the next test
-    window.removeEventListener(type, listener);
     done();
   };
 
