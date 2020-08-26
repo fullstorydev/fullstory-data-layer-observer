@@ -2,11 +2,11 @@ import { expect } from 'chai';
 import deepcopy from 'deepcopy';
 import 'mocha';
 
-import { DataLayerEventType } from '../src/event';
 import ShimMonitor from '../src/monitor-shim';
 
 import { basicDigitalData, CEDDL } from './mocks/CEDDL';
 import { expectEventListener } from './utils/mocha';
+import { createEventType } from '../src/event';
 
 interface GlobalMock {
   digitalData: CEDDL,
@@ -28,7 +28,7 @@ describe('ShimMonitor unit tests', () => {
     expect(globalMock.digitalData.cart).to.not.be.undefined;
     expect(globalMock.digitalData.user.profile).to.not.be.undefined;
 
-    const cartMonitor = new ShimMonitor(globalMock.digitalData.cart, 'price', 'digitalData.cart[(cartID,price)]');
+    const cartMonitor = new ShimMonitor(globalMock.digitalData.cart, 'cartID', 'digitalData.cart');
     const userMonitor = new ShimMonitor(globalMock.digitalData.user, 'profile', 'digitalData.user.profile[0]');
 
     expect(cartMonitor).to.not.be.undefined;
@@ -40,11 +40,11 @@ describe('ShimMonitor unit tests', () => {
     expect(idDescriptor).to.not.be.undefined;
     expect(priceDescriptor).to.not.be.undefined;
 
-    expect(priceDescriptor!.get).to.not.be.undefined;
-    expect(priceDescriptor!.set).to.not.be.undefined;
+    expect(priceDescriptor!.get).to.be.undefined;
+    expect(priceDescriptor!.set).to.be.undefined;
 
-    expect(idDescriptor!.get).to.be.undefined;
-    expect(idDescriptor!.set).to.be.undefined;
+    expect(idDescriptor!.get).to.not.be.undefined;
+    expect(idDescriptor!.set).to.not.be.undefined;
   });
 
   it('it will throw an error unsupported properties', () => {
@@ -53,9 +53,11 @@ describe('ShimMonitor unit tests', () => {
   });
 
   it('it should emit the value on change', (done) => {
-    expectEventListener(DataLayerEventType.PROPERTY, 'cart-5678', done);
+    const path = 'digitalData.cart';
 
-    const cartMonitor = new ShimMonitor(globalMock.digitalData.cart, 'cartID', 'digitalData.cart');
+    expectEventListener(createEventType(path), 'cart-5678', done);
+
+    const cartMonitor = new ShimMonitor(globalMock.digitalData.cart, 'cartID', path);
     expect(cartMonitor).to.not.be.undefined;
 
     globalMock.digitalData.cart.cartID = 'cart-5678';
@@ -89,15 +91,15 @@ describe('ShimMonitor unit tests', () => {
     expect(descriptor!.enumerable).to.eq(enumerable);
     expect(descriptor!.writable).to.eq(writable);
   });
-});
 
-it('it should throw an error for sealed and frozen objects', () => {
-  const f = { message: 'Hello World' };
-  Object.freeze(f);
+  it('it should throw an error for sealed and frozen objects', () => {
+    const f = { message: 'Hello World' };
+    Object.freeze(f);
 
-  const s = { message: 'Hello World' };
-  Object.seal(s);
+    const s = { message: 'Hello World' };
+    Object.seal(s);
 
-  expect(() => new ShimMonitor(f, 'message', 'f')).to.throw();
-  expect(() => new ShimMonitor(s, 'message', 's')).to.throw();
+    expect(() => new ShimMonitor(f, 'message', 'f')).to.throw();
+    expect(() => new ShimMonitor(s, 'message', 's')).to.throw();
+  });
 });

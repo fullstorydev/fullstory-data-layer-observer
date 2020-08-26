@@ -11,12 +11,12 @@ export default class ShimMonitor extends Monitor {
 
   private writable: boolean | undefined = true;
 
-  addPropertyMonitor(target: any, property: string) {
-    if (Object.isFrozen(target)) {
+  addPropertyMonitor(object: any, property: string) {
+    if (Object.isFrozen(object)) {
       throw new Error('Failed to monitor frozen object');
     }
 
-    if (Object.isSealed(target)) {
+    if (Object.isSealed(object)) {
       throw new Error('Failed to monitor sealed object');
     }
 
@@ -30,7 +30,7 @@ export default class ShimMonitor extends Monitor {
     }
 
     // define a new property and default to a more malleable property if descriptor is undefined
-    Object.defineProperty(target, property, {
+    Object.defineProperty(object, property, {
       configurable: this.configurable,
       enumerable: this.enumerable,
       get: () => this.state,
@@ -50,7 +50,7 @@ export default class ShimMonitor extends Monitor {
         writable: this.writable,
       });
     } catch (err) {
-      Logger.getInstance().error(`Failed to remove listener on ${this.property}`, this.source);
+      Logger.getInstance().error(`Failed to remove listener on ${this.property}`, this.path);
     }
   }
 }

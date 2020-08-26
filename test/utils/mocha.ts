@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import { MockClass, Call } from '../mocks/mock';
-import { DataLayerEventType, DataLayerDetail } from '../../src/event';
+import { DataLayerDetail } from '../../src/event';
 
 /**
  * Tests whether a call queue has one Call and returns it.
@@ -46,11 +46,11 @@ export function expectParams(mock: MockClass, methodName: string, callQueueLengt
 /**
  * Create an EventListener that tests the events fired match expected values.
  * This harness supports async events by using Mocha's done callback.
- * @param expectedType the expected DataLayerEventType
+ * @param expectedType the expected type string
  * @param expectedValue the expected value in the object event
  * @param done Mocha's done callback to signal the tests passed
  */
-export function expectEventListener(type: DataLayerEventType, expectedValue: any, done: Mocha.Done) {
+export function expectEventListener(type: string, expectedValue: any, done: Mocha.Done) {
   expect(expectedValue).to.not.be.undefined;
 
   const listener = (event: Event) => {
@@ -63,11 +63,11 @@ export function expectEventListener(type: DataLayerEventType, expectedValue: any
     const customEvent = event as CustomEvent<DataLayerDetail>;
     expect(customEvent.detail).to.not.be.undefined;
 
-    if (event.type === DataLayerEventType.PROPERTY) {
+    if (customEvent.detail.value) {
       expect(customEvent.detail.value).to.eq(expectedValue);
     }
 
-    if (event.type === DataLayerEventType.FUNCTION) {
+    if (customEvent.detail.args) {
       expect(customEvent.detail.args).to.not.be.undefined;
       expect(customEvent.detail.args!.length).to.eq(expectedValue.length);
 

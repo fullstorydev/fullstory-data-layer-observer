@@ -1,12 +1,12 @@
 /* eslint-disable max-classes-per-file */
 
 /**
- * Defines CustomEvent types.
+ * Defines CustomEvent types. Types will be prefixed with a DLO namespace.
  * See https://developer.mozilla.org/en-US/docs/Web/API/Event/type
+ * @param path that identifies the data layer object that created the event
  */
-export enum DataLayerEventType {
-  PROPERTY = '_dlo_DataLayerProperty',
-  FUNCTION = '_dlo_DataLayerFunction',
+export function createEventType(path: string) {
+  return `datalayerobserver/${path}`;
 }
 
 /**
@@ -25,7 +25,7 @@ export interface DataLayerDetail {
  * FunctionDetail provides metadata specific to function invocations.
  */
 export class FunctionDetail implements DataLayerDetail {
-  constructor(public target: object, public args: any[], public path: string) {
+  constructor(public path: string, public property: string, public args: any[]) {
     // use constructor params
   }
 }
@@ -34,7 +34,7 @@ export class FunctionDetail implements DataLayerDetail {
  * PropertyDetail provides metadata specific to property (i.e. value) changes.
  */
 export class PropertyDetail implements DataLayerDetail {
-  constructor(public target: object, public value: any, public path: string) {
+  constructor(public path: string, public property: string, public value: any) {
     // use constructor params
   }
 }

@@ -1,5 +1,5 @@
 import {
-  DataLayerEventType, DataLayerDetail, PropertyDetail, FunctionDetail,
+  DataLayerDetail, PropertyDetail, FunctionDetail, createEventType,
 } from './event';
 import { Logger } from './utils/logger';
 
@@ -9,31 +9,32 @@ import { Logger } from './utils/logger';
 export default abstract class Monitor {
   protected state: any;
 
-  readonly type: DataLayerEventType;
-
   /**
    * Creates a Monitor.
-   * @param target the object containing the property to watch or function
-   * @param property the property to watch (can hold a value or function)
-   * @param source the source (e.g. selector) used to disambiguate who fired the event
+   * @param target object containing the property or function to watch
+   * @param property to watch (can hold a value or function)
+   * @param path to the data layer object
    */
-  constructor(protected target: any, protected property: string, protected source: string) {
-    if (!this.target) {
+  constructor(protected target: any, protected property: string, protected path: string) {
+    if (!target) {
       throw new Error('Monitor could not find target');
     } else {
+      if (path.endsWith(property)) {
+        // this could be an error or just a poorly structured data layer object
+        Logger.getInstance().warn(`Monitor path appears to include property ${property}`, path);
+      }
+
       this.copy();
 
-      switch (typeof this.target) {
+      switch (typeof target) {
         case 'object':
-          this.type = DataLayerEventType.PROPERTY;
           this.addPropertyMonitor(target, property);
           break;
         case 'function':
-          this.type = DataLayerEventType.FUNCTION;
           // TODO
           break;
         default:
-          throw new Error(`Monitor has unsupported type ${typeof this.target}`);
+          throw new Error(`Monitor can not be added to unsupported type ${typeof this.target}`);
       }
     }
   }
@@ -51,14 +52,8 @@ export default abstract class Monitor {
    * @param value the property changed or function arguments
    */
   private createDetail(value: any): DataLayerDetail {
-    switch (this.type) {
-      case DataLayerEventType.PROPERTY:
-        return new PropertyDetail(this.target, value, this.source);
-      case DataLayerEventType.FUNCTION:
-        return new FunctionDetail(this.target, value, this.source);
-      default:
-        throw new Error(`Unknown event type ${this.type}`);
-    }
+    return typeof this.target === 'function' ? new FunctionDetail(this.path, this.property, value)
+      : new PropertyDetail(this.path, this.property, value);
   }
 
   /**
@@ -66,10 +61,12 @@ export default abstract class Monitor {
    * @param value the property changed or function arguments
    */
   protected emit(value: any) {
+    // TODO (van) emit would be a good place to put a debounce feature
     try {
-      window.dispatchEvent(new CustomEvent<DataLayerDetail>(this.type, { detail: this.createDetail(value) }));
+      window.dispatchEvent(new CustomEvent<DataLayerDetail>(createEventType(this.path),
+        { detail: this.createDetail(value) }));
     } catch (err) {
-      Logger.getInstance().error(`Failed to broadcast change for ${this.property}`, this.source);
+      Logger.getInstance().error(`Failed to broadcast change for ${this.property}`, this.path);
     }
   }
 

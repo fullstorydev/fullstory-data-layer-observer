@@ -224,7 +224,13 @@ describe('DataHandler unit tests', () => {
     // @ts-ignore
     basicDigitalData.fn = () => console.log('Hello World'); // eslint-disable-line no-console
     const handler = new DataHandler('digitalData.fn');
-    expect(() => handler.fireEvent()).to.throw();
+
+    const seen: any = [];
+
+    const echo = new EchoOperator(seen);
+    handler.push(echo);
+
+    expect(seen.length).to.eq(0);
   });
 
   it('events with unknown types should not be handled', () => {
@@ -236,7 +242,7 @@ describe('DataHandler unit tests', () => {
     handler.push(echo);
 
     handler.handleEvent(new CustomEvent<DataLayerDetail>('unknownType', {
-      detail: new PropertyDetail(basicDigitalData.page.pageInfo, basicDigitalData.page, 'digitalData.page.pageInfo'),
+      detail: new PropertyDetail('digitalData.page', 'pageInfo', basicDigitalData.page.pageInfo),
     }));
 
     expect(seen.length).to.eq(0);
