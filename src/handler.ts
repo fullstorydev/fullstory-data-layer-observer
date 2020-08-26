@@ -71,11 +71,14 @@ export default class DataHandler {
 
         // NOTE even though a value change occurred, handleData expects the root data layer object
         // so select the source and send it to handle data
-        const result: any[] = [select(selector)];
+        const result: any = select(selector);
 
-        this.timeoutId = window.setTimeout(() => {
-          this.handleData(result);
-        }, DataHandler.debounceTime);
+        // only handle data if the selector actually returns something with data
+        if (result) {
+          this.timeoutId = window.setTimeout(() => {
+            this.handleData([result]);
+          }, DataHandler.debounceTime);
+        }
       } else {
         this.handleData(args || []);
       }

@@ -10,6 +10,7 @@ import { basicDigitalData, PageInfo, Page } from './mocks/CEDDL';
 import { Operator, OperatorOptions } from '../src/operator';
 import { DataLayerDetail, PropertyDetail, createEvent } from '../src/event';
 import { expectNoCalls, expectParams } from './utils/mocha';
+import DataLayerTarget from '../src/target';
 
 const originalConsole = globalThis.console;
 const console = new Console();
@@ -288,6 +289,24 @@ describe('DataHandler unit tests', () => {
 
     setTimeout(() => {
       expect(seen.length).to.eq(1);
+      done();
+    }, DataHandler.debounceTime * 1.5);
+  });
+
+  it('an object with no properties selected from an event should not be handled', (done) => {
+    const handler = new DataHandler(new DataLayerTarget('digitalData.page.pageInfo[(missingProperty)]'));
+
+    const seen: any = [];
+
+    const echo = new EchoOperator(seen);
+    handler.push(echo);
+
+    (globalThis as any).digitalData.page.pageInfo.pageID = '1234';
+    handler.handleEvent(createEvent((globalThis as any).digitalData.page, 'pageInfo',
+      (globalThis as any).digitalData.page.pageInfo, 'digitalData.page.pageInfo'));
+
+    setTimeout(() => {
+      expect(seen.length).to.eq(0);
       done();
     }, DataHandler.debounceTime * 1.5);
   });
