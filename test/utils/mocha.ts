@@ -2,6 +2,7 @@ import { expect } from 'chai';
 
 import { MockClass, Call } from '../mocks/mock';
 import { DataLayerDetail } from '../../src/event';
+import { DataLayerObserver, DataLayerConfig } from '../../src/observer';
 
 /**
  * Tests whether a call queue has one Call and returns it.
@@ -78,4 +79,92 @@ export function expectEventListener(type: string, expectedValue: any, done: Moch
   };
 
   window.addEventListener(type, listener);
+}
+
+/**
+ * Manages the lifecycle of DataLayerObservers to clean up properly.
+ */
+export class ExpectObserver {
+  static instance: ExpectObserver;
+
+  observers: DataLayerObserver[];
+
+  private constructor() {
+    this.observers = [];
+  }
+
+  /**
+   * Creates a DataLayerObserver.
+   * @param config that defines the DataLayerConfig
+   * @param expectHandlers when true checks there is a handler for each rule
+   */
+  create(config: DataLayerConfig, expectHandlers = true): DataLayerObserver {
+    const observer = new DataLayerObserver(config);
+    expect(observer).to.not.be.undefined;
+    expect(observer).to.not.be.null;
+
+    if (expectHandlers) {
+      expect(observer.handlers.length).to.eq(config.rules.length);
+    }
+
+    if (config.rules.find((rule) => rule.monitor === undefined || rule.monitor === true)) {
+      expect(Object.getOwnPropertyNames(observer.monitors).length).be.greaterThan(0);
+    }
+
+    this.observers.push(observer);
+
+    return observer;
+  }
+
+  /**
+   * Cleans up an observer by removing its EventListener from the window.
+   * If no observer is defined, all observers previously registered are cleaned up.
+   * @param observer to be cleaned up.
+   */
+  cleanup(observer?: DataLayerObserver) {
+    if (observer) {
+      this.destroy(observer);
+    } else {
+      this.observers.forEach((o) => {
+        this.destroy(o);
+      });
+    }
+  }
+
+  /**
+   * Creates an DataLayerObserver with default DataLayerConfig.
+   */
+  default(): DataLayerObserver {
+    const observer = new DataLayerObserver();
+
+    expect(observer).to.not.be.undefined;
+    expect(observer).to.not.be.null;
+
+    this.observers.push(observer);
+
+    return observer;
+  }
+
+  /**
+   * Cleans up an observer by removing its EventListener from the window.
+   * @param observer to be cleaned up.
+   */
+  private destroy(observer: DataLayerObserver) {
+    observer.handlers.forEach((handler) => {
+      handler.stop();
+    });
+
+    const i = this.observers.indexOf(observer);
+    if (i > -1) {
+      this.observers.splice(i, 1);
+    }
+  }
+
+  static getInstance(): ExpectObserver {
+    if (!ExpectObserver.instance) {
+      ExpectObserver.instance = new ExpectObserver();
+    }
+
+    return ExpectObserver.instance;
+  }
 }

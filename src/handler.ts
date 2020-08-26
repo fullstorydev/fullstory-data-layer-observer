@@ -10,6 +10,8 @@ import DataLayerTarget from './target';
  * registered operators.
  */
 export default class DataHandler {
+  static readonly debounceTime = 250;
+
   private listener: EventListener | null = null;
 
   private operators: Operator[] = [];
@@ -73,7 +75,7 @@ export default class DataHandler {
 
         this.timeoutId = window.setTimeout(() => {
           this.handleData(result);
-        }, 250);
+        }, DataHandler.debounceTime);
       } else {
         this.handleData(args || []);
       }
