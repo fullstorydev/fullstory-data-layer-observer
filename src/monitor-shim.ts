@@ -20,7 +20,7 @@ export default class ShimMonitor extends Monitor {
       throw new Error('Failed to monitor sealed object');
     }
 
-    const descriptor = Object.getOwnPropertyDescriptor(this.target, this.property);
+    const descriptor = Object.getOwnPropertyDescriptor(this.object, this.property);
 
     if (descriptor) {
       const { configurable, enumerable, writable } = descriptor;
@@ -43,7 +43,7 @@ export default class ShimMonitor extends Monitor {
 
   remove() {
     try {
-      Object.defineProperty(this.target, this.property, {
+      Object.defineProperty(this.object, this.property, {
         enumerable: this.enumerable,
         configurable: this.configurable,
         value: this.state,

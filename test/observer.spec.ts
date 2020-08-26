@@ -153,8 +153,6 @@ describe('DataLayerObserver unit tests', () => {
       ],
     });
 
-    expect(observer).to.not.be.undefined;
-
     const [pageInfo] = expectParams(globalMock.console, 'log');
     expect(pageInfo).to.eq(globalMock.digitalData.page.pageInfo);
 
@@ -244,8 +242,6 @@ describe('DataLayerObserver unit tests', () => {
       ],
     });
 
-    expect(observer).to.not.be.undefined;
-
     const [profileInfo] = expectParams(globalMock.console, 'log');
     expect(profileInfo).to.eq(globalMock.digitalData.user.profile[0].profileInfo);
 
@@ -272,8 +268,6 @@ describe('DataLayerObserver unit tests', () => {
       ],
     });
 
-    expect(observer).to.not.be.undefined;
-
     const [profileInfo] = expectParams(globalMock.console, 'debug');
     expect(profileInfo).to.eq(globalMock.digitalData.user.profile[0].profileInfo);
 
@@ -286,8 +280,6 @@ describe('DataLayerObserver unit tests', () => {
     expectNoCalls(globalMock.console, 'debug');
 
     const observer = ExpectObserver.getInstance().default();
-
-    expect(observer).to.not.be.undefined;
 
     observer.registerOperator('toUpper', new UppercaseOperator());
     observer.processRule({
@@ -320,8 +312,6 @@ describe('DataLayerObserver unit tests', () => {
     expectNoCalls(globalMock.console, 'log');
 
     const observer = ExpectObserver.getInstance().create({ beforeDestination: { name: 'toUpper' }, rules: [] });
-
-    expect(observer).to.not.be.undefined;
 
     observer.registerOperator('toUpper', new UppercaseOperator());
     observer.processRule({
@@ -368,8 +358,6 @@ describe('DataLayerObserver unit tests', () => {
       ],
     }, false);
 
-    expect(observer).to.not.be.undefined;
-
     const [eventName, event, source] = expectParams(globalMock.FS, 'event');
     expect(eventName).to.eq('Data Layer Observer');
     expect(event).to.not.be.undefined;
@@ -396,7 +384,6 @@ describe('DataLayerObserver unit tests', () => {
       ],
     }, true);
 
-    expect(observer).to.not.be.undefined;
     expect(globalMock.digitalData.cart).to.not.be.undefined;
 
     // check the readOnLoad
@@ -450,8 +437,49 @@ describe('DataLayerObserver unit tests', () => {
       ],
     }, true);
 
-    expect(observer).to.not.be.undefined;
     expect(globalMock.digitalData.cart).to.not.be.undefined;
+
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
+  it('removing monitors should prevent property changes from firing', () => {
+    let changes: any[] = [];
+
+    const observer = ExpectObserver.getInstance().create({
+      rules: [
+        {
+          source: 'digitalData.cart[(cartID,price)]',
+          operators: [],
+          destination: (...data: any[]) => {
+            // NOTE use a local destination to prevent cross-test pollution
+            changes = data;
+          },
+          readOnLoad: false,
+          // monitor: true, // NOTE the default is true
+        },
+      ],
+    }, true);
+
+    expect(globalMock.digitalData.cart).to.not.be.undefined;
+
+    globalMock.digitalData.cart.cartID = 'cart-5678';
+
+    // check the assignment
+    setTimeout(() => {
+      const [reassigned] = changes;
+      expect(reassigned.cartID).to.eq('cart-5678');
+    }, DataHandler.debounceTime * 1.5);
+
+    // remove monitors and re-check
+    observer.removeMonitor('digitalData.cart');
+
+    globalMock.digitalData.cart.cartID = 'cart-0000';
+
+    // check that no event occurred
+    setTimeout(() => {
+      const [reassigned] = changes;
+      expect(reassigned.cartID).to.eq('cart-5678');
+    }, DataHandler.debounceTime * 1.5);
 
     ExpectObserver.getInstance().cleanup(observer);
   });
