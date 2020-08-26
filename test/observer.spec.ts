@@ -360,13 +360,17 @@ describe('DataLayerObserver unit tests', () => {
     expect(source).to.eq('dataLayerObserver');
   });
 
-  it('updating properties should trigger the data handler', () => {
+  it('updating properties should trigger the data handler', (done) => {
+    let changes: any[] = [];
+
     const observer = new DataLayerObserver({
       rules: [
         {
           source: 'digitalData.cart[(cartID,price)]',
           operators: [],
-          destination: 'console.log',
+          destination: (...data: any[]) => {
+            changes = data;
+          },
           readOnLoad: true,
           // monitor: true, // NOTE the default is true
         },
@@ -377,15 +381,17 @@ describe('DataLayerObserver unit tests', () => {
     expect(globalMock.digitalData.cart).to.not.be.undefined;
 
     // check the readOnLoad
-    const [cart] = expectParams(globalMock.console, 'log');
+    const [cart] = changes;
     expect(cart.cartID).to.eq(globalMock.digitalData.cart.cartID);
 
     globalMock.digitalData.cart.cartID = 'cart-5678';
 
     // check the assignment
-    const [reassigned] = expectParams(globalMock.console, 'log');
-    expect(reassigned.cartID).to.eq('cart-5678');
-    expect((reassigned as Cart).item).to.be.undefined; // ensure selector picked
+    setTimeout(() => {
+      const [reassigned] = changes;
+      expect(reassigned.cartID).to.eq('cart-5678');
+      expect((reassigned as Cart).item).to.be.undefined; // ensure selector picked
+    }, 300);
 
     const updatedPrice: TotalCartPrice = {
       basePrice: 15.55,
@@ -401,10 +407,14 @@ describe('DataLayerObserver unit tests', () => {
 
     globalMock.digitalData.cart.price = updatedPrice;
 
-    const [shippingChange] = expectParams(globalMock.console, 'log');
-    expect(shippingChange.cartID).to.eq('cart-5678');
-    expect((shippingChange as Cart).price).to.eq(updatedPrice);
-    expect((shippingChange as Cart).item).to.be.undefined; // ensure selector picked
+    setTimeout(() => {
+      const [shippingChange] = changes;
+      expect(shippingChange.cartID).to.eq('cart-5678');
+      expect((shippingChange as Cart).price).to.eq(updatedPrice);
+      expect((shippingChange as Cart).item).to.be.undefined; // ensure selector picked
+
+      done();
+    }, 300);
   });
 
   it('it should not add monitors for an invalid rule', () => {

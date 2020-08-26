@@ -14,7 +14,9 @@ export default class DataHandler {
 
   private operators: Operator[] = [];
 
-  readonly target: DataLayerTarget;
+  private target: DataLayerTarget;
+
+  private timeoutId: number | null = null;
 
   // external tooling can override the console debugger
   debugger = (message: string, data?: any, indent?: string) => console.debug(
@@ -60,9 +62,18 @@ export default class DataHandler {
       Logger.getInstance().warn(`${path} emitted no data`, path);
     } else if (type === createEventType(path)) {
       if (value) {
+        // debounce events so multiple, related property assignments don't create multiple events
+        if (typeof this.timeoutId === 'number') {
+          window.clearTimeout(this.timeoutId);
+        }
+
         // NOTE even though a value change occurred, handleData expects the root data layer object
         // so select the source and send it to handle data
-        this.handleData([select(selector)]);
+        const result: any[] = [select(selector)];
+
+        this.timeoutId = window.setTimeout(() => {
+          this.handleData(result);
+        }, 250);
       } else {
         this.handleData(args || []);
       }
@@ -76,6 +87,8 @@ export default class DataHandler {
    * @param data the data as an array of values emitted from the data layer
    */
   private handleData(data: any[] | null): any[] | null {
+    this.timeoutId = null; // clear the timeout used for debouncing
+
     const { path } = this.target;
 
     this.runDebugger(`${path} handleData entry`, data);

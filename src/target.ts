@@ -16,6 +16,8 @@ export default class DataLayerTarget {
     return typeof this.object === 'object' ? select(this.selector) : null;
   }
 
+  id: number;
+
   constructor(public readonly selector: string, object?: any) {
     const parsedPath = parsePath(selector);
 
@@ -39,7 +41,7 @@ export default class DataLayerTarget {
         }
       }
     }
-
+    this.id = Date.now();
     this.path = !path ? selector : path;
     this.object = object || select(this.path);
   }

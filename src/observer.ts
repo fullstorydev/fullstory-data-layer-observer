@@ -37,7 +37,7 @@ export interface DataLayerConfig {
  *
  * Required
  *  source: data layer target using selector syntax
- *  destination: destination function using selector syntax
+ *  destination: destination function using selector syntax or native function
  * Optional
  *  id: optional identifier for the rule
  *  description: optional description of the rule
@@ -51,7 +51,7 @@ export interface DataLayerRule {
   debug?: boolean;
   source: string;
   operators?: OperatorOptions[];
-  destination: string;
+  destination: string | Function;
   readOnLoad?: boolean;
   url?: string;
   id?: string;
