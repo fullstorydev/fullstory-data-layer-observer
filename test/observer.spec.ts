@@ -64,6 +64,7 @@ class UppercaseOperator implements Operator {
 const originalConsole = console;
 
 interface GlobalMock {
+  dataLayer: any[],
   digitalData: CEDDL,
   FS: FullStory
   console: Console,
@@ -73,6 +74,7 @@ let globalMock: GlobalMock;
 
 describe('DataLayerObserver unit tests', () => {
   beforeEach(() => {
+    (globalThis as any).dataLayer = [];
     (globalThis as any).digitalData = deepcopy(basicDigitalData); // NOTE copy so mutations don't pollute tests
     (globalThis as any).console = new Console();
     (globalThis as any).FS = new FullStory(); // eslint-disable-line no-underscore-dangle
@@ -80,6 +82,7 @@ describe('DataLayerObserver unit tests', () => {
   });
 
   afterEach(() => {
+    delete (globalThis as any).dataLayer;
     delete (globalThis as any).digitalData;
     delete (globalThis as any).FS;
     (globalThis as any).console = originalConsole;
@@ -473,6 +476,43 @@ describe('DataLayerObserver unit tests', () => {
     setTimeout(() => {
       const [reassigned] = changes;
       expect(reassigned.cartID).to.eq('cart-5678');
+    }, DataHandler.debounceTime * 1.5);
+
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
+  it('function calls should trigger the data handler', (done) => {
+    let args: any[] = [];
+
+    const hit: any = {
+      page: 'homepage',
+    };
+
+    const observer = ExpectObserver.getInstance().create({
+      rules: [
+        {
+          source: 'dataLayer.push',
+          operators: [],
+          destination: (...data: any[]) => {
+            // NOTE use a local destination to prevent cross-test pollution
+            args = data;
+          },
+          readOnLoad: false,
+        },
+      ],
+    }, true);
+
+    expect(globalMock.dataLayer).to.not.be.undefined;
+    expect(globalMock.dataLayer.length).to.eq(0);
+
+    globalMock.dataLayer.push(hit);
+
+    // check the function args
+    setTimeout(() => {
+      expect(args.length).to.eq(1);
+      expect(args[0]).to.eq(hit);
+
+      done();
     }, DataHandler.debounceTime * 1.5);
 
     ExpectObserver.getInstance().cleanup(observer);

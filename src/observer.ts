@@ -6,6 +6,7 @@ import { FunctionOperator } from './operators';
 import Monitor from './monitor';
 import ShimMonitor from './monitor-shim';
 import DataLayerTarget from './target';
+import { select } from './selector';
 
 /**
  * DataLayerConfig provides global settings for a DataLayerObserver.
@@ -119,18 +120,28 @@ export class DataLayerObserver {
    * Adds monitor to a target in the data layer. If a monitor already exists, calling this
    * function will result in a no-op.
    * @param target to add monitors into
-   * @param property to monitor
+   * @param property to monitor; if not property is given, the monitor is added to the target itself
    */
-  addMonitor(target: DataLayerTarget, property: string) {
-    const { object, path } = target;
+  addMonitor(target: DataLayerTarget, property?: string) {
+    const { subject, path } = target;
 
     if (!this.monitors[path]) {
       this.monitors[path] = {};
     }
 
     // NOTE we can only shim a property once
-    if (!this.monitors[target.path][property]) {
-      this.monitors[path][property] = new ShimMonitor(object, property, path);
+    if (property) {
+      if (!this.monitors[target.path][property]) {
+        this.monitors[path][property] = new ShimMonitor(subject, property, path);
+      }
+    } else {
+      // NOTE this is also used to create a function monitor
+      const lastProperty = target.path.substring(target.path.lastIndexOf('.') + 1);
+      const parentPath = target.path.substring(0, target.path.lastIndexOf('.'));
+
+      if (!this.monitors[target.path][lastProperty]) {
+        this.monitors[path][lastProperty] = new ShimMonitor(select(parentPath), lastProperty, path);
+      }
     }
   }
 
@@ -244,9 +255,9 @@ export class DataLayerObserver {
           this.removeHandler(handler);
         }
 
-        if (typeof target.object === 'object') {
+        if (typeof target.subject === 'object') {
           if (monitor) {
-            Object.getOwnPropertyNames(target.object).forEach((property) => {
+            Object.getOwnPropertyNames(target.subject).forEach((property) => {
               try {
                 this.addMonitor(target, property);
               } catch (err) {
@@ -261,6 +272,12 @@ export class DataLayerObserver {
             } catch (err) {
               Logger.getInstance().error(`Failed to read on load for rule ${id}`, source);
             }
+          }
+        } else {
+          try {
+            this.addMonitor(target);
+          } catch (err) {
+            Logger.getInstance().warn(`Failed to create function monitor for rule ${id}`, source);
           }
         }
       } catch (err) {

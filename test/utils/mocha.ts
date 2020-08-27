@@ -71,8 +71,7 @@ export function expectEventListener(type: string, expectedValue: any, done: Moch
     if (customEvent.detail.args) {
       expect(customEvent.detail.args).to.not.be.undefined;
       expect(customEvent.detail.args!.length).to.eq(expectedValue.length);
-
-      customEvent.detail.args!.forEach((arg: any, i: number) => expect(expectedValue[i] === arg));
+      expect(customEvent.detail.args!).to.eql(expectedValue);
     }
 
     done();

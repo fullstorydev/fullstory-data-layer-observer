@@ -34,7 +34,7 @@ export default class DataHandler {
   constructor(target: DataLayerTarget | string, public debug = false) {
     this.target = typeof target === 'string' ? new DataLayerTarget(target) : target;
 
-    if (!this.target.object) {
+    if (!this.target.subject) {
       throw new Error(`Data layer ${typeof target === 'string' ? target : target.path} not found on page`);
     }
 

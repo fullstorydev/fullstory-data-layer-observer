@@ -24,15 +24,14 @@ export default abstract class Monitor {
 
       this.copy();
 
-      switch (typeof object) {
-        case 'object':
-          this.addPropertyMonitor(object, property);
-          break;
-        case 'function':
-          // TODO
-          break;
-        default:
-          throw new Error(`Monitor can not be added to unsupported type ${typeof this.object}`);
+      if (typeof object !== 'object' && typeof object[property] !== 'function') {
+        throw new Error(`Unsupported type ${typeof object}`);
+      }
+
+      if (typeof object[property] === 'function') {
+        this.addFunctionMonitor();
+      } else {
+        this.addPropertyMonitor();
       }
     }
   }
@@ -59,10 +58,13 @@ export default abstract class Monitor {
 
   /**
    * Watches for changes on properties within an object.
-   * @param target the object containing the property
-   * @param property the property to watch
    */
-  abstract addPropertyMonitor(target: any, property: string): void;
+  abstract addPropertyMonitor(): void;
+
+  /**
+   * Watches for function calls.
+   */
+  abstract addFunctionMonitor(): void;
 
   /**
    * Stops watching for changes and function calls.
