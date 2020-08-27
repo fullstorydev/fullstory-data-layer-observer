@@ -3,6 +3,7 @@
     /* Basic Options */
     "target": "es2015",
     "module": "commonjs",
+    "outDir": "./dist",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
@@ -18,7 +19,11 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "lib": ["es6", "dom", "es2017"]
+    "lib": [
+      "es6",
+      "dom",
+      "es2017"
+    ]
   },
   "include": [
     "src/**/*.ts"
