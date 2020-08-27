@@ -95,6 +95,10 @@ describe('test selection paths', () => {
     expect(select('favorites.films.action', testData)).to.eq('Rogue One');
   });
 
+  it('dot notation should return a reference to the object', () => {
+    expect(select('favorites', testData)).to.eq(testData.favorites);
+  });
+
   it('should respect index notation', () => {
     expect(select('cities[0]', testData)).to.eq('Seattle');
     expect(select('cities[1]', testData)).to.eq('Atlanta');
@@ -117,6 +121,11 @@ describe('test selection paths', () => {
     expect(select('favorites[(totally, bogus)]', testData)).to.be.undefined;
   });
 
+  it('pick notation should return a new object', () => {
+    expect(select('favorites.films[(action,adventure,rom com)]', testData)).to.not.eq(testData.favorites.films);
+    expect(select('favorites.films[(action,adventure,rom com)]', testData)).to.eql(testData.favorites.films);
+  });
+
   it('should respect omit notation', () => {
     expect(select('favorites[!(color)]', testData).color).to.be.undefined;
     expect(select('favorites[!(color)]', testData).number).to.eq(25);
@@ -124,6 +133,13 @@ describe('test selection paths', () => {
     expect(select('favorites[!(color, number)]', testData).color).to.be.undefined;
     expect(select('favorites[!(color, number)]', testData).number).to.be.undefined;
     expect(select('favorites[!(color, number)]', testData).pickle).to.eq('dill');
+  });
+
+  it('omit notation should return a new object', () => {
+    expect(select('favorites.films[!(rom com)]', testData)).to.not.eq(testData.favorites.films);
+
+    const { action, adventure } = testData.favorites.films;
+    expect(select('favorites.films[!(rom com)]', testData)).to.eql({ action, adventure });
   });
 
   it('should respect prefix notation', () => {
@@ -137,6 +153,13 @@ describe('test selection paths', () => {
     expect(select('favorites[^(col, bogus)]', testData).bogus).to.be.undefined;
   });
 
+  it('prefix notation should return a new object', () => {
+    expect(select('favorites.films[^(a)]', testData)).to.not.eq(testData.favorites.films);
+
+    const { action, adventure } = testData.favorites.films;
+    expect(select('favorites.films[^(a)]', testData)).to.eql({ action, adventure });
+  });
+
   it('should respect suffix notation', () => {
     expect(select('favorites[$(color)]', testData).color).to.eq('red');
     expect(select('favorites[$(olor)]', testData).color).to.eq('red');
@@ -146,6 +169,13 @@ describe('test selection paths', () => {
     expect(select('favorites[$(bogus, olor)]', testData).bogus).to.be.undefined;
     expect(select('favorites[$(olor, bogus)]', testData).color).to.eq('red');
     expect(select('favorites[$(olor, bogus)]', testData).bogus).to.be.undefined;
+  });
+
+  it('suffix notation should return a new object', () => {
+    expect(select('favorites.films[$(n,e)]', testData)).to.not.eq(testData.favorites.films);
+
+    const { action, adventure } = testData.favorites.films;
+    expect(select('favorites.films[$(n,e)]', testData)).to.eql({ action, adventure });
   });
 
   it('should respect filter notation', () => {
@@ -176,5 +206,9 @@ describe('test selection paths', () => {
     expect(select('favorites[?(number!=25)]', testData)).to.be.undefined;
     expect(select('favorites[?(number!=12)]', testData)).to.eq(testData.favorites);
     expect(select('favorites[?(number+=25)]', testData)).to.be.undefined;
+  });
+
+  it('filter notation should return a reference to the object', () => {
+    expect(select('favorites.films[?(action=Rogue One)]', testData)).to.eq(testData.favorites.films);
   });
 });

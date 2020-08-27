@@ -2,13 +2,15 @@
 import { expect } from 'chai';
 import 'mocha';
 
+import deepcopy from 'deepcopy';
 import DataHandler from '../src/handler';
 
 import Console from './mocks/console';
 import { basicDigitalData, PageInfo, Page } from './mocks/CEDDL';
 import { Operator, OperatorOptions } from '../src/operator';
-import { DataLayerDetail, PropertyDetail } from '../src/event';
+import { DataLayerDetail, PropertyDetail, createEvent } from '../src/event';
 import { expectNoCalls, expectParams } from './utils/mocha';
+import DataLayerTarget from '../src/target';
 
 const originalConsole = globalThis.console;
 const console = new Console();
@@ -93,7 +95,7 @@ class ThrowOperator implements Operator {
 
 describe('DataHandler unit tests', () => {
   beforeEach(() => {
-    (globalThis as any).digitalData = basicDigitalData;
+    (globalThis as any).digitalData = deepcopy(basicDigitalData);
     (globalThis as any).console = console;
   });
 
@@ -222,9 +224,15 @@ describe('DataHandler unit tests', () => {
 
   it('objects should only allow manual firing of events', () => {
     // @ts-ignore
-    basicDigitalData.fn = () => console.log('Hello World'); // eslint-disable-line no-console
+    (globalThis as any).digitalData.fn = () => console.log('Hello World'); // eslint-disable-line no-console
     const handler = new DataHandler('digitalData.fn');
-    expect(() => handler.fireEvent()).to.throw();
+
+    const seen: any = [];
+
+    const echo = new EchoOperator(seen);
+    handler.push(echo);
+
+    expect(seen.length).to.eq(0);
   });
 
   it('events with unknown types should not be handled', () => {
@@ -236,9 +244,70 @@ describe('DataHandler unit tests', () => {
     handler.push(echo);
 
     handler.handleEvent(new CustomEvent<DataLayerDetail>('unknownType', {
-      detail: new PropertyDetail(basicDigitalData.page.pageInfo, basicDigitalData.page, 'digitalData.page.pageInfo'),
+      detail: new PropertyDetail('digitalData.page', 'pageInfo', basicDigitalData.page.pageInfo),
     }));
 
     expect(seen.length).to.eq(0);
+  });
+
+  it('data layer events should be delayed to allow debouncing', (done) => {
+    const handler = new DataHandler('digitalData.page.pageInfo');
+
+    const seen: any = [];
+
+    const echo = new EchoOperator(seen);
+    handler.push(echo);
+
+    (globalThis as any).digitalData.page.pageInfo.pageID = 'changedPage';
+    handler.handleEvent(createEvent((globalThis as any).digitalData.page, 'pageInfo',
+      (globalThis as any).digitalData.page.pageInfo, 'digitalData.page.pageInfo'));
+
+    // since this occurs immediately after the handleEvent call, the debounce delay hasn't fully elapsed
+    expect(seen[0]).to.be.undefined;
+
+    setTimeout(() => {
+      expect((seen[0] as PageInfo).pageID).to.eq('changedPage');
+      done();
+    }, DataHandler.debounceTime * 1.5);
+  });
+
+  it('multiple data layer events should be debounced', (done) => {
+    const handler = new DataHandler('digitalData.page.pageInfo');
+
+    const seen: any = [];
+
+    const echo = new EchoOperator(seen);
+    handler.push(echo);
+
+    (globalThis as any).digitalData.page.pageInfo.pageID = 'changedAgain';
+    handler.handleEvent(createEvent((globalThis as any).digitalData.page, 'pageInfo',
+      (globalThis as any).digitalData.page.pageInfo, 'digitalData.page.pageInfo'));
+
+    (globalThis as any).digitalData.page.pageInfo.pageID = 'changedOneMoreTime';
+    handler.handleEvent(createEvent((globalThis as any).digitalData.page, 'pageInfo',
+      (globalThis as any).digitalData.page.pageInfo, 'digitalData.page.pageInfo'));
+
+    setTimeout(() => {
+      expect(seen.length).to.eq(1);
+      done();
+    }, DataHandler.debounceTime * 1.5);
+  });
+
+  it('an object with no properties selected from an event should not be handled', (done) => {
+    const handler = new DataHandler(new DataLayerTarget('digitalData.page.pageInfo[(missingProperty)]'));
+
+    const seen: any = [];
+
+    const echo = new EchoOperator(seen);
+    handler.push(echo);
+
+    (globalThis as any).digitalData.page.pageInfo.pageID = '1234';
+    handler.handleEvent(createEvent((globalThis as any).digitalData.page, 'pageInfo',
+      (globalThis as any).digitalData.page.pageInfo, 'digitalData.page.pageInfo'));
+
+    setTimeout(() => {
+      expect(seen.length).to.eq(0);
+      done();
+    }, DataHandler.debounceTime * 1.5);
   });
 });

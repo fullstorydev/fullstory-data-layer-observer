@@ -3,6 +3,9 @@ import { BuiltinOptions, OperatorFactory } from './factory';
 import DataHandler from './handler';
 import { Logger, LogAppender } from './utils/logger';
 import { FunctionOperator } from './operators';
+import Monitor from './monitor';
+import ShimMonitor from './monitor-shim';
+import DataLayerTarget from './target';
 
 /**
  * DataLayerConfig provides global settings for a DataLayerObserver.
@@ -34,11 +37,12 @@ export interface DataLayerConfig {
  *
  * Required
  *  source: data layer target using selector syntax
- *  destination: destination function using selector syntax
+ *  destination: destination function using selector syntax or native function
  * Optional
  *  id: optional identifier for the rule
  *  description: optional description of the rule
  *  debug: true if the rule should print debug for each Operator transformation
+ *  monitor: true if property changes or function calls should rerun the operators
  *  operators: list of OperatorOptions to transform data before a destination
  *  readOnLoad: rule-specific readOnLoad (see DataLayerConfig readOnLoad)
  *  url: regular expression used to enable the rule when the page URL matches
@@ -47,11 +51,12 @@ export interface DataLayerRule {
   debug?: boolean;
   source: string;
   operators?: OperatorOptions[];
-  destination: string;
+  destination: string | Function;
   readOnLoad?: boolean;
   url?: string;
   id?: string;
   description?: string;
+  monitor?: boolean;
 }
 
 /**
@@ -63,6 +68,10 @@ export class DataLayerObserver {
   private customOperators: { [key: string]: Operator } = {};
 
   handlers: DataHandler[] = [];
+
+  listeners: { [path: string]: EventListener[] } = {};
+
+  monitors: { [path: string]: { [property: string]: Monitor } } = {};
 
   /**
    * Creates a DataLayerObserver. If no DataLayerConfig is provided, the following settings will be
@@ -92,13 +101,33 @@ export class DataLayerObserver {
 
   /**
    * Creates and adds a DataHandler.
-   * @param selector data layer target selector syntax
+   * @param target to the data layer
+   * @param debug when true enables debugging of operator transformations
    */
-  addHandler(selector: string): DataHandler {
-    const handler = new DataHandler(selector);
+  addHandler(target: DataLayerTarget, debug = false): DataHandler {
+    const handler = new DataHandler(target, debug);
     this.handlers.push(handler);
 
     return handler;
+  }
+
+  /**
+   * Adds monitor to a target in the data layer. If a monitor already exists, calling this
+   * function will result in a no-op.
+   * @param target to add monitors into
+   * @param property to monitor
+   */
+  addMonitor(target: DataLayerTarget, property: string) {
+    const { object, path } = target;
+
+    if (!this.monitors[path]) {
+      this.monitors[path] = {};
+    }
+
+    // NOTE we can only shim a property once
+    if (!this.monitors[target.path][property]) {
+      this.monitors[path][property] = new ShimMonitor(object, property, path);
+    }
   }
 
   /**
@@ -166,6 +195,7 @@ export class DataLayerObserver {
       destination,
       readOnLoad: ruleReadOnLoad,
       url,
+      monitor = true,
     } = rule;
 
     // rule properties override global ones
@@ -182,44 +212,58 @@ export class DataLayerObserver {
     }
 
     try {
-      const handler = this.addHandler(source);
-      handler.debug = !!debug;
+      const target = new DataLayerTarget(source);
 
       try {
-        // sequentially add the operators to the handler
-        operators.forEach((options) => {
-          const operator = this.getOperator(options);
-          this.addOperator(handler, operator);
-        });
+        const handler = this.addHandler(target, !!debug);
 
-        // optionally perform a final transformation
-        // useful if every rule needs the same operator run before the destination
-        if (beforeDestination) {
-          const operator = this.getOperator(beforeDestination);
-          this.addOperator(handler, operator);
-        }
-
-        // end with destination
-        const { previewDestination = 'console.log' } = this.config;
-        const func = previewMode ? previewDestination : destination;
-        this.addOperator(handler, new FunctionOperator({ name: 'function', func }));
-      } catch (err) {
-        Logger.getInstance().error(`Failed to create operators for rule ${id}`, source);
-        this.removeHandler(handler);
-      }
-
-      // TODO (van) this will be delegated to PropertyListeners when available
-      // if the rule creator wants to fire the initial value for a property, do it
-      if (readOnLoad) {
         try {
-          // this could error if a function is supplied to readOnLoad
-          handler.fireEvent();
+          // sequentially add the operators to the handler
+          operators.forEach((options) => {
+            const operator = this.getOperator(options);
+            this.addOperator(handler, operator);
+          });
+
+          // optionally perform a final transformation
+          // useful if every rule needs the same operator run before the destination
+          if (beforeDestination) {
+            const operator = this.getOperator(beforeDestination);
+            this.addOperator(handler, operator);
+          }
+
+          // end with destination
+          const { previewDestination = 'console.log' } = this.config;
+          const func = previewMode ? previewDestination : destination;
+          this.addOperator(handler, new FunctionOperator({ name: 'function', func }));
         } catch (err) {
-          Logger.getInstance().error(`Failed to read on load for rule ${id}`, source);
+          Logger.getInstance().error(`Failed to create operators for rule ${id}`, source);
+          this.removeHandler(handler);
         }
+
+        if (typeof target.object === 'object') {
+          if (monitor) {
+            Object.getOwnPropertyNames(target.object).forEach((property) => {
+              try {
+                this.addMonitor(target, property);
+              } catch (err) {
+                Logger.getInstance().warn(`Failed to create monitor on ${property} for rule ${id}`, source);
+              }
+            });
+          }
+
+          if (readOnLoad) {
+            try {
+              handler.fireEvent();
+            } catch (err) {
+              Logger.getInstance().error(`Failed to read on load for rule ${id}`, source);
+            }
+          }
+        }
+      } catch (err) {
+        Logger.getInstance().error(`Failed to create data handler for rule ${id}`, source);
       }
     } catch (err) {
-      Logger.getInstance().error(`Failed to create data handler for rule ${id}`, source);
+      Logger.getInstance().error(`Failed find target for rule ${id}`, source);
     }
   }
 
@@ -237,13 +281,28 @@ export class DataLayerObserver {
   }
 
   /**
-   * Removes a previously added DataHandler.
-   * @param handler the DataHandler to be removed
+   * Removes a previously added DataHandler. This will also remove any corresponding event listener.
+   * @param handler to be removed
    */
   removeHandler(handler: DataHandler) {
+    handler.stop();
+
     const i = this.handlers.indexOf(handler);
     if (i > -1) {
       this.handlers.splice(i, 1);
     }
+  }
+
+  /**
+   * Removes a monitor from watching property changes or function calls.
+   * @param path to the data layer object that have monitors created
+   * @param property of the specific monitor to remove, else all monitors are removed
+   */
+  removeMonitor(path: string, property?: string) {
+    const properties = property ? [property] : Object.getOwnPropertyNames(this.monitors[path]);
+    properties.forEach((prop) => {
+      this.monitors[path][prop].remove();
+      delete this.monitors[path][prop];
+    });
   }
 }

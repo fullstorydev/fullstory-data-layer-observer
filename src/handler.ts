@@ -1,7 +1,8 @@
 import { Logger } from './utils/logger';
 import { Operator } from './operator';
-import { DataLayerEventType, DataLayerDetail, PropertyDetail } from './event';
+import { DataLayerDetail, createEventType } from './event';
 import { select } from './selector';
+import DataLayerTarget from './target';
 
 /**
  * DataHandler listens for changes from lower level PropertyListeners. Events emitted from
@@ -9,9 +10,15 @@ import { select } from './selector';
  * registered operators.
  */
 export default class DataHandler {
+  static readonly debounceTime = 250;
+
+  private listener: EventListener | null = null;
+
   private operators: Operator[] = [];
 
-  readonly target: any;
+  private target: DataLayerTarget;
+
+  private timeoutId: number | null = null;
 
   // external tooling can override the console debugger
   debugger = (message: string, data?: any, indent?: string) => console.debug(
@@ -24,58 +31,59 @@ export default class DataHandler {
    * @param debug true optionally enables debugging data transformation (defaults to console.debug)
    * @throws will throw an error if the data layer is not found (i.e. undefined or null)
    */
-  constructor(private readonly path: string, public debug = false) {
-    this.target = select(path);
+  constructor(target: DataLayerTarget | string, public debug = false) {
+    this.target = typeof target === 'string' ? new DataLayerTarget(target) : target;
 
-    // guards against trying to register an observer on a non-existent datalayer
-    // this could happen if the data layer is dynamically loaded after DLO starts
-    if (!this.target) {
-      throw new Error(`Data layer ${path} not found on page`);
+    if (!this.target.object) {
+      throw new Error(`Data layer ${typeof target === 'string' ? target : target.path} not found on page`);
     }
+
+    // begin handling data by listening for events
+    this.start();
   }
 
   /**
    * Manually emit the current value of the observed target property.
-   * @throws will throw an error if the target's property is not an object
    */
-  fireEvent() {
-    const value = select(this.path);
-    const type = typeof value;
-
-    if (type === 'object') {
-      this.handleEvent(new CustomEvent<DataLayerDetail>(DataLayerEventType.PROPERTY, {
-        detail: new PropertyDetail(this.target, value, this.path),
-      }));
-    } else {
-      throw new Error(`${this.path} (${type}) is not a supported type`);
+  fireEvent(value = this.target.value) {
+    if (value) {
+      this.handleData([value]);
     }
   }
 
   /**
-   * Handles the incoming event. This function implements EventListener to also support
+   * Handles the incoming event. This function implements EventListener to support
    * addEventListener() browser APIs and Data Layer Observer events.
    * @param event a browser Event or CustomEvent emitted
    */
   handleEvent(event: CustomEvent<DataLayerDetail>): void {
-    const { detail: { args, value, path }, type } = event;
+    const { detail: { args, value }, type } = event;
+    const { path, selector } = this.target;
 
-    // since window is the event dispatcher, use the path in DataLayerDetail to decide if this
-    // DataHandler should process the data
-    if (this.path === path) {
-      if (value === undefined && args === undefined) {
-        Logger.getInstance().warn(`${this.path} emitted no data`, this.path);
-      } else {
-        switch (type) {
-          case DataLayerEventType.PROPERTY:
-            this.handleData([value]);
-            break;
-          case DataLayerEventType.FUNCTION:
-            this.handleData(args || []);
-            break;
-          default:
-            Logger.getInstance().warn(`Unknown event type ${type}`);
+    if (value === undefined && args === undefined) {
+      Logger.getInstance().warn(`${path} emitted no data`, path);
+    } else if (type === createEventType(path)) {
+      if (value) {
+        // debounce events so multiple, related property assignments don't create multiple events
+        if (typeof this.timeoutId === 'number') {
+          window.clearTimeout(this.timeoutId);
         }
+
+        // NOTE even though a value change occurred, handleData expects the root data layer object
+        // so select the source and send it to handle data
+        const result: any = select(selector);
+
+        // only handle data if the selector actually returns something with data
+        if (result) {
+          this.timeoutId = window.setTimeout(() => {
+            this.handleData([result]);
+          }, DataHandler.debounceTime);
+        }
+      } else {
+        this.handleData(args || []);
       }
+    } else {
+      Logger.getInstance().warn(`EventListener received unexpected event ${type}`, path);
     }
   }
 
@@ -84,7 +92,11 @@ export default class DataHandler {
    * @param data the data as an array of values emitted from the data layer
    */
   private handleData(data: any[] | null): any[] | null {
-    this.runDebugger(`${this.path} handleData entry`, data);
+    this.timeoutId = null; // clear the timeout used for debouncing
+
+    const { path } = this.target;
+
+    this.runDebugger(`${path} handleData entry`, data);
 
     let handledData = data;
 
@@ -113,14 +125,14 @@ export default class DataHandler {
 
         this.runDebugger(`[${i}] ${name} output ${stats}`, handledData, '  ');
       } catch (err) {
-        Logger.getInstance().error(`Operator ${name} failed for ${this.path} at step ${i}`,
-          this.path);
+        Logger.getInstance().error(`Operator ${name} failed for ${path} at step ${i}`,
+          path);
         console.error(err.message);
         return null;
       }
     }
 
-    this.runDebugger(`${this.path} handleData exit`, handledData);
+    this.runDebugger(`${path} handleData exit`, handledData);
 
     return handledData;
   }
@@ -202,5 +214,23 @@ export default class DataHandler {
    */
   push(...operators: Operator[]): void {
     operators.forEach((operator) => this.operators.push(operator));
+  }
+
+  /**
+   * Starts listening for data layer changes or function calls.
+   */
+  start() {
+    if (!this.listener) {
+      this.listener = (e: Event) => this.handleEvent(e as CustomEvent);
+      window.addEventListener(createEventType(this.target.path), this.listener);
+    }
+  }
+
+  /**
+   * Stops listening for data layer changes or function calls.
+   */
+  stop() {
+    window.removeEventListener(createEventType(this.target.path), this.listener as EventListener);
+    this.listener = null;
   }
 }
