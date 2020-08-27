@@ -14,6 +14,7 @@ import {
 import { Operator, OperatorOptions } from '../src/operator';
 import { LogEvent } from '../src/utils/logger';
 import DataHandler from '../src/handler';
+import { MockClass } from './mocks/mock';
 
 class EchoOperator implements Operator {
   options: OperatorOptions = {
@@ -74,7 +75,7 @@ describe('DataLayerObserver unit tests', () => {
   beforeEach(() => {
     (globalThis as any).digitalData = deepcopy(basicDigitalData); // NOTE copy so mutations don't pollute tests
     (globalThis as any).console = new Console();
-    (globalThis as any).FS = new FullStory();
+    (globalThis as any).FS = new FullStory(); // eslint-disable-line no-underscore-dangle
     globalMock = globalThis as any;
   });
 
@@ -336,20 +337,15 @@ describe('DataLayerObserver unit tests', () => {
   it('it should register a custom log appender', () => {
     expectNoCalls(globalMock.FS, 'event');
 
-    class FullStoryAppender {
-      constructor(private fs: FullStory) {
-        // sets this.fs
-      }
-
-      log(event: LogEvent) {
-        // eslint-disable-next-line camelcase
-        const { level: level_int, message: message_str, datalayer: datalayer_str } = event;
-        this.fs.event('Data Layer Observer', { level_int, message_str, datalayer_str }, 'dataLayerObserver');
-      }
+    class MockAppender extends MockClass {
+      /* eslint-disable class-methods-use-this, @typescript-eslint/no-unused-vars */
+      log(event: LogEvent) { }
     }
 
+    const appender = new MockAppender();
+
     const observer = ExpectObserver.getInstance().create({
-      appender: new FullStoryAppender(globalMock.FS),
+      appender,
       readOnLoad: true,
       rules: [
         {
@@ -358,10 +354,8 @@ describe('DataLayerObserver unit tests', () => {
       ],
     }, false);
 
-    const [eventName, event, source] = expectParams(globalMock.FS, 'event');
-    expect(eventName).to.eq('Data Layer Observer');
+    const [event] = expectParams(appender, 'log');
     expect(event).to.not.be.undefined;
-    expect(source).to.eq('dataLayerObserver');
 
     ExpectObserver.getInstance().cleanup(observer);
   });

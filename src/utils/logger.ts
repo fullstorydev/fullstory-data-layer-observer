@@ -17,13 +17,13 @@ export enum LogLevel {
 /**
  * ConsoleAppender serializes LogEvents to the browser's console.
  */
-class ConsoleAppender implements LogAppender {
+export class ConsoleAppender implements LogAppender {
   /* eslint-disable class-methods-use-this */
   log(event: LogEvent): void {
-    const { datalayer, level, message } = event;
+    const { context, level, message } = event;
 
-    // example 'Data layer unavailable (digitalData.user)'
-    const consoleMessage = `${message}${datalayer ? ` (${datalayer})` : ''}`;
+    // example 'Data layer unavailable { selector: "digitalData.user"}'
+    const consoleMessage = `${message}${context ? ` ${JSON.stringify(context)}` : ''}`;
 
     switch (level) {
       case LogLevel.ERROR: return console.error(consoleMessage);
@@ -37,12 +37,43 @@ class ConsoleAppender implements LogAppender {
 }
 
 /**
+ * FullStoryAppender serializes LogEvents to FullStory using FS.event.
+ */
+export class FullStoryAppender implements LogAppender {
+  /* eslint-disable class-methods-use-this */
+  log(event: LogEvent): void {
+    const fs = (window as any)[(window as any)._fs_namespace]; // eslint-disable-line no-underscore-dangle
+
+    const customEventName = 'Data Layer Observer';
+    const customEventSource = 'dlo';
+
+    if (fs) {
+      /* eslint-disable camelcase */
+      const { context, level: level_int, message } = event;
+      if (context) {
+        fs.event(customEventName, { level_int, message, context }, customEventSource);
+      } else {
+        fs.event(customEventName, { level_int, message }, customEventSource);
+      }
+    }
+  }
+}
+
+/**
+ * LogContext provides context for debugging and understand log error messages.
+ */
+export interface LogContext {
+  rule?: string;
+  source?: string;
+  path?: string;
+  selector?: string;
+}
+
+/**
  * LogEvent defines a message to be sent to a sink for a given level.
- * Optionally, the datalayer (e.g. digitalData.user) that generated the message can be provided for
- * traceability.
  */
 export interface LogEvent {
-  datalayer?: string;
+  context?: string | LogContext;
   level: LogLevel;
   message: string;
 }
@@ -55,13 +86,24 @@ export interface LogEvent {
 export class Logger {
   private static instance: Logger;
 
-  appender: LogAppender = new ConsoleAppender();
+  appender: LogAppender;
 
   level = 1;
 
-  static getInstance(): Logger {
+  constructor(appender = 'console') {
+    switch (appender) {
+      case 'fullstory':
+        this.appender = new FullStoryAppender();
+        break;
+      case 'console':
+      default:
+        this.appender = new ConsoleAppender();
+    }
+  }
+
+  static getInstance(appender?: string): Logger {
     if (!Logger.instance) {
-      Logger.instance = new Logger();
+      Logger.instance = new Logger(appender);
     }
 
     return Logger.instance;
@@ -71,32 +113,32 @@ export class Logger {
    * Serializes the event by calling the current appender.
    * If Logger.level is less than the event's level, no serialization occurs.
    * @param level the logging level of the event
-   * @param message
-   * @param datalayer
+   * @param message the informational message
+   * @param context provides additional metadata related to the log event
    */
-  private log(level: LogLevel, message: string, datalayer?: string) {
+  private log(level: LogLevel, message: string, context?: string | LogContext) {
     if (level <= this.level) {
       this.appender.log({
         level,
         message,
-        datalayer,
+        context,
       });
     }
   }
 
-  error(message: string, datalayer?: string) {
-    this.log(LogLevel.ERROR, message, datalayer);
+  error(message: string, data?: string | LogContext) {
+    this.log(LogLevel.ERROR, message, data);
   }
 
-  warn(message: string, datalayer?: string) {
-    this.log(LogLevel.WARN, message, datalayer);
+  warn(message: string, data?: string | LogContext) {
+    this.log(LogLevel.WARN, message, data);
   }
 
-  info(message: string, datalayer?: string) {
-    this.log(LogLevel.INFO, message, datalayer);
+  info(message: string, data?: string | LogContext) {
+    this.log(LogLevel.INFO, message, data);
   }
 
-  debug(message: string, datalayer?: string) {
-    this.log(LogLevel.DEBUG, message, datalayer);
+  debug(message: string, data?: string | LogContext) {
+    this.log(LogLevel.DEBUG, message, data);
   }
 }

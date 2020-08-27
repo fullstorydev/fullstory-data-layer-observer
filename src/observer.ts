@@ -13,7 +13,7 @@ import DataLayerTarget from './target';
  * Required
  *  rules: a list of pre-configured DataLayerRules
  * Optional
- *  appender: a custom log appender
+ *  appender: a custom log appender or string alias (e.g. fullstory or console)
  *  beforeDestination: OperatorOptions that is always used just before before the destination
  *  previewMode: redirects output from a destination to previewDestination when testing rules
  *  previewDestination: output destination using selection syntax for with previewMode
@@ -22,7 +22,7 @@ import DataLayerTarget from './target';
  *  urlValidator: a function used to validate a DataLayerRule's `url`
  */
 export interface DataLayerConfig {
-  appender?: LogAppender;
+  appender?: string | LogAppender;
   beforeDestination?: OperatorOptions;
   previewDestination?: string;
   previewMode?: boolean;
@@ -91,7 +91,11 @@ export class DataLayerObserver {
   }) {
     const { appender, rules } = config;
     if (appender) {
-      Logger.getInstance().appender = appender;
+      if (typeof appender === 'string') {
+        Logger.getInstance(appender);
+      } else {
+        Logger.getInstance().appender = appender;
+      }
     }
 
     if (rules) {

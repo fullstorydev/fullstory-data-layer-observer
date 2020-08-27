@@ -1,26 +1,30 @@
 import { expect } from 'chai';
 import 'mocha';
 
-import { Logger, LogLevel, LogEvent } from '../src/utils/logger';
+import {
+  Logger, LogLevel, LogEvent, LogContext, FullStoryAppender, ConsoleAppender,
+} from '../src/utils/logger';
 import Console from './mocks/console';
 import FullStory from './mocks/fullstory-recording';
 import { expectParams, expectNoCalls } from './utils/mocha';
+import { MockClass } from './mocks/mock';
 
 const originalConsole = globalThis.console;
 const console = new Console();
 
 describe('logger unit tests', () => {
   before(() => {
-    // @ts-ignore
-    globalThis.console = console;
+    (globalThis as any).console = console;
+    (window as any)._fs_namespace = 'FS'; // eslint-disable-line no-underscore-dangle
+    (window as any).FS = new FullStory();
   });
 
   after(() => {
-    // @ts-ignore
-    globalThis.console = originalConsole;
+    (globalThis as any).console = originalConsole;
+    delete (window as any).FS;
   });
 
-  it('it should create a console logger with warn and error levels by default', () => {
+  it('a console logger with warn and error levels is configured by default', () => {
     const mockDatalayer = 'digitalData.user';
 
     const logger = Logger.getInstance();
@@ -29,10 +33,10 @@ describe('logger unit tests', () => {
     logger.warn('Data layer not ready', mockDatalayer);
 
     const [error] = expectParams(console, 'error');
-    expect(error).to.eq(`Data layer not found (${mockDatalayer})`);
+    expect(error).to.eq(`Data layer not found "${mockDatalayer}"`);
 
     const [warn] = expectParams(console, 'warn');
-    expect(warn).to.eq(`Data layer not ready (${mockDatalayer})`);
+    expect(warn).to.eq(`Data layer not ready "${mockDatalayer}"`);
 
     logger.info('Data layer rules loaded', mockDatalayer);
     expectNoCalls(console, 'info');
@@ -41,8 +45,39 @@ describe('logger unit tests', () => {
     expectNoCalls(console, 'debug');
   });
 
+  it('a FullStory appender can be configured', () => {
+    const context: LogContext = {
+      rule: 'fs-event-ceddl-cart',
+      path: 'digitalData.cart',
+      selector: 'digitalData.cart[(cartID,price)]',
+      source: 'digitalData.cart[(cartID,price)]',
+    };
+
+    const logger = Logger.getInstance('fullstory'); // technically the singleton prevents reconfiguring
+    logger.appender = new FullStoryAppender(); // so manually assign
+
+    logger.error('Data layer not found', context);
+
+    const [eventName, event, source] = expectParams((window as any).FS, 'event');
+    expect(eventName).to.eq('Data Layer Observer');
+    expect(event.message).to.eq('Data layer not found');
+    expect(event.context.rule).to.eq(context.rule);
+    expect(event.context.path).to.eq(context.path);
+    expect(event.context.selector).to.eq(context.selector);
+    expect(event.context.source).to.eq(context.source);
+    expect(source).to.eq('dlo');
+
+    logger.info('Data layer rules loaded', context);
+    expectNoCalls((window as any).FS, 'event');
+
+    logger.debug('Operator output', context);
+    expectNoCalls((window as any).FS, 'event');
+  });
+
   it('it should allow setting higher log levels', () => {
-    const logger = Logger.getInstance();
+    const logger = Logger.getInstance('console'); // technically the singleton prevents reconfiguring
+    logger.appender = new ConsoleAppender(); // so manually assign
+
     logger.level = LogLevel.DEBUG;
 
     logger.info('Data layer rules loaded');
@@ -57,24 +92,22 @@ describe('logger unit tests', () => {
   it('it should allow setting a custom appender', () => {
     const mockDatalayer = 'digitalData.user';
 
-    const FS = new FullStory();
+    class MockAppender extends MockClass {
+      /* eslint-disable class-methods-use-this, @typescript-eslint/no-unused-vars */
+      log(event: LogEvent) { } //
+    }
+
+    const appender = new MockAppender();
 
     const logger = Logger.getInstance();
-    logger.appender = {
-      log(event: LogEvent) {
-        // eslint-disable-next-line camelcase
-        const { level: level_int, message: message_str, datalayer: datalayer_str } = event;
-        FS.event('Data Layer Observer', { level_int, message_str, datalayer_str }, 'dataLayerObserver');
-      },
-    };
+    logger.appender = appender;
 
-    logger.error('Data layer not found', mockDatalayer);
+    logger.error('Data layer not found', { source: mockDatalayer });
 
-    const [eventName, payload, source] = expectParams(FS, 'event');
-    expect(eventName).to.eq('Data Layer Observer');
-    expect(payload.level_int).to.eq(LogLevel.ERROR);
-    expect(payload.message_str).to.eq('Data layer not found');
-    expect(payload.datalayer_str).to.eq(mockDatalayer);
-    expect(source).to.eq('dataLayerObserver');
+    const [event] = expectParams(appender, 'log');
+    expect(event).to.not.be.undefined;
+    expect(event.level).to.eq(LogLevel.ERROR);
+    expect(event.message).to.eq('Data layer not found');
+    expect(event.context.source).to.eq(mockDatalayer);
   });
 });
