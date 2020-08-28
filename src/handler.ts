@@ -3,6 +3,7 @@ import { Operator } from './operator';
 import { DataLayerDetail, createEventType } from './event';
 import { select } from './selector';
 import DataLayerTarget from './target';
+import { FanOutOperator } from './operators/fan-out';
 
 /**
  * DataHandler listens for changes from lower level PropertyListeners. Events emitted from
@@ -91,7 +92,7 @@ export default class DataHandler {
    * Sequentially process the list of operators.
    * @param data the data as an array of values emitted from the data layer
    */
-  private handleData(data: any[] | null): any[] | null {
+  private handleData(data: any[] | null, operatorStartIndex: number = 0): any[] | null {
     this.timeoutId = null; // clear the timeout used for debouncing
 
     const { path } = this.target;
@@ -100,7 +101,7 @@ export default class DataHandler {
 
     let handledData = data;
 
-    for (let i = 0; i < this.operators.length; i += 1) {
+    for (let i = operatorStartIndex; i < this.operators.length; i += 1) {
       const { options: { name } } = this.operators[i];
 
       try {
@@ -111,6 +112,18 @@ export default class DataHandler {
           return null;
         }
         handledData = this.operators[i].handleData(handledData);
+
+        /*
+        The FanOutOperator is a special case.
+        It returns an array of objects that each should have the remaining operators run on them.
+        So, we call handleData on each of them and then abort this loop.
+        */
+        if (handledData !== null && this.operators[i] instanceof FanOutOperator) {
+          for (let fanIndex = 0; fanIndex < handledData.length; fanIndex += 1) {
+            this.handleData([handledData[fanIndex]], i + 1);
+          }
+          break;
+        }
 
         let stats = ''; // debug stats (only compute if debug is enabled)
         if (this.debug && handledData !== null && handledData[0] !== null && typeof handledData[0] === 'object') {
@@ -127,6 +140,7 @@ export default class DataHandler {
       } catch (err) {
         Logger.getInstance().error(`Operator ${name} failed for ${path} at step ${i}`,
           path);
+        // @eslint-disable-next-line
         console.error(err.message);
         return null;
       }

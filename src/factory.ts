@@ -6,20 +6,23 @@ import {
   ConvertOperator, ConvertOperatorOptions,
   QueryOperator, QueryOperatorOptions,
   RenameOperator, RenameOperatorOptions,
+  FanOutOperator, FanOutOperatorOptions,
 } from './operators';
 import { Operator } from './operator';
 
 /**
  * Declares known, built-in Operators.
  */
-export type BuiltinOperator = typeof ConvertOperator | typeof FlattenOperator | typeof FunctionOperator |
-  typeof InsertOperator | typeof SuffixOperator | typeof QueryOperator | typeof RenameOperator;
+export type BuiltinOperator = typeof ConvertOperator | typeof FlattenOperator
+  | typeof FunctionOperator | typeof InsertOperator | typeof SuffixOperator
+  | typeof QueryOperator | typeof RenameOperator | typeof FanOutOperator;
 
 /**
  * Declares known, built-in OperatorOptions.
  */
-export type BuiltinOptions = ConvertOperatorOptions | FlattenOperatorOptions | FunctionOperatorOptions
-  | InsertOperatorOptions | SuffixOperatorOptions | QueryOperatorOptions | RenameOperatorOptions;
+export type BuiltinOptions = ConvertOperatorOptions | FlattenOperatorOptions
+  | FunctionOperatorOptions | InsertOperatorOptions | SuffixOperatorOptions
+  | QueryOperatorOptions | RenameOperatorOptions | FanOutOperatorOptions;
 
 /**
  * OperatorFactory creates instances built-in Operators. Since DataLayerRule can define OperatorOptions at runtime,
@@ -34,6 +37,7 @@ export class OperatorFactory {
     suffix: SuffixOperator,
     query: QueryOperator,
     rename: RenameOperator,
+    'fan-out': FanOutOperator,
   };
 
   /**
