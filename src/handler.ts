@@ -16,7 +16,7 @@ export default class DataHandler {
 
   private operators: Operator[] = [];
 
-  private target: DataLayerTarget;
+  readonly target: DataLayerTarget;
 
   private timeoutId: number | null = null;
 

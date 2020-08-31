@@ -12,8 +12,40 @@ export default class DataLayerTarget {
 
   readonly path: string;
 
+  /**
+   * Returns the value of the subject by executing the selector.
+   */
   get value(): any {
-    return typeof this.subject === 'object' ? select(this.selector) : null;
+    return select(this.selector);
+  }
+
+  /**
+   * Returns the property name of the subject.
+   */
+  get property(): string {
+    return this.path.substring(this.path.lastIndexOf('.') + 1);
+  }
+
+  /**
+   * Returns the parent object that contains the subject.
+   */
+  get parent(): any {
+    return select(this.parentPath);
+  }
+
+  /**
+   * Returns the path to the parent that contains the subject.
+   */
+  get parentPath(): string {
+    return this.path.substring(0, this.path.lastIndexOf('.'));
+  }
+
+  /**
+   * Returns the parent's property name.
+   */
+  get parentProperty(): string {
+    const parentPath = this.path.substring(0, this.path.lastIndexOf('.'));
+    return parentPath.substring(parentPath.lastIndexOf('.') + 1);
   }
 
   constructor(public readonly selector: string) {

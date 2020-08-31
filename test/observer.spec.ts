@@ -15,6 +15,7 @@ import { Operator, OperatorOptions } from '../src/operator';
 import { LogEvent } from '../src/utils/logger';
 import DataHandler from '../src/handler';
 import { MockClass } from './mocks/mock';
+import MonitorFactory from '../src/monitor-factory';
 
 class EchoOperator implements Operator {
   options: OperatorOptions = {
@@ -468,7 +469,7 @@ describe('DataLayerObserver unit tests', () => {
     }, DataHandler.debounceTime * 1.5);
 
     // remove monitors and re-check
-    observer.removeMonitor('digitalData.cart');
+    MonitorFactory.getInstance().remove('digitalData.cart.cartID');
 
     globalMock.digitalData.cart.cartID = 'cart-0000';
 
@@ -481,7 +482,7 @@ describe('DataLayerObserver unit tests', () => {
     ExpectObserver.getInstance().cleanup(observer);
   });
 
-  it('function calls should trigger the data handler', (done) => {
+  it('function calls should trigger the data handler', () => {
     let args: any[] = [];
 
     const hit: any = {
@@ -508,12 +509,9 @@ describe('DataLayerObserver unit tests', () => {
     globalMock.dataLayer.push(hit);
 
     // check the function args
-    setTimeout(() => {
-      expect(args.length).to.eq(1);
-      expect(args[0]).to.eq(hit);
-
-      done();
-    }, DataHandler.debounceTime * 1.5);
+    // NOTE that functions are not debounced and called synchronously
+    expect(args.length).to.eq(1);
+    expect(args[0]).to.eq(hit);
 
     ExpectObserver.getInstance().cleanup(observer);
   });
