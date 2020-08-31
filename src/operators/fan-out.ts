@@ -18,7 +18,7 @@ export class FanOutOperator implements Operator {
     const { index = 0, properties = [] } = options;
     this.index = index;
     if (typeof properties === 'string') {
-      this.properties = [properties];
+      this.properties = properties.split(',').map((val) => val.trim());
     } else {
       this.properties = properties;
     }

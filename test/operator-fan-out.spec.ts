@@ -13,24 +13,18 @@ const item = {
   ],
 };
 
-// @ts-ignore
-function handleDestination(...params: any[]) {
-  (globalThis as any).callParameters.push(params);
-}
-
 describe('fan out operator unit tests', () => {
   beforeEach(() => {
     (globalThis as any).item = deepcopy(item);
-    (globalThis as any).handleDestination = handleDestination;
-    (globalThis as any).callParameters = [];
   });
 
   afterEach(() => {
     delete (globalThis as any).item;
-    delete (globalThis as any).callParameters;
   });
 
   it('it should fan out properties', () => {
+    const callParameters: any[] = [];
+
     const observer = new DataLayerObserver({
       rules: [
         {
@@ -39,22 +33,54 @@ describe('fan out operator unit tests', () => {
             { name: 'fan-out', properties: ['left-hand', 'right-hand', 'list'] },
             { name: 'flatten' },
           ],
-          destination: 'globalThis.handleDestination',
+          destination: (...params: any[]) => {
+            callParameters.push(params);
+          },
           monitor: false,
         },
       ],
       readOnLoad: true,
     });
     expect(observer).to.not.be.undefined;
-    const callParams: object[] = (globalThis as any).callParameters;
-    expect(callParams.length).to.equal(4);
+    expect(callParameters.length).to.equal(4);
     // @ts-ignore
-    expect(callParams[0][0].index).to.equal(true);
+    expect(callParameters[0][0].index).to.equal(true);
     // @ts-ignore
-    expect(callParams[1][0].middle).to.equal(false);
+    expect(callParameters[1][0].middle).to.equal(false);
     // @ts-ignore
-    expect(callParams[2][0].eenie).to.equal('meenie');
+    expect(callParameters[2][0].eenie).to.equal('meenie');
     // @ts-ignore
-    expect(callParams[3][0].minie).to.equal('moe');
+    expect(callParameters[3][0].minie).to.equal('moe');
+  });
+
+  it('it should handle string properties', () => {
+    const callParameters: any[] = [];
+
+    const observer = new DataLayerObserver({
+      rules: [
+        {
+          source: 'item',
+          operators: [
+            { name: 'fan-out', properties: 'left-hand, right-hand,list' },
+            { name: 'flatten' },
+          ],
+          destination: (...params: any[]) => {
+            callParameters.push(params);
+          },
+          monitor: false,
+        },
+      ],
+      readOnLoad: true,
+    });
+    expect(observer).to.not.be.undefined;
+    expect(callParameters.length).to.equal(4);
+    // @ts-ignore
+    expect(callParameters[0][0].index).to.equal(true);
+    // @ts-ignore
+    expect(callParameters[1][0].middle).to.equal(false);
+    // @ts-ignore
+    expect(callParameters[2][0].eenie).to.equal('meenie');
+    // @ts-ignore
+    expect(callParameters[3][0].minie).to.equal('moe');
   });
 });

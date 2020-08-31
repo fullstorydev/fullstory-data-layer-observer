@@ -140,8 +140,6 @@ export default class DataHandler {
       } catch (err) {
         Logger.getInstance().error(`Operator ${name} failed for ${path} at step ${i}`,
           path);
-        // @eslint-disable-next-line
-        console.error(err.message);
         return null;
       }
     }
