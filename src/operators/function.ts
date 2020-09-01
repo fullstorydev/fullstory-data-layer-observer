@@ -45,13 +45,13 @@ export class FunctionOperator implements Operator {
     switch (typeof func) {
       case 'function':
         val = func.apply(actualThisArg, data);
-        if (typeof val === 'undefined' || val === null) {
+        if (val === undefined || val === null) {
           return null; // aborts the handler
         }
         return [val];
       case 'string':
         val = select(func).apply(actualThisArg, data);
-        if (typeof val === 'undefined' || val === null) {
+        if (val === undefined || val === null) {
           return null; // aborts the handler
         }
         return [val];
