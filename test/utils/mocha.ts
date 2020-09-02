@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import { MockClass, Call } from '../mocks/mock';
 import { DataLayerDetail } from '../../src/event';
 import { DataLayerObserver, DataLayerConfig } from '../../src/observer';
+import MonitorFactory from '../../src/monitor-factory';
 
 /**
  * Tests whether a call queue has one Call and returns it.
@@ -71,8 +72,7 @@ export function expectEventListener(type: string, expectedValue: any, done: Moch
     if (customEvent.detail.args) {
       expect(customEvent.detail.args).to.not.be.undefined;
       expect(customEvent.detail.args!.length).to.eq(expectedValue.length);
-
-      customEvent.detail.args!.forEach((arg: any, i: number) => expect(expectedValue[i] === arg));
+      expect(customEvent.detail.args!).to.eql(expectedValue);
     }
 
     done();
@@ -105,10 +105,6 @@ export class ExpectObserver {
 
     if (expectHandlers) {
       expect(observer.handlers.length).to.eq(config.rules.length);
-    }
-
-    if (config.rules.find((rule) => rule.monitor === undefined || rule.monitor === true)) {
-      expect(Object.getOwnPropertyNames(observer.monitors).length).be.greaterThan(0);
     }
 
     this.observers.push(observer);
@@ -151,6 +147,7 @@ export class ExpectObserver {
    */
   private destroy(observer: DataLayerObserver) {
     observer.handlers.forEach((handler) => {
+      MonitorFactory.getInstance().remove(handler.target.path, true);
       handler.stop();
     });
 

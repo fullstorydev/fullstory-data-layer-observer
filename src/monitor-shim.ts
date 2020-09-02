@@ -11,14 +11,22 @@ export default class ShimMonitor extends Monitor {
 
   private writable: boolean | undefined = true;
 
-  addPropertyMonitor(object: any, property: string) {
+  /**
+   * Checks if a shim is allowed and if not throws an Error.
+   * @param object to be checked
+   */
+  static checkShimAllowed(object: any) {
     if (Object.isFrozen(object)) {
-      throw new Error('Failed to monitor frozen object');
+      throw new Error('Object is frozen');
     }
 
     if (Object.isSealed(object)) {
-      throw new Error('Failed to monitor sealed object');
+      throw new Error('Object is sealed');
     }
+  }
+
+  addPropertyMonitor() {
+    ShimMonitor.checkShimAllowed(this.object);
 
     const descriptor = Object.getOwnPropertyDescriptor(this.object, this.property);
 
@@ -30,7 +38,7 @@ export default class ShimMonitor extends Monitor {
     }
 
     // define a new property and default to a more malleable property if descriptor is undefined
-    Object.defineProperty(object, property, {
+    Object.defineProperty(this.object, this.property, {
       configurable: this.configurable,
       enumerable: this.enumerable,
       get: () => this.state,
@@ -52,5 +60,19 @@ export default class ShimMonitor extends Monitor {
     } catch (err) {
       Logger.getInstance().error(`Failed to remove listener on ${this.property}`, this.path);
     }
+  }
+
+  addFunctionMonitor() {
+    ShimMonitor.checkShimAllowed(this.object);
+
+    this.object[this.property] = (...args: any[]): any => {
+      try {
+        this.emit(args);
+        return this.state.apply(this.object, args);
+      } catch (err) {
+        Logger.getInstance().error(`Function ${this.property} exception`);
+        return null;
+      }
+    };
   }
 }

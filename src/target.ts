@@ -1,24 +1,54 @@
 import { parsePath, ElementKind, select } from './selector';
 
 /**
- * DataLayerTarget refers to the object to be observed from a data layer.
- * Selectors are commonly used to access objects in a data layer; however, a selector can sometimes return
+ * DataLayerTarget refers to the subject to be observed from a data layer.
+ * Selectors are commonly used to access objects or functions in a data layer; however, a selector can sometimes return
  * a copy of an object. For example, picking or omitting returns an intermediate object - not the original
- * object from the data layer. DataLayerTarget retains the object and path to that object for the purposes
- * of storing a reference to the actual data layer object.
+ * object from the data layer. DataLayerTarget retains the subject and path to the subject for the purposes
+ * of storing a reference to the actual data layer object or function.
  */
 export default class DataLayerTarget {
-  readonly object: any;
+  readonly subject: Object | Function;
 
   readonly path: string;
 
+  /**
+   * Returns the value of the subject by executing the selector.
+   */
   get value(): any {
-    return typeof this.object === 'object' ? select(this.selector) : null;
+    return select(this.selector);
   }
 
-  id: number;
+  /**
+   * Returns the property name of the subject.
+   */
+  get property(): string {
+    return this.path.substring(this.path.lastIndexOf('.') + 1);
+  }
 
-  constructor(public readonly selector: string, object?: any) {
+  /**
+   * Returns the parent object that contains the subject.
+   */
+  get parent(): any {
+    return select(this.parentPath);
+  }
+
+  /**
+   * Returns the path to the parent that contains the subject.
+   */
+  get parentPath(): string {
+    return this.path.substring(0, this.path.lastIndexOf('.'));
+  }
+
+  /**
+   * Returns the parent's property name.
+   */
+  get parentProperty(): string {
+    const parentPath = this.path.substring(0, this.path.lastIndexOf('.'));
+    return parentPath.substring(parentPath.lastIndexOf('.') + 1);
+  }
+
+  constructor(public readonly selector: string) {
     const parsedPath = parsePath(selector);
 
     if (!parsedPath) {
@@ -41,8 +71,8 @@ export default class DataLayerTarget {
         }
       }
     }
-    this.id = Date.now();
+
     this.path = !path ? selector : path;
-    this.object = object || select(this.path);
+    this.subject = select(this.path);
   }
 }
