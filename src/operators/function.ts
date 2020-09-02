@@ -41,11 +41,20 @@ export class FunctionOperator implements Operator {
       throw new Error('FunctionOperator has no this');
     }
 
+    let val = null;
     switch (typeof func) {
       case 'function':
-        return [func.apply(actualThisArg, data)];
+        val = func.apply(actualThisArg, data);
+        if (val === undefined || val === null) {
+          return null; // aborts the handler
+        }
+        return [val];
       case 'string':
-        return [select(func).apply(actualThisArg, data)];
+        val = select(func).apply(actualThisArg, data);
+        if (val === undefined || val === null) {
+          return null; // aborts the handler
+        }
+        return [val];
       default:
         // NOTE this will stop the handler
         return null;
