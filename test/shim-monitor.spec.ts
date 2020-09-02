@@ -9,6 +9,7 @@ import { expectEventListener } from './utils/mocha';
 import { createEventType } from '../src/event';
 
 interface GlobalMock {
+  dataLayer: any[],
   digitalData: CEDDL,
 }
 
@@ -17,11 +18,13 @@ let globalMock: GlobalMock;
 describe('ShimMonitor unit tests', () => {
   beforeEach(() => {
     (globalThis as any).digitalData = deepcopy(basicDigitalData); // NOTE copy so mutations don't pollute tests
+    (globalThis as any).dataLayer = [];
     globalMock = globalThis as any;
   });
 
   afterEach(() => {
     delete (globalThis as any).digitalData;
+    delete (globalThis as any).dataLayer;
   });
 
   it('it should create a property Monitor', () => {
@@ -61,6 +64,69 @@ describe('ShimMonitor unit tests', () => {
     expect(cartMonitor).to.not.be.undefined;
 
     globalMock.digitalData.cart.cartID = 'cart-5678';
+  });
+
+  it('it should emit args from function calls', (done) => {
+    const path = 'dataLayer';
+    const hit: any = {
+      page: 'homepage',
+    };
+
+    expectEventListener(createEventType(path), [hit], done); // NOTE the value emitted is a list of args
+
+    const listMonitor = new ShimMonitor(globalMock.dataLayer, 'push', path);
+    expect(listMonitor).to.not.be.undefined;
+
+    const length = globalMock.dataLayer.push(hit);
+    expect(length).to.eq(1);
+  });
+
+  it('it should emit variadic args from function calls', (done) => {
+    const path = 'dataLayer';
+
+    expectEventListener(createEventType(path), [1, 2, 3], done); // NOTE the value emitted is a list of args
+
+    const listMonitor = new ShimMonitor(globalMock.dataLayer, 'push', path);
+    expect(listMonitor).to.not.be.undefined;
+
+    const length = globalMock.dataLayer.push(1, 2, 3);
+    expect(length).to.eq(3);
+  });
+
+  it('it should emit args but trap function exceptions', (done) => {
+    const path = 'dataLayer';
+    (globalThis as any).dataLayer.error = (message: string) => {
+      throw new Error(message);
+    };
+
+    expectEventListener(createEventType(path), ['Hello World'], done); // NOTE the value emitted is a list of args
+
+    const listMonitor = new ShimMonitor(globalMock.dataLayer, 'error', path);
+    expect(listMonitor).to.not.be.undefined;
+
+    // @ts-ignore
+    const ret = globalMock.dataLayer.error('Hello World');
+    expect(ret).to.eq(null);
+  });
+
+  it('it should emit args and not fail because of dispatch related exceptions', () => {
+    const path = 'digitalData.fn';
+    (globalThis as any).dataLayer.fn = () => true;
+
+    // this will simulate a handler's exception
+    const listener = () => {
+      throw new Error();
+    };
+    window.addEventListener(createEventType(path), listener);
+
+    const fnMonitor = new ShimMonitor(globalMock.dataLayer, 'fn', path);
+    expect(fnMonitor).to.not.be.undefined;
+
+    // @ts-ignore
+    const ret = globalMock.dataLayer.fn();
+    expect(ret).to.eq(true);
+
+    window.removeEventListener(createEventType(path), listener);
   });
 
   it('it should remove a monitor and reassign the original value', () => {

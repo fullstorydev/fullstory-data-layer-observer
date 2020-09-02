@@ -3,9 +3,8 @@ import { BuiltinOptions, OperatorFactory } from './factory';
 import DataHandler from './handler';
 import { Logger, LogAppender } from './utils/logger';
 import { FunctionOperator } from './operators';
-import Monitor from './monitor';
-import ShimMonitor from './monitor-shim';
 import DataLayerTarget from './target';
+import MonitorFactory from './monitor-factory';
 
 /**
  * DataLayerConfig provides global settings for a DataLayerObserver.
@@ -71,8 +70,6 @@ export class DataLayerObserver {
 
   listeners: { [path: string]: EventListener[] } = {};
 
-  monitors: { [path: string]: { [property: string]: Monitor } } = {};
-
   /**
    * Creates a DataLayerObserver. If no DataLayerConfig is provided, the following settings will be
    * used:
@@ -119,18 +116,22 @@ export class DataLayerObserver {
    * Adds monitor to a target in the data layer. If a monitor already exists, calling this
    * function will result in a no-op.
    * @param target to add monitors into
-   * @param property to monitor
+   * @param property to monitor; if property is not given, the monitor is added to the target itself
    */
-  addMonitor(target: DataLayerTarget, property: string) {
-    const { object, path } = target;
+  static addMonitor(target: DataLayerTarget) {
+    const {
+      subject, path, property, parent, parentPath,
+    } = target;
 
-    if (!this.monitors[path]) {
-      this.monitors[path] = {};
+    if (typeof subject === 'object') {
+      MonitorFactory.getInstance().create(parent, property, parentPath); // monitor the parent for re-assignments
+      Object.getOwnPropertyNames(subject).forEach((childProperty: string) => {
+        MonitorFactory.getInstance().create(subject, childProperty, path); // monitor the child properties
+      });
     }
 
-    // NOTE we can only shim a property once
-    if (!this.monitors[target.path][property]) {
-      this.monitors[path][property] = new ShimMonitor(object, property, path);
+    if (typeof subject === 'function') {
+      MonitorFactory.getInstance().create(parent, property, path);
     }
   }
 
@@ -244,23 +245,19 @@ export class DataLayerObserver {
           this.removeHandler(handler);
         }
 
-        if (typeof target.object === 'object') {
-          if (monitor) {
-            Object.getOwnPropertyNames(target.object).forEach((property) => {
-              try {
-                this.addMonitor(target, property);
-              } catch (err) {
-                Logger.getInstance().warn(`Failed to create monitor on ${property} for rule ${id}`, source);
-              }
-            });
+        if (readOnLoad && typeof target.subject === 'object') {
+          try {
+            handler.fireEvent();
+          } catch (err) {
+            Logger.getInstance().error(`Failed to read on load for rule ${id}`, source);
           }
+        }
 
-          if (readOnLoad) {
-            try {
-              handler.fireEvent();
-            } catch (err) {
-              Logger.getInstance().error(`Failed to read on load for rule ${id}`, source);
-            }
+        if (typeof target.subject === 'function' || monitor) {
+          try {
+            DataLayerObserver.addMonitor(target);
+          } catch (err) {
+            Logger.getInstance().warn(`Failed to create monitor for rule ${id}`, source);
           }
         }
       } catch (err) {
@@ -295,18 +292,5 @@ export class DataLayerObserver {
     if (i > -1) {
       this.handlers.splice(i, 1);
     }
-  }
-
-  /**
-   * Removes a monitor from watching property changes or function calls.
-   * @param path to the data layer object that have monitors created
-   * @param property of the specific monitor to remove, else all monitors are removed
-   */
-  removeMonitor(path: string, property?: string) {
-    const properties = property ? [property] : Object.getOwnPropertyNames(this.monitors[path]);
-    properties.forEach((prop) => {
-      this.monitors[path][prop].remove();
-      delete this.monitors[path][prop];
-    });
   }
 }

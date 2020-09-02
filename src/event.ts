@@ -48,7 +48,7 @@ export function createEventType(path: string) {
  */
 export function createEvent(target: any, property: string, value: any, path: string): CustomEvent<DataLayerDetail> {
   return new CustomEvent<DataLayerDetail>(createEventType(path), {
-    detail: typeof target === 'function' ? new FunctionDetail(path, property, value)
+    detail: typeof target[property] === 'function' ? new FunctionDetail(path, property, value)
       : new PropertyDetail(path, property, value),
   });
 }
