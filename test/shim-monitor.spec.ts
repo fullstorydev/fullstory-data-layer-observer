@@ -109,6 +109,26 @@ describe('ShimMonitor unit tests', () => {
     expect(ret).to.eq(null);
   });
 
+  it('it should emit args and not fail because of dispatch related exceptions', () => {
+    const path = 'digitalData.fn';
+    (globalThis as any).dataLayer.fn = () => true;
+
+    // this will simulate a handler's exception
+    const listener = () => {
+      throw new Error();
+    };
+    window.addEventListener(createEventType(path), listener);
+
+    const fnMonitor = new ShimMonitor(globalMock.dataLayer, 'fn', path);
+    expect(fnMonitor).to.not.be.undefined;
+
+    // @ts-ignore
+    const ret = globalMock.dataLayer.fn();
+    expect(ret).to.eq(true);
+
+    window.removeEventListener(createEventType(path), listener);
+  });
+
   it('it should remove a monitor and reassign the original value', () => {
     const o = { message: 'Hello World' };
 
