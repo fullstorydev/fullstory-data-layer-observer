@@ -116,7 +116,7 @@ export class DataLayerObserver {
    * Adds monitor to a target in the data layer. If a monitor already exists, calling this
    * function will result in a no-op.
    * @param target to add monitors into
-   * @param property to monitor; if not property is given, the monitor is added to the target itself
+   * @param property to monitor; if property is not given, the monitor is added to the target itself
    */
   static addMonitor(target: DataLayerTarget) {
     const {
