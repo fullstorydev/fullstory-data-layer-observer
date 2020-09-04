@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "rollup --config",
-    "build:module": "tsc",
+    "build:module": "tsc --outDir ./dist",
     "watch": "rollup --config -w",
     "examples": "npm run build && http-server",
     "test": "nyc mocha -r ts-node/register -r source-map-support/register -r jsdom-global/register test/*.spec.ts test/**/*.spec.ts",
