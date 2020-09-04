@@ -17,7 +17,7 @@
       "operators": [
         { "name": "query", "select": "$.ecommerce.impressions" },
         { "name": "fan-out" },
-        { "name": "insert", "value": "Commerce impressions" }
+        { "name": "insert", "value": "Commerce impression" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
@@ -29,7 +29,7 @@
       "operators": [
         { "name": "query", "select": "$.ecommerce.promoView.promotions" },
         { "name": "fan-out" },
-        { "name": "insert", "value": "Commerce promotions" }
+        { "name": "insert", "value": "Commerce promotion" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,

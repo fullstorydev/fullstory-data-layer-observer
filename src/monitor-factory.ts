@@ -32,7 +32,11 @@ export default class MonitorFactory {
     const key = typeof (object as any)[property] === 'function' ? path : `${path}.${property}`;
 
     if (!this.monitors[key]) {
-      this.monitors[key] = new ShimMonitor(object, property, path);
+      const propDescriptor = Object.getOwnPropertyDescriptor(object, property) || null;
+      // functions have no property descriptors but properties need to be configurable (e.g. Array.length is not)
+      if (propDescriptor === null || propDescriptor.configurable) {
+        this.monitors[key] = new ShimMonitor(object, property, path);
+      }
     }
 
     return this.monitors[key];

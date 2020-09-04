@@ -16,7 +16,7 @@ import { CEDDL, basicDigitalData } from './mocks/CEDDL';
 import { basicGoogleTags } from './mocks/google-tags';
 import Console from './mocks/console';
 import FullStory from './mocks/fullstory-recording';
-import { expectParams } from './utils/mocha';
+import { expectParams, ExpectObserver } from './utils/mocha';
 
 interface GlobalMock {
   digitalData: CEDDL,
@@ -49,14 +49,116 @@ describe('Google Tags to FullStory rules', () => {
     delete (globalThis as any).FS;
   });
 
+  it('should read page type', () => {
+    const observer = ExpectObserver.getInstance().create({
+      rules: [
+        getRule('fs-ga-page-type'),
+      ],
+    });
+
+    const [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('View Page Type');
+    expect(payload.pageType).to.eq('Home');
+
+    (globalThis as any).digitalData.push({
+      pageType: 'Test',
+      pageName: 'test',
+    });
+    const [id3, payload3] = expectParams(globalMock.FS, 'event');
+    expect(id3).to.eq('View Page Type');
+    expect(payload3.pageName).to.eq('test');
+
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
+  it('should read commerce impressions', () => {
+    const observer = ExpectObserver.getInstance().create({
+      rules: [
+        getRule('fs-ga-e-commerce-impressions'),
+      ],
+    });
+
+    const [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('Commerce impression');
+    expect(payload.id).to.eq('P000614444');
+
+    const [id2, payload2] = expectParams(globalMock.FS, 'event');
+    expect(id2).to.eq('Commerce impression');
+    expect(payload2.id).to.eq('P000525722');
+
+    (globalThis as any).digitalData.push({
+      event: 'impressions_loaded',
+      ecommerce: {
+        impressions: [
+          {
+            id: 'test',
+            name: 'Test',
+          },
+        ],
+      },
+    });
+    const [id3, payload3] = expectParams(globalMock.FS, 'event');
+    expect(id3).to.eq('Commerce impression');
+    expect(payload3.id).to.eq('test');
+
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
   it('should set the user', () => {
-    const observer = new DataLayerObserver({
+    const observer = ExpectObserver.getInstance().create({
       rules: [
         getRule('fs-ga-user-vars'),
       ],
-      readOnLoad: true,
     });
     expect(observer).to.not.be.undefined;
+    const [id, payload] = expectParams(globalMock.FS, 'setUserVars');
+    expect(id).to.eq('101');
+    expect(payload.userType).to.eq('member');
+
+    (globalThis as any).digitalData.push({
+      userProfile: {
+        userId: '201',
+        userType: 'admin',
+        loyaltyProgram: 'early-adopter',
+        hashedEmail: '555-12232-2332232-222',
+      },
+    });
+    const [id2, payload2] = expectParams(globalMock.FS, 'setUserVars');
+    expect(id2).to.eq('201');
+    expect(payload2.userType).to.eq('admin');
+
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
+  it('should read commerce promotions', () => {
+    const observer = ExpectObserver.getInstance().create({
+      rules: [
+        getRule('fs-ga-e-commerce-promotions'),
+      ],
+    });
+    expect(observer).to.not.be.undefined;
+    const [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('Commerce promotion');
+    expect(payload.id).to.eq('1001-Strawberries222333');
+
+    (globalThis as any).digitalData.push({
+      event: 'impressions_loaded',
+      ecommerce: {
+        promoView: {
+          promotions: [
+            {
+              id: 'test',
+              name: 'Test',
+            },
+          ],
+        },
+      },
+    });
+    const [id2, payload2] = expectParams(globalMock.FS, 'event');
+    expect(id2).to.eq('Commerce promotion');
+    expect(payload2.id).to.eq('test');
+
+    ExpectObserver.getInstance().cleanup(observer);
   });
 });
 

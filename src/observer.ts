@@ -117,7 +117,6 @@ export class DataLayerObserver {
    * Adds monitor to a target in the data layer. If a monitor already exists, calling this
    * function will result in a no-op.
    * @param target to add monitors into
-   * @param property to monitor; if property is not given, the monitor is added to the target itself
    */
   private addMonitor(target: DataLayerTarget) {
     const {
@@ -219,15 +218,36 @@ export class DataLayerObserver {
    */
   registerTarget(target: DataLayerTarget, options: OperatorOptions[], destination: string | Function,
     read = false, monitor = true, debug = false): DataHandler {
+    const targetValue = target.value;
+
+    /*
+    We do a bit of magic when monitor is set and the target is an Array.
+    We convert the target to the `push` method and then monitor it below.
+    */
+    if (monitor && Array.isArray(targetValue)) {
+      target.convertToPropertyMethod('push');
+    }
+
     const handler = this.addHandler(target, !!debug);
 
     this.addOperators(handler, options, destination);
 
-    if (read && target.type === 'object') {
-      try {
-        handler.fireEvent();
-      } catch (err) {
-        Logger.getInstance().error('Failed to read data layer');
+    if (read) {
+      // For read-on-load for targeted arrays we do a sort of manual fan-out of the items
+      if (Array.isArray(targetValue)) {
+        for (let i = 0; i < targetValue.length; i += 1) {
+          try {
+            handler.fireEvent(targetValue[i]);
+          } catch (err) {
+            Logger.getInstance().error('Failed to read-on-load data layer array');
+          }
+        }
+      } else if (target.type === 'object') {
+        try {
+          handler.fireEvent();
+        } catch (err) {
+          Logger.getInstance().error('Failed to read data layer');
+        }
       }
     }
 

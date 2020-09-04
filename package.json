@@ -10,6 +10,7 @@
     "watch": "rollup --config -w",
     "examples": "npm run build && http-server",
     "test": "nyc mocha -r ts-node/register -r source-map-support/register -r jsdom-global/register test/*.spec.ts test/**/*.spec.ts",
+    "test:fullstory": "nyc mocha -r ts-node/register -r source-map-support/register -r jsdom-global/register test/fullstory.spec.ts",
     "test:wel-auto-formulate": "npm run examples & cd ./test/web-embed-lab && ./auto-formulate.sh",
     "test:wel-runner": "npm run build && cd ./test/web-embed-lab && ./run-tests.sh",
     "lint": "eslint --ext .ts src/** test/mocks/** test/utils/** test/*.ts",
