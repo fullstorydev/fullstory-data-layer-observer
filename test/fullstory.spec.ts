@@ -1,3 +1,4 @@
+import deepcopy from 'deepcopy';
 import { expect } from 'chai';
 import 'mocha';
 
@@ -8,9 +9,11 @@ import * as cartRules from '../examples/rules/ceddl-cart-fullstory.json';
 import * as pageRules from '../examples/rules/ceddl-page-fullstory.json';
 import * as productRules from '../examples/rules/ceddl-product-fullstory.json';
 import * as transactionRules from '../examples/rules/ceddl-transaction-fullstory.json';
+import * as googleTagsRules from '../examples/rules/google-tags-fullstory.json';
 
 import { basicAppMeasurement, AppMeasurement } from './mocks/adobe';
 import { CEDDL, basicDigitalData } from './mocks/CEDDL';
+import { basicGoogleTags } from './mocks/google-tags';
 import Console from './mocks/console';
 import FullStory from './mocks/fullstory-recording';
 import { expectParams } from './utils/mocha';
@@ -25,7 +28,7 @@ interface GlobalMock {
 let globalMock: GlobalMock;
 
 const rules = [...adobeRules.rules, ...cartRules.rules, ...pageRules.rules, ...userRules.rules, ...productRules.rules,
-  ...transactionRules.rules];
+  ...transactionRules.rules, ...googleTagsRules.rules];
 
 function getRule(id: string) {
   const rule = rules.find((r: DataLayerRule) => r.id === id);
@@ -33,6 +36,29 @@ function getRule(id: string) {
 
   return rule!;
 }
+
+describe('Google Tags to FullStory rules', () => {
+  beforeEach(() => {
+    (globalThis as any).digitalData = deepcopy(basicGoogleTags);
+    (globalThis as any).FS = new FullStory();
+    globalMock = globalThis as any;
+  });
+
+  afterEach(() => {
+    delete (globalThis as any).digitalData;
+    delete (globalThis as any).FS;
+  });
+
+  it('should set the user', () => {
+    const observer = new DataLayerObserver({
+      rules: [
+        getRule('fs-ga-user-vars'),
+      ],
+      readOnLoad: true,
+    });
+    expect(observer).to.not.be.undefined;
+  });
+});
 
 describe('FullStory example rules unit tests', () => {
   beforeEach(() => {

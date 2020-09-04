@@ -1,0 +1,52 @@
+{
+  "rules": [
+    {
+      "id": "fs-ga-page-type",
+      "source": "digitalData",
+      "operators": [
+        { "name": "query", "select": "$[?(pageType, pageName)]" },
+        { "name": "insert", "value": "View Page Type" }
+      ],
+      "destination": "FS.event",
+      "readOnLoad": true,
+      "monitor": true
+    },
+    {
+      "id": "fs-ga-e-commerce-impressions",
+      "source": "digitalData",
+      "operators": [
+        { "name": "query", "select": "$.ecommerce.impressions" },
+        { "name": "fan-out" },
+        { "name": "insert", "value": "Commerce impressions" }
+      ],
+      "destination": "FS.event",
+      "readOnLoad": true,
+      "monitor": true
+    },
+    {
+      "id": "fs-ga-e-commerce-promotions",
+      "source": "digitalData",
+      "operators": [
+        { "name": "query", "select": "$.ecommerce.promoView.promotions" },
+        { "name": "fan-out" },
+        { "name": "insert", "value": "Commerce promotions" }
+      ],
+      "destination": "FS.event",
+      "readOnLoad": true,
+      "monitor": true
+    },
+    {
+      "id": "fs-ga-user-vars",
+      "source": "digitalData",
+      "operators": [
+        { "name": "query", "select": "$[?(userProfile)]" },
+        { "name": "flatten"},
+        { "name": "query", "select": "$[?(userId!=-1)]" },
+        { "name": "insert", "select": "userId" }
+      ],
+      "destination": "FS.setUserVars",
+      "readOnLoad": true,
+      "monitor": true
+    }
+  ]
+}
