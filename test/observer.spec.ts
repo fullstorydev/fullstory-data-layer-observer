@@ -16,6 +16,8 @@ import { LogEvent } from '../src/utils/logger';
 import DataHandler from '../src/handler';
 import { MockClass } from './mocks/mock';
 import MonitorFactory from '../src/monitor-factory';
+import { DataLayerObserver } from '../src/observer';
+import DataLayerTarget from '../src/target';
 
 class EchoOperator implements Operator {
   options: OperatorOptions = {
@@ -176,16 +178,12 @@ describe('DataLayerObserver unit tests', () => {
     const observer = ExpectObserver.getInstance().create({
       validateRules: true,
       rules: [{
-        source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log', monitor: false,
+        source: 'digitalData.page.pageInfo',
+        operators: [{ name: 'insert' }],
+        destination: 'console.log',
+        monitor: false,
       }],
     }, false);
-
-    expect(observer.handlers.length).to.eq(1);
-
-    const operator = new EchoOperator();
-    operator.options.fail = true;
-
-    expect(() => observer.addOperator(observer.handlers[0], operator)).to.throw();
 
     expect(observer.handlers.length).to.eq(0);
 
@@ -287,7 +285,7 @@ describe('DataLayerObserver unit tests', () => {
     const observer = ExpectObserver.getInstance().default();
 
     observer.registerOperator('toUpper', new UppercaseOperator());
-    observer.processRule({
+    observer.registerRule({
       source: 'digitalData.page.pageInfo',
       operators: [
         { name: 'toUpper' }],
@@ -295,7 +293,7 @@ describe('DataLayerObserver unit tests', () => {
       debug: true,
       monitor: false,
     });
-    observer.processRule({
+    observer.registerRule({
       source: 'digitalData.product[0].productInfo',
       operators: [
         { name: 'toUpper' }],
@@ -319,7 +317,7 @@ describe('DataLayerObserver unit tests', () => {
     const observer = ExpectObserver.getInstance().create({ beforeDestination: { name: 'toUpper' }, rules: [] });
 
     observer.registerOperator('toUpper', new UppercaseOperator());
-    observer.processRule({
+    observer.registerRule({
       source: 'digitalData.page.category',
       operators: [],
       destination: 'console.log',
@@ -512,6 +510,38 @@ describe('DataLayerObserver unit tests', () => {
     // NOTE that functions are not debounced and called synchronously
     expect(args.length).to.eq(1);
     expect(args[0]).to.eq(hit);
+
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
+  it('a developer can programmatically observe an object by reference', (done) => {
+    let changes: any[] = [];
+
+    const user = deepcopy(basicDigitalData.user.profile[0]);
+
+    const observer = new DataLayerObserver();
+    expect(observer).to.not.be.undefined;
+
+    const target = new DataLayerTarget(user, 'profileInfo', 'myUser');
+    expect(target).to.not.be.undefined;
+
+    observer.registerTarget(target, [{ name: 'query', select: '$[(profileID)]' }],
+      (...data: any[]) => { changes = data; }, true);
+
+    // check the readOnLoad
+    const [read] = changes;
+    expect(read.profileID).to.eq(user.profileInfo.profileID);
+
+    user.profileInfo.profileID = 'atl-404678';
+
+    // check the assignment
+    setTimeout(() => {
+      const [reassigned] = changes;
+      expect(reassigned.profileID).to.eq('atl-404678');
+      expect(reassigned.userName).to.be.undefined; // ensure selector picked
+
+      done();
+    }, DataHandler.debounceTime * 1.5);
 
     ExpectObserver.getInstance().cleanup(observer);
   });

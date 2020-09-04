@@ -1,7 +1,6 @@
 import { Logger } from './utils/logger';
 import { Operator } from './operator';
 import { DataLayerDetail, createEventType } from './event';
-import { select } from './selector';
 import DataLayerTarget from './target';
 import { FanOutOperator } from './operators/fan-out';
 
@@ -17,8 +16,6 @@ export default class DataHandler {
 
   private operators: Operator[] = [];
 
-  readonly target: DataLayerTarget;
-
   private timeoutId: number | null = null;
 
   // external tooling can override the console debugger
@@ -28,25 +25,19 @@ export default class DataHandler {
 
   /**
    * Creates a DataHandler.
-   * @param path the string path to the data layer (used to identify which data layer emitted data)
+   * @param target in the data layer
    * @param debug true optionally enables debugging data transformation (defaults to console.debug)
    * @throws will throw an error if the data layer is not found (i.e. undefined or null)
    */
-  constructor(target: DataLayerTarget | string, public debug = false) {
-    this.target = typeof target === 'string' ? new DataLayerTarget(target) : target;
-
-    if (!this.target.subject) {
-      throw new Error(`Data layer ${typeof target === 'string' ? target : target.path} not found on page`);
-    }
-
+  constructor(public readonly target: DataLayerTarget, public debug = false) {
     // begin handling data by listening for events
     this.start();
   }
 
   /**
-   * Manually emit the current value of the observed target property.
+   * Manually emit the current result of the observed target property.
    */
-  fireEvent(value = this.target.value) {
+  fireEvent(value = this.target.query()) {
     if (value) {
       this.handleData([value]);
     }
@@ -59,7 +50,7 @@ export default class DataHandler {
    */
   handleEvent(event: CustomEvent<DataLayerDetail>): void {
     const { detail: { args, value }, type } = event;
-    const { path, selector } = this.target;
+    const { path } = this.target;
 
     if (value === undefined && args === undefined) {
       Logger.getInstance().warn(`${path} emitted no data`, path);
@@ -70,9 +61,9 @@ export default class DataHandler {
           window.clearTimeout(this.timeoutId);
         }
 
-        // NOTE even though a value change occurred, handleData expects the root data layer object
-        // so select the source and send it to handle data
-        const result: any = select(selector);
+        // NOTE even though a change event includes a value, get the result from a query so that
+        // properties in the object can get picked, omitted, filtered, etc
+        const result: any = this.target.query();
 
         // only handle data if the selector actually returns something with data
         if (result) {

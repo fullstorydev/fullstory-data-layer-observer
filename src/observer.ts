@@ -1,3 +1,4 @@
+/* eslint-disable class-methods-use-this */
 import { OperatorOptions, Operator } from './operator';
 import { BuiltinOptions, OperatorFactory } from './factory';
 import DataHandler from './handler';
@@ -96,7 +97,7 @@ export class DataLayerObserver {
     }
 
     if (rules) {
-      rules.forEach((rule: DataLayerRule) => this.processRule(rule));
+      rules.forEach((rule: DataLayerRule) => this.registerRule(rule));
     }
   }
 
@@ -105,7 +106,7 @@ export class DataLayerObserver {
    * @param target to the data layer
    * @param debug when true enables debugging of operator transformations
    */
-  addHandler(target: DataLayerTarget, debug = false): DataHandler {
+  private addHandler(target: DataLayerTarget, debug = false): DataHandler {
     const handler = new DataHandler(target, debug);
     this.handlers.push(handler);
 
@@ -118,20 +119,26 @@ export class DataLayerObserver {
    * @param target to add monitors into
    * @param property to monitor; if property is not given, the monitor is added to the target itself
    */
-  static addMonitor(target: DataLayerTarget) {
+  private addMonitor(target: DataLayerTarget) {
     const {
-      subject, path, property, parent, parentPath,
+      subject, property, subjectPath, path: targetPath, selector, type,
     } = target;
 
-    if (typeof subject === 'object') {
-      MonitorFactory.getInstance().create(parent, property, parentPath); // monitor the parent for re-assignments
-      Object.getOwnPropertyNames(subject).forEach((childProperty: string) => {
-        MonitorFactory.getInstance().create(subject, childProperty, path); // monitor the child properties
-      });
-    }
+    if (type === 'function') {
+      MonitorFactory.getInstance().create(subject, property, targetPath);
+    } else {
+      // when a selector gets used, we know the full path through the data layer and can monitor note
+      if (selector) {
+        MonitorFactory.getInstance().create(subject, property, subjectPath); // monitor the subject for re-assignments
+      }
 
-    if (typeof subject === 'function') {
-      MonitorFactory.getInstance().create(parent, property, path);
+      // monitor all child properties
+      // NOTE this results in all properties firing changes but the query result ensures that only desired events
+      // are sent to the destination
+      const subjectRef = target.value;
+      Object.getOwnPropertyNames(subjectRef).forEach((childProperty: string) => {
+        MonitorFactory.getInstance().create(subjectRef, childProperty, targetPath);
+      });
     }
   }
 
@@ -139,31 +146,48 @@ export class DataLayerObserver {
    * Appends an Operator to the existing list for a given DataHandler. Data will be transformed
    * sequentially by iterating through the list of Operators. If an error occurs when creating or
    * adding the operator, the DataHandler will be removed to prevent unexpected data processing.
-   * @param handler the DataHandler to add the operator to
-   * @param options the OperatorOptions used to configure the Operator
-   * @throws an error if ruleValidation is enabled an the OperatorOptions are invalid
+   * @param handler to add operators to
+   * @param options for operators used to configure each Operator
    */
-  addOperator(handler: DataHandler, operator: Operator) {
-    if (this.config.validateRules) {
-      try {
-        operator.validate();
-      } catch (err) {
-        this.removeHandler(handler);
-        throw new Error(`Data handler removed because ${err.message}`);
-      }
-    }
+  private addOperators(handler: DataHandler, options: OperatorOptions[], destination: string | Function) {
+    const { beforeDestination, previewDestination = 'console.log', previewMode } = this.config;
 
-    handler.push(operator);
+    try {
+      // sequentially add the operators to the handler
+      options.forEach((optionSet) => {
+        handler.push(this.getOperator(optionSet));
+      });
+
+      // optionally perform a final transformation
+      // useful if every rule needs the same operator run before the destination
+      if (beforeDestination) {
+        handler.push(this.getOperator(beforeDestination));
+      }
+
+      // end with destination
+      const func = previewMode ? previewDestination : destination;
+      handler.push(new FunctionOperator({ name: 'function', func }));
+    } catch (err) {
+      this.removeHandler(handler);
+      throw err;
+    }
   }
 
   /**
    * Gets an Operator if it has already been registered. If not, create the Operator from the factory.
    * @param options the OperatorOptions used to locate or create the Operator
+   * @throws an Error if the `validateRules` setting is true and the `options` are invalid
    */
   private getOperator(options: OperatorOptions) {
     const { name } = options;
-    return this.customOperators[name] ? this.customOperators[name]
+    const operator = this.customOperators[name] ? this.customOperators[name]
       : OperatorFactory.create(name, options as BuiltinOptions);
+
+    if (this.config.validateRules) {
+      operator.validate();
+    }
+
+    return operator;
   }
 
   /**
@@ -182,15 +206,52 @@ export class DataLayerObserver {
   }
 
   /**
-   * Processes a DataLayerRule. Assuming the rule's `url` is valid, this will result in the rule
-   * being parsed, adding a DataHandler with any Operators, and registering a source and
-   * destination. If an error occurs when processing, the DataHandler will be removed
-   * to prevent unexpected data processing.
-   * @param rule the DataLayerRule to parse and process
-   * @throws errors if the rule has missing data or an error occurs during processing
+   * Registers a data layer target by creating the handler and monitor. This results in the target
+   * being inspected, adding a DataHandler with any Operators, registering a source and
+   * destination, and monitoring for changes or function calls.
+   * @param target from the data layer
+   * @param options list of OperatorOptions to transform data before a destination
+   * @param destination function using selector syntax or native function
+   * @param read when true reads data layer target and emit the initial value
+   * @param monitor when true property changes or function calls re-run the operators
+   * @param debug when true the rule prints debug for each Operator transformation
+   * @throws error if an error occurs during handler creation
    */
-  processRule(rule: DataLayerRule) {
-    const { beforeDestination, previewMode, readOnLoad: globalReadOnLoad } = this.config;
+  registerTarget(target: DataLayerTarget, options: OperatorOptions[], destination: string | Function,
+    read = false, monitor = true, debug = false): DataHandler {
+    const handler = this.addHandler(target, !!debug);
+
+    this.addOperators(handler, options, destination);
+
+    if (read && target.type === 'object') {
+      try {
+        handler.fireEvent();
+      } catch (err) {
+        Logger.getInstance().error('Failed to read data layer');
+      }
+    }
+
+    // NOTE functions are always monitored
+    if (monitor || target.type === 'function') {
+      try {
+        this.addMonitor(target);
+      } catch (err) {
+        Logger.getInstance().warn('Monitor creation failed');
+      }
+    }
+
+    return handler;
+  }
+
+  /**
+   * Registers a data layer rule. Assuming the rule's `url` is valid, this results in the rule
+   * being parsed, adding a DataHandler with any Operators, registering a source and
+   * destination, and monitoring for changes or function calls.
+   * @param rule to parse and process
+   * @throws error if the rule has missing data or an error occurs during processing
+   */
+  registerRule(rule: DataLayerRule) {
+    const { readOnLoad: globalReadOnLoad } = this.config;
 
     const {
       id = '',
@@ -217,54 +278,10 @@ export class DataLayerObserver {
     }
 
     try {
-      const target = new DataLayerTarget(source);
-
-      try {
-        const handler = this.addHandler(target, !!debug);
-
-        try {
-          // sequentially add the operators to the handler
-          operators.forEach((options) => {
-            const operator = this.getOperator(options);
-            this.addOperator(handler, operator);
-          });
-
-          // optionally perform a final transformation
-          // useful if every rule needs the same operator run before the destination
-          if (beforeDestination) {
-            const operator = this.getOperator(beforeDestination);
-            this.addOperator(handler, operator);
-          }
-
-          // end with destination
-          const { previewDestination = 'console.log' } = this.config;
-          const func = previewMode ? previewDestination : destination;
-          this.addOperator(handler, new FunctionOperator({ name: 'function', func }));
-        } catch (err) {
-          Logger.getInstance().error(`Failed to create operators for rule ${id}`, source);
-          this.removeHandler(handler);
-        }
-
-        if (readOnLoad && typeof target.subject === 'object') {
-          try {
-            handler.fireEvent();
-          } catch (err) {
-            Logger.getInstance().error(`Failed to read on load for rule ${id}`, source);
-          }
-        }
-
-        if (typeof target.subject === 'function' || monitor) {
-          try {
-            DataLayerObserver.addMonitor(target);
-          } catch (err) {
-            Logger.getInstance().warn(`Failed to create monitor for rule ${id}`, source);
-          }
-        }
-      } catch (err) {
-        Logger.getInstance().error(`Failed to create data handler for rule ${id}`, source);
-      }
+      const target = DataLayerTarget.find(source);
+      this.registerTarget(target, operators, destination, readOnLoad, monitor, debug);
     } catch (err) {
-      Logger.getInstance().error(`Failed find target for rule ${id}`, source);
+      Logger.getInstance().error('Failed register rule');
     }
   }
 
