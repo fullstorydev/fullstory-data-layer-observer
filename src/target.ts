@@ -42,8 +42,8 @@ export default class DataLayerTarget {
    * @param path that describes the path (or some unique identifier) to the property
    * @param selector that can optionally describe a query to be used when accessing the data layer
    */
-  constructor(public readonly subject: Object, public readonly property: string, public readonly path: string,
-    public readonly selector = '') {
+  constructor(public subject: Object, public property: string, public path: string,
+    public selector = '') {
     if (typeof subject !== 'object') {
       throw new Error('Data layer subject must be an object');
     }
@@ -75,6 +75,21 @@ export default class DataLayerTarget {
    */
   query(): any {
     return this.selector ? select(this.selector) : this.value;
+  }
+
+  /**
+   * Converts an Object instance to one that targets a method of the current target
+   * This is mainly used by the observer to convert from targeting an array to targeting array.push
+   */
+  convertToPropertyMethod(methodName: string) {
+    if (this.type !== 'object') {
+      throw new Error('Can only convert targets of type object to a property method target');
+    }
+    this.subject = this.value;
+    // this.path stays as-is because we're setting a new property
+    this.property = methodName;
+    this.selector = this.selector ? this.subjectPath : '';
+    this.type = 'function';
   }
 
   /**

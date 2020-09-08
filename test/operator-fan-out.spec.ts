@@ -59,8 +59,9 @@ describe('fan out operator unit tests', () => {
     const observer = new DataLayerObserver({
       rules: [
         {
-          source: 'item.list',
+          source: 'item',
           operators: [
+            { name: 'query', select: '$[(list)]' },
             { name: 'fan-out' },
           ],
           destination: (...params: any[]) => {
