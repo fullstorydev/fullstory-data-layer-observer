@@ -10,6 +10,14 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.1.0
+
+- Monitor property changes on data layer objects
+- Monitor function calls (e.g. dataLayer.push)
+- Two new operators added: Rename and Fan-Out
+- Google Analytics examples
+- Updated packaging to support NPM and programmatic usage
+
 ### 1.0.0
 
 - Initial release supporting static data layers

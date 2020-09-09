@@ -14,6 +14,7 @@ Add Data Layer Observer to your web site or web app by including the following s
 
 ```html
 <script>
+ window['_dlo_appender'] = 'fullstory';
  window['_dlo_beforeDestination'] = { name: 'suffix' };
  window['_dlo_previewMode'] = true;   // false in production
  window['_dlo_readOnLoad'] = true;    // see docs on usage
@@ -21,14 +22,6 @@ Add Data Layer Observer to your web site or web app by including the following s
  window['_dlo_rules'] = [{
   // add your rules here
  }];
- window['_dlo_appender'] = {
-  log: ({ level: level_int, message: message_str, datalayer: datalayer_str }) => {
-   const name = 'Data Layer Observer';
-   if (window[window['_fs_namespace']]) {
-    window[window['_fs_namespace']].event(name, { level_int, message_str, datalayer_str }, 'dlo');
-   }
-  }
- };
  </script>
 ```
 
@@ -69,7 +62,7 @@ To include DLO on a webpage, simply add the script to source code or load the sc
 
 If you would prefer to self-host the asset, use the `npm run build` command to create `dlo.js` and `dlo.min.js` files.  The latter is a minified script suitable for production.  You should also gzip compress the asset and set appropriate `Cache-Control` headers when self-hosting.
 
-FullStory’s hosted asset is roughly 6KB minified, compressed and has `Cache-Control` set to one month.
+FullStory’s hosted asset is less than 8KB minified, compressed and has `Cache-Control` set to one month.
 
 ## Configuration
 
@@ -95,7 +88,7 @@ Additional configuration can be added using the below options.
 
 | Option | Type | Default | Description |
 | ------ | ---- | ------- | ----------- |
-| _dlo_appender | LogAppender | `ConsoleAppender` | Defines a custom log appender to redirect log messages. |
+| _dlo_appender | LogAppender or string | `console` | Defines a custom log appender to redirect log messages. |
 | _dlo_beforeDestination | OperatorOptions | `undefined` | An optional operator that is always used just before before the destination. |
 | _dlo_previewDestination | string | `'console.log'` | Output destination using rule selector syntax for use with previewMode. |
 | _dlo_previewMode | boolean | `true` | Redirects output from a destination to previewDestination when testing rules. |
@@ -150,6 +143,7 @@ Each rule provides a set of options for configuration.  Options with an asterisk
 | `debug` | `false` | Set to true if the rule should print debug for each operator transformation. |
 | `description` | `undefined` | Text description of the rule. |
 | `id` | `undefined` | Unique identifier for the rule. |
+| `monitor` | `true` | Set to true to monitor property changes or function calls |
 | `operators` | `[]` | List of operators that transform data before a destination. |
 | `readOnLoad` | `false` | Rule-specific override for `window[‘_dlo_readOnLoad’]`. |
 | `url` | `undefined` | Specifies a regular expression that enables the rule when the page URL matches. |
@@ -158,11 +152,11 @@ Each rule provides a set of options for configuration.  Options with an asterisk
 
 ## Data Handling
 
-In version 1.0.x, data from a data layer is evaluated when DLO loads on the page.  The configuration option `window['_dlo_readOnLoad'] = true;` should be used for static data layers, which should exist on the page prior to loading DLO.  In the very near future, monitoring of dynamic changes in a data layer will be introduced.
+The configuration option `window['_dlo_readOnLoad'] = true;` can be used on static data layers, which should exist on the page prior to loading DLO.  Many data layers are however dynamic: values change as the user interacts with the page.  By default, DLO will attempt to monitor for changes to a data layer's object or any property within an object.  An observed change will cause the data to be handled.  Functions can be observed as well (e.g. `trackEvent()`).  When functions are called, the arguments passed to the function will be provided to data handlers.
 
 ## Source Selection
 
-As mentioned, `source` is an important aspect of a rule: it defines which data layer to observe or read an initial value from.   In version 1.0.x, every `source` must be a JavaScript object with name value pairs - for example `digitalData.user`.
+As mentioned, `source` is an important aspect of a rule: it defines which data layer subject to observe or read an initial value from.  A `source` can be a JavaScript object with name value pairs (`digitalData.user`) or a function (`s.event`).
 
 The `source` property uses a custom selector syntax.  It’s most often seen as dot notation such as `digitalData.cart`, which can be read as, "Find the cart object inside the digitalData object that exists on the page."  Selector syntax is however much more expressive to allow a variety of common use cases.
 
@@ -179,7 +173,7 @@ The `source` property uses a custom selector syntax.  It’s most often seen as 
 
 Selector syntax can be combined to create sophisticated queries to the data layer.  For example, `digitalData.products[-1].attributes.availability[?(pickup)]` can be read as, "From the products list, return the last product's availability if it has the `pickup` property."  This usage of selection can be helpful to record only significant events and disregard others.
 
-> **Tip:** A selector returns the object from the lowest level. For example, `digitalData.cart.price[?(basePrice>=10)]` returns the `price` object - not `cart`. If you need `cart` returned, use `digitalData.cart` as the selector and the use the query operator.
+> **Tip:** A selector returns the most current subject from the data layer at the lowest level. For example, `digitalData.cart.price[?(basePrice>=10)]` returns the `price` object - not `cart`. If you need `cart` returned, use `digitalData.cart` as the selector and the use the query operator.
 
 ## Destination Selection
 
@@ -204,10 +198,12 @@ Click an operator name for additional documentation.
 | Name | Description |
 | ---- | ----------- |
 | [convert](./docs/operator_convert.md) | Formats a value to a bool, int, real, or string. |
+| [fan-out](./docs/operator_fan-out.md) | Executes subsequent operators on each item in a list. |
 | [flatten](./docs/operator_flatten.md) | Recursively flattens all properties into an object. |
 | [function](./docs/operator_function.md) | Executes a function and returns the result. |
 | [insert](./docs/operator_insert.md) | Inserts a value into a list at a specified position. |
 | [query](./docs/operator_query.md) | Executes queries using selector syntax to return specific data within an object. |
+| [rename](./docs/operator_rename.md) | Renames existing properties to desired properties. |
 | [suffix](./docs/operator_suffix.md) | Infers and appends a type suffix to an object’s properties. |
 
 Every operator requires the `name` property.  Additional options can be found by viewing an operator's documentation.
