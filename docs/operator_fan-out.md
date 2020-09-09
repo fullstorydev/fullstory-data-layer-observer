@@ -8,8 +8,8 @@ Options with an asterisk are required.
 
 | Option | Type | Default | Description |
 | ------ | ---- | ------- | ----------- |
-| `index` | `number` | `0` | Position of the object with properties in the operator input list. |
-| `properties`* | `object` | `undefined` | Dictionary of existing property to renamed property pairs. |
+| `index` | `number` | `0` | Position of the object to fan-out in the operator input list. |
+| `properties`* | `string` or `string[]` | `undefined` | Desired list of properties to obtain the values and execute the remaining operators. |
 
 ## Usage
 
