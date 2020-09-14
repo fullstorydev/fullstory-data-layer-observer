@@ -13,14 +13,14 @@ Options with an asterisk are required.
 
 ## Usage
 
-## Sending multiple events from a list
+## Sending multiple events from a list (automatic)
 
 ### Rule
 
 ```javascript
 {
   source: 'dataLayer[0].ecommerce.promoView.promotions',
-  operators: [{ name: 'fan-out' }, { name: 'insert', value: 'Viewed Promotion' }],
+  operators: [{ name: 'insert', value: 'Viewed Promotion' }],
   destination: 'FS.event',
 }
 ```
@@ -46,6 +46,69 @@ Options with an asterisk are required.
       position: 'Sub1'
      },
     ]
+   }
+  },
+  'gtm.uniqueEventId': 6
+}]
+```
+
+### Output
+
+```javascript
+[
+  'Viewed Promotion',
+  {
+   id: '1004-Blueberries123321',
+   name: 'Fruits',
+   creative: 'Blueberries123321',
+   position: 'Feature'
+   }
+]
+```
+
+```javascript
+[
+  'Viewed Promotion',
+  {
+   id: '1001-Strawberries222333',
+   name: 'Fruits',
+   creative: 'Strawberries222333',
+   position: 'Sub1'
+   }
+]
+```
+
+## Sending multiple events from an object's properties
+
+```javascript
+{
+  source: 'dataLayer[0].ecommerce.promoView.promotions',
+  operators: [{ name: 'fan-out' }, { name: 'insert', value: 'Viewed Promotion' }],
+  destination: 'FS.event',
+}
+```
+
+### Input
+
+```javascript
+[{
+  event: 'impressions_loaded',
+  ecommerce: {
+   promoView: {
+    promotions: {
+     0: {
+      id: '1004-Blueberries123321',
+      name: 'Fruits',
+      creative: 'Blueberries123321',
+      position: 'Feature'
+     },
+     1: {
+      id: '1001-Strawberries222333',
+      name: 'Fruits',
+      creative: 'Strawberries222333',
+      position: 'Sub1'
+     },
+    }
    }
   },
   'gtm.uniqueEventId': 6
