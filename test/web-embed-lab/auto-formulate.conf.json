@@ -53,6 +53,9 @@
       "capture-name": "basic-embed",
       "formula-name": "basic-embed",
       "probe-basis": {
+        "dlo-rules": {
+          "count": 3
+        },
         "dom-shape": {
           "relative": {
             "depth": 0,
