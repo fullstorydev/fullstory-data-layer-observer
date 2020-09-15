@@ -12,15 +12,15 @@
       },
       "sites": [
         {
-          "name": "basic-embed",
-          "url": "https://dlowel.ngrok.io/examples/basic-embed/",
+          "name": "basics",
+          "url": "https://dlowel.ngrok.io/test/web-embed-lab/sites/basics/",
           "close-pause": 5,
           "modifiers": [
             {
               "mime-type-selectors": ["text/html"],
               "replacements": [
                 {
-                  "selector": "<script async=\"true\" src=\"../../build/dlo.js\">(?s:.*)</script>",
+                  "selector": "<script async=\"true\" src=\"../../../../build/dlo.js\">(?s:.*)</script>",
                   "replacement": "<!-- removed original script -->",
                   "all": true
                 }
@@ -50,11 +50,15 @@
   ],
   "formulations": [
     {
-      "capture-name": "basic-embed",
-      "formula-name": "basic-embed",
+      "capture-name": "basics",
+      "formula-name": "basics",
       "probe-basis": {
         "dlo-rules": {
-          "count": 3
+          "count": 3,
+          "parameters": [
+            [0, 0, "First"],
+            [2, 0, "Last"]
+          ]
         },
         "dom-shape": {
           "relative": {

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Basic WEL DLO test</title>
+    <meta charset="utf-8" />
+    <script>
+      window._testRuleResults = []; // This will hold rule results for the test probe
+
+      window.exampleData = {
+        page: {
+          pageName: 'basic embed',
+          pageInfo: {
+            pageID: '1234'
+          }
+        }
+      }
+      window.adInformation = {
+        accountID: 'abcd'
+      }
+      window.ops = {
+        clusterInfo: {
+          id: '444-111-11231',
+          load: 0.4
+        }
+      }
+
+      /* This function will receive information as the DLO rules find it */
+      function ruleDestination(...info) {
+        console.log('ruleDestination received:', ...info);
+        // We tuck the results into this array for the DLO rules test probe
+        window._testRuleResults.push(info);
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Basic WEL DLO test</h1>
+
+    <script>
+      window['_dlo_validateRules'] = true;
+      window['_dlo_readOnLoad'] = true;
+      window['_dlo_rules'] = [
+        {
+          source: 'exampleData.page',
+          operators: [
+            { name: 'flatten' },
+            { name: 'insert', value: 'First' }
+          ],
+          destination: 'ruleDestination'
+        },
+        {
+          source: 'adInformation',
+          operators: [],
+          destination: 'ruleDestination'
+        },
+        {
+          source: 'ops.clusterInfo',
+          operators: [
+            { name: 'insert', value: 'Last' }
+          ],
+          destination: 'ruleDestination'
+        },
+        /* The following rule has a bogus source */
+        {
+          source: 'exampleData.cart.cartInfo',
+          operators: [],
+          destination: 'ruleDestination'
+        }
+      ];
+    </script>
+    <script async="true" src="../../../../build/dlo.js"></script>
+  </body>
+</html>

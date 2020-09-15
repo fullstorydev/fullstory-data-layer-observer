@@ -1,7 +1,7 @@
 {
   "comment": "This experiment tests the example sites",
   "page-formulas": [
-    { "name": "basic-embed" },
+    { "name": "basics" },
     { "name": "ceddl-fs" }
   ],
   "browser-configurations": [
@@ -17,7 +17,7 @@
   "test-runs": [
     {
       "page-formulas": [
-        "basic-embed",
+        "basics",
         "ceddl-fs"
       ],
       "test-probes": [

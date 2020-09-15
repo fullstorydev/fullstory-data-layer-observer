@@ -24,7 +24,7 @@ class DLORulesProbe {
     if(!basis) return { passed: true }
     const results = {
       passed: true,
-      results: window._testRuleResults || null, // List of rule results
+      results: window._testRuleResults, // List of rule results
       failures: []
     }
 
@@ -33,6 +33,22 @@ class DLORulesProbe {
       if (basis.count !== window._testRuleResults.length) {
         results.passed = false;
         results.failures.push('Count does not match results length');
+      }
+    }
+
+    if (Array.isArray(basis.parameters)) {
+      for (let i=0; i < basis.parameters.length; i += 1) {
+        const paramInfo = basis.parameters[i];
+        if (Array.isArray(paramInfo) && typeof paramInfo[0] === 'number' && typeof paramInfo[1] === 'number') {
+          if (results.results[paramInfo[0]][paramInfo[1]] != paramInfo[2]) {
+            results.passed = false;
+            results.failures.push('Parameter mismatch:', paramInfo);
+          }
+        } else {
+          console.error('The parameters array must contain arrays like [result index, parameter index, value]');
+          results.passed = false;
+          results.failures.push('The parameters array must contain arrays like [index, value]')
+        }
       }
     }
 
