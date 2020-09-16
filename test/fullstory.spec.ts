@@ -20,6 +20,7 @@ import { expectParams, ExpectObserver } from './utils/mocha';
 
 interface GlobalMock {
   digitalData: CEDDL,
+  dataLayer: any[],
   FS: FullStory
   console: Console,
   s: AppMeasurement,
@@ -39,13 +40,13 @@ function getRule(id: string) {
 
 describe('Google Tags to FullStory rules', () => {
   beforeEach(() => {
-    (globalThis as any).digitalData = deepcopy(basicGoogleTags);
+    (globalThis as any).dataLayer = deepcopy(basicGoogleTags);
     (globalThis as any).FS = new FullStory();
     globalMock = globalThis as any;
   });
 
   afterEach(() => {
-    delete (globalThis as any).digitalData;
+    delete (globalThis as any).dataLayer;
     delete (globalThis as any).FS;
   });
 
@@ -60,7 +61,7 @@ describe('Google Tags to FullStory rules', () => {
     expect(id).to.eq('View Page Type');
     expect(payload.pageType).to.eq('Home');
 
-    (globalThis as any).digitalData.push({
+    (globalThis as any).dataLayer.push({
       pageType: 'Test',
       pageName: 'test',
     });
@@ -86,7 +87,7 @@ describe('Google Tags to FullStory rules', () => {
     expect(id2).to.eq('Commerce impression');
     expect(payload2.id).to.eq('P000525722');
 
-    (globalThis as any).digitalData.push({
+    (globalThis as any).dataLayer.push({
       event: 'impressions_loaded',
       ecommerce: {
         impressions: [
@@ -115,7 +116,7 @@ describe('Google Tags to FullStory rules', () => {
     expect(id).to.eq('101');
     expect(payload.userType).to.eq('member');
 
-    (globalThis as any).digitalData.push({
+    (globalThis as any).dataLayer.push({
       userProfile: {
         userId: '201',
         userType: 'admin',
@@ -141,7 +142,7 @@ describe('Google Tags to FullStory rules', () => {
     expect(id).to.eq('Commerce promotion');
     expect(payload.id).to.eq('1001-Strawberries222333');
 
-    (globalThis as any).digitalData.push({
+    (globalThis as any).dataLayer.push({
       event: 'impressions_loaded',
       ecommerce: {
         promoView: {
