@@ -2,10 +2,16 @@
   "rules": [
     {
       "id": "fs-ga-page-type",
-      "source": "digitalData",
+      "source": "dataLayer",
       "operators": [
-        { "name": "query", "select": "$[?(pageType, pageName)]" },
-        { "name": "insert", "value": "View Page Type" }
+        {
+          "name": "query",
+          "select": "$[?(pageType, pageName)]"
+        },
+        {
+          "name": "insert",
+          "value": "View Page Type"
+        }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
@@ -13,11 +19,19 @@
     },
     {
       "id": "fs-ga-e-commerce-impressions",
-      "source": "digitalData",
+      "source": "dataLayer",
       "operators": [
-        { "name": "query", "select": "$.ecommerce.impressions" },
-        { "name": "fan-out" },
-        { "name": "insert", "value": "Commerce impression" }
+        {
+          "name": "query",
+          "select": "$.ecommerce.impressions"
+        },
+        {
+          "name": "fan-out"
+        },
+        {
+          "name": "insert",
+          "value": "Commerce impression"
+        }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
@@ -25,11 +39,19 @@
     },
     {
       "id": "fs-ga-e-commerce-promotions",
-      "source": "digitalData",
+      "source": "dataLayer",
       "operators": [
-        { "name": "query", "select": "$.ecommerce.promoView.promotions" },
-        { "name": "fan-out" },
-        { "name": "insert", "value": "Commerce promotion" }
+        {
+          "name": "query",
+          "select": "$.ecommerce.promoView.promotions"
+        },
+        {
+          "name": "fan-out"
+        },
+        {
+          "name": "insert",
+          "value": "Commerce promotion"
+        }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
@@ -37,12 +59,23 @@
     },
     {
       "id": "fs-ga-user-vars",
-      "source": "digitalData",
+      "source": "dataLayer",
       "operators": [
-        { "name": "query", "select": "$[?(userProfile)]" },
-        { "name": "flatten"},
-        { "name": "query", "select": "$[?(userId!=-1)]" },
-        { "name": "insert", "select": "userId" }
+        {
+          "name": "query",
+          "select": "$[?(userProfile)]"
+        },
+        {
+          "name": "flatten"
+        },
+        {
+          "name": "query",
+          "select": "$[?(userId!=-1)]"
+        },
+        {
+          "name": "insert",
+          "select": "userId"
+        }
       ],
       "destination": "FS.setUserVars",
       "readOnLoad": true,

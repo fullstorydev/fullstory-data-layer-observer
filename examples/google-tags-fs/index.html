@@ -4,7 +4,7 @@
     <title>Data Layer Observer Example: Google Tags</title>
     <meta charset='utf-8' />
     <script>
-      window.digitalData = [
+      window.dataLayer = [
         {
           'pageType': 'Home',
           'pageName': 'Home: Fruit shoppe'
@@ -116,7 +116,7 @@
       window['_dlo_rules'] = [
     {
       "id": "fs-ga-page-type",
-      "source": "digitalData",
+      "source": "dataLayer",
       "operators": [
         { "name": "query", "select": "$[?(pageType, pageName)]" },
         { "name": "insert", "value": "View Page Type" }
@@ -127,7 +127,7 @@
     },
     {
       "id": "fs-ga-e-commerce-impressions",
-      "source": "digitalData",
+      "source": "dataLayer",
       "operators": [
         { "name": "query", "select": "$.ecommerce.impressions" },
         { "name": "fan-out" },
@@ -139,7 +139,7 @@
     },
     {
       "id": "fs-ga-e-commerce-promotions",
-      "source": "digitalData",
+      "source": "dataLayer",
       "operators": [
         { "name": "query", "select": "$.ecommerce.promoView.promotions" },
         { "name": "fan-out" },
@@ -151,7 +151,7 @@
     },
     {
       "id": "fs-ga-user-vars",
-      "source": "digitalData",
+      "source": "dataLayer",
       "operators": [
         { "name": "query", "select": "$[?(userProfile)]" },
         { "name": "flatten"},
