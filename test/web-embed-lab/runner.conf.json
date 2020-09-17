@@ -17,8 +17,7 @@
   "test-runs": [
     {
       "page-formulas": [
-        "basics",
-        "ceddl-fs"
+        "basics"
       ],
       "test-probes": [
         "dlo-rules",
