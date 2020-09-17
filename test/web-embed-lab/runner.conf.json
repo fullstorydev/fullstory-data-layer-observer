@@ -1,8 +1,7 @@
 {
   "comment": "This experiment tests the example sites",
   "page-formulas": [
-    { "name": "basics" },
-    { "name": "ceddl-fs" }
+    { "name": "basics" }
   ],
   "browser-configurations": [
     {
