@@ -1,8 +1,7 @@
 {
-  "comment": "This experiment tests the sites of the largest users of FullStory",
+  "comment": "This experiment tests the example sites",
   "page-formulas": [
-    { "name": "basic-embed" },
-    { "name": "ceddl-fs" }
+    { "name": "basics" }
   ],
   "browser-configurations": [
     {
@@ -17,10 +16,10 @@
   "test-runs": [
     {
       "page-formulas": [
-        "basic-embed",
-        "ceddl-fs"
+        "basics"
       ],
       "test-probes": [
+        "dlo-rules",
         "dom-shape",
         "exceptions"
       ],

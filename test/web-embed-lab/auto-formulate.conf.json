@@ -12,32 +12,15 @@
       },
       "sites": [
         {
-          "name": "basic-embed",
-          "url": "https://dlowel.ngrok.io/examples/basic-embed/",
+          "name": "basics",
+          "url": "https://dlowel.ngrok.io/test/web-embed-lab/sites/basics/",
           "close-pause": 5,
           "modifiers": [
             {
               "mime-type-selectors": ["text/html"],
               "replacements": [
                 {
-                  "selector": "<script async=\"true\" src=\"../../build/dlo.js\">(?s:.*)</script>",
-                  "replacement": "<!-- removed original script -->",
-                  "all": true
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "ceddl-fs",
-          "url": "https://dlowel.ngrok.io/examples/ceddl-fs/",
-          "close-pause": 5,
-          "modifiers": [
-            {
-              "mime-type-selectors": ["text/html"],
-              "replacements": [
-                {
-                  "selector": "<script async=\"true\" src=\"../../build/dlo.js\">(?s:.*)</script>",
+                  "selector": "<script async=\"true\" src=\"../../../../build/dlo.js\">(?s:.*)</script>",
                   "replacement": "<!-- removed original script -->",
                   "all": true
                 }
@@ -50,9 +33,16 @@
   ],
   "formulations": [
     {
-      "capture-name": "basic-embed",
-      "formula-name": "basic-embed",
+      "capture-name": "basics",
+      "formula-name": "basics",
       "probe-basis": {
+        "dlo-rules": {
+          "count": 3,
+          "parameters": [
+            [0, 0, "First"],
+            [2, 0, "Last"]
+          ]
+        },
         "dom-shape": {
           "relative": {
             "depth": 0,
@@ -63,23 +53,6 @@
           "relative": {
             "comment": "this is 1 because one of the rules is bogus",
             "count": 1
-          }
-        }
-      }
-    },
-    {
-      "capture-name": "ceddl-fs",
-      "formula-name": "ceddl-fs",
-      "probe-basis": {
-        "dom-shape": {
-          "relative": {
-            "depth": 0,
-            "width": 0
-          }
-        },
-        "exceptions": {
-          "relative": {
-            "count": 0
           }
         }
       }
