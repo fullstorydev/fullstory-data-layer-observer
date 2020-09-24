@@ -219,13 +219,14 @@ export class DataLayerObserver {
   registerTarget(target: DataLayerTarget, options: OperatorOptions[], destination: string | Function,
     read = false, monitor = true, debug = false): DataHandler {
     const targetValue = target.value;
-
     /*
     We do a bit of magic when monitor is set and the target is an Array.
     We convert the target to the `push` method and then monitor it below.
     */
+    let shouldShimUnshift = false;
     if (monitor && Array.isArray(targetValue)) {
       target.convertToPropertyMethod('push');
+      shouldShimUnshift = true;
     }
 
     const handler = this.addHandler(target, !!debug);
@@ -258,6 +259,18 @@ export class DataLayerObserver {
       } catch (err) {
         Logger.getInstance().warn('Monitor creation failed');
       }
+    }
+
+    if (shouldShimUnshift) {
+      const unshiftTarget = target.copyToDifferentPropertyMethod('unshift');
+      this.registerTarget(
+        unshiftTarget,
+        options,
+        destination,
+        read,
+        monitor,
+        debug,
+      );
     }
 
     return handler;
