@@ -17,7 +17,7 @@ export default abstract class Monitor {
     if (!object) {
       throw new Error('Monitor could not find target');
     } else {
-      if (path.endsWith(property)) {
+      if (path.endsWith(property) && typeof object[property] !== 'function') {
         // this could be an error or just a poorly structured data layer object
         Logger.getInstance().warn(`Monitor path appears to include property ${property}`, path);
       }

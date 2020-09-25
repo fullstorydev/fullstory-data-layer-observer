@@ -78,21 +78,6 @@ export default class DataLayerTarget {
   }
 
   /**
-   * Converts an Object instance to one that targets a method of the current target
-   * This is mainly used by the observer to convert from targeting an array to targeting array.push
-   */
-  convertToPropertyMethod(methodName: string) {
-    if (this.type !== 'object') {
-      throw new Error('Can only convert targets of type object to a property method target');
-    }
-    this.subject = this.value;
-    // this.path stays as-is because we're setting a new property
-    this.property = methodName;
-    this.selector = this.selector ? this.subjectPath : '';
-    this.type = 'function';
-  }
-
-  /**
    * Finds a target in the data layer and constructs a DataLayerTarget.
    * @param selector used to build the target
    */

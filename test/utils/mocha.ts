@@ -104,7 +104,8 @@ export class ExpectObserver {
     expect(observer).to.not.be.null;
 
     if (expectHandlers) {
-      expect(observer.handlers.length).to.eq(config.rules.length);
+      // We can end up with multiple rules for a single array target
+      expect(observer.handlers.length >= config.rules.length);
     }
 
     this.observers.push(observer);

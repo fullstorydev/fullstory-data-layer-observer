@@ -11,7 +11,8 @@
           pageInfo: {
             pageID: '1234'
           }
-        }
+        },
+        list: [1, 2, 3, 4, 5]
       }
       window.adInformation = {
         accountID: 'abcd'
@@ -24,8 +25,8 @@
       }
 
       /* This function will receive information as the DLO rules find it */
-      function ruleDestination(info) {
-        console.log('ruleDestination received:', info);
+      function ruleDestination(...info) {
+        console.log('ruleDestination received:', ...info);
       }
     </script>
   </head>
@@ -64,7 +65,14 @@
       window['_dlo_rules'] = [
         { source: 'exampleData.page.pageInfo', operators: [], destination: 'ruleDestination' },
         /* The following rule has a bogus source so an error will appear in the console */
-        { source: 'exampleData.cart.cartInfo', operators: [], destination: 'ruleDestination' }
+        { source: 'exampleData.cart.cartInfo', operators: [], destination: 'ruleDestination' },
+        { source:
+          'exampleData.list',
+          operators: [
+            { name: 'insert', value: 'First parameter' }
+          ],
+          destination: 'ruleDestination'
+        }
       ];
       window['_dlo_rulesFromAdTeam'] = [
         { source: 'adInformation', operators: [], destination: 'ruleDestination' }
