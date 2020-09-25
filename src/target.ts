@@ -78,33 +78,6 @@ export default class DataLayerTarget {
   }
 
   /**
-   * Converts an Object instance to one that targets a method of the current target
-   * This is mainly used by the observer to convert from targeting an array to targeting array.push
-   */
-  convertToPropertyMethod(methodName: string) {
-    if (this.type !== 'object') {
-      throw new Error('Can only convert targets of type object to a property method target');
-    }
-    this.subject = (this.subject as any)[this.property];
-    this.property = methodName;
-    this.selector = this.path;
-    this.path = `${this.path}.${methodName}`;
-    this.type = 'function';
-  }
-
-  /**
-   * Creates a new DataLayerTarget from a function type target but with a new method name
-   * This is mainly used by the observer to add `unshift` monitoring to an array target
-   */
-  copyToDifferentPropertyMethod(methodName: string) {
-    if (this.type !== 'function') {
-      throw new Error('Can only copy targets of type function to a new property method target');
-    }
-    const path = `${this.path.substring(0, this.path.lastIndexOf('.'))}.${methodName}`;
-    return new DataLayerTarget(this.subject, methodName, path, this.selector);
-  }
-
-  /**
    * Finds a target in the data layer and constructs a DataLayerTarget.
    * @param selector used to build the target
    */

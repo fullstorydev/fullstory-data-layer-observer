@@ -216,21 +216,27 @@ export class DataLayerObserver {
    * @param debug when true the rule prints debug for each Operator transformation
    * @throws error if an error occurs during handler creation
    */
-  registerTarget(target: DataLayerTarget, options: OperatorOptions[], destination: string | Function,
-    read = false, monitor = true, debug = false): DataHandler {
-    const targetValue = target.value;
+  registerTarget(
+    target: DataLayerTarget,
+    options: OperatorOptions[],
+    destination: string | Function,
+    read = false,
+    monitor = true,
+    debug = false,
+  ): DataHandler {
+    let workingTarget = target;
+    const targetValue = workingTarget.value;
+
     /*
-    We do a bit of magic when monitor is set and the target is an Array.
-    We convert the target to the `push` method and then monitor it below.
+    * We do a bit of magic when monitoring an Array target.
+    * We create separate targets for the `push` and `unshift` methods.
     */
-    let shouldShimUnshift = false;
     if (monitor && Array.isArray(targetValue)) {
-      target.convertToPropertyMethod('push');
-      shouldShimUnshift = true;
+      this.registerTarget(DataLayerTarget.find(`${target.path}.unshift`), options, destination, false, true, debug);
+      workingTarget = DataLayerTarget.find(`${target.path}.push`);
     }
 
-    const handler = this.addHandler(target, !!debug);
-
+    const handler = this.addHandler(workingTarget, !!debug);
     this.addOperators(handler, options, destination);
 
     if (read) {
@@ -243,7 +249,7 @@ export class DataLayerObserver {
             Logger.getInstance().error('Failed to read-on-load data layer array');
           }
         }
-      } else if (target.type === 'object') {
+      } else if (workingTarget.type === 'object') {
         try {
           handler.fireEvent();
         } catch (err) {
@@ -253,24 +259,12 @@ export class DataLayerObserver {
     }
 
     // NOTE functions are always monitored
-    if (monitor || target.type === 'function') {
+    if (monitor || workingTarget.type === 'function') {
       try {
-        this.addMonitor(target);
+        this.addMonitor(workingTarget);
       } catch (err) {
         Logger.getInstance().warn('Monitor creation failed');
       }
-    }
-
-    if (shouldShimUnshift) {
-      const unshiftTarget = target.copyToDifferentPropertyMethod('unshift');
-      this.registerTarget(
-        unshiftTarget,
-        options,
-        destination,
-        read,
-        monitor,
-        debug,
-      );
     }
 
     return handler;
