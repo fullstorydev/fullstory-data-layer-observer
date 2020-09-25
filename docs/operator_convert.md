@@ -1,6 +1,6 @@
 # Convert Operator
 
-The convert operator can be used to convert values from one type to another.  Values can be converted to and from the following types: `bool`, `date`, `int`, `real`, or `string`.
+The convert operator can be used to convert values from one type to another.  Values can be converted to and from the following types: `bool`, `date`, `int`, `real`, or `string`.  If the value to be converted is an array, each element in the list will be converted to the desired type.  If the array has only a single value, the property will be set to the single converted value.  For example, `price: ['24.99']` would become `price: 24.99` if the desired conversion is to a `real` value.
 
 Convert is most useful when paired with `FS.event` for cart and checkout events where the data layer property is a string and the value should ideally be numeric.
 
@@ -11,6 +11,7 @@ Options with an asterisk are required.
 | Option | Type | Default | Description |
 | ------ | ---- | ------- | ----------- |
 | `index` | `number` | `0` | Position of the object to convert in the operator input list. |
+| `preserveArray` | `boolean` | `false` | If the conversion value is a list, keep the array type even if the array has a single value. |
 | `properties`* | `string` or `string[]` | `undefined` | List of properties to convert. |
 | `type`* | `string` | `undefined` | The desired type to convert properties to. |
 
