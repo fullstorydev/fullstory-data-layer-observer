@@ -15,11 +15,17 @@ const item = {
   empty: '',
   saleDate: '12-26-2020',
   vat: null,
+  salePrice: ['24.99'],
+  discountTiers: ['24.99', '19.99', '12.99'],
 };
 
 describe('convert operator unit tests', () => {
   it('it should validate options', () => {
     expect(() => new ConvertOperator({ name: 'convert', properties: 'quantity', type: 'int' }).validate())
+      .to.not.throw();
+    expect(() => new ConvertOperator({
+      name: 'convert', properties: 'salePrice', preserveArray: true, type: 'int',
+    }).validate())
       .to.not.throw();
     expect(() => new ConvertOperator({
       name: 'convert', properties: 'quantity', type: 'int', index: 1,
@@ -180,5 +186,39 @@ describe('convert operator unit tests', () => {
     expect(int).to.not.be.null;
     expect(int!.vat).to.eq(0);
     expect(int!.nothing).to.eq(0);
+  });
+
+  it('it should convert a list to a single converted value', () => {
+    const operator = OperatorFactory.create('convert', { name: 'convert', properties: 'salePrice', type: 'real' });
+    const [real] = operator.handleData([item])!;
+
+    expect(real).to.not.be.null;
+    expect(real.salePrice).to.eq(24.99);
+    expect(real.size).to.eq(5); // non-converted properties remain
+    expect(item.salePrice).to.eql(['24.99']); // don't mutate the actual data layer
+  });
+
+  it('it should convert a list to a list of a single converted value', () => {
+    const operator = OperatorFactory.create('convert', {
+      name: 'convert', properties: 'salePrice', preserveArray: true, type: 'real',
+    });
+    const [reals] = operator.handleData([item])!;
+
+    expect(reals).to.not.be.null;
+    expect(reals.salePrice).to.eql([24.99]);
+    expect(reals.size).to.eq(5); // non-converted properties remain
+    expect(item.salePrice).to.eql(['24.99']); // don't mutate the actual data layer
+  });
+
+  it('it should convert a list to a list of converted values', () => {
+    const operator = OperatorFactory.create('convert', {
+      name: 'convert', properties: 'discountTiers', type: 'real',
+    });
+    const [reals] = operator.handleData([item])!;
+
+    expect(reals).to.not.be.null;
+    expect(reals.discountTiers).to.eql([24.99, 19.99, 12.99]);
+    expect(reals.size).to.eq(5); // non-converted properties remain
+    expect(item.discountTiers).to.eql(['24.99', '19.99', '12.99']); // don't mutate the actual data layer
   });
 });
