@@ -101,6 +101,40 @@
       "monitor": true
     },
     {
+      "id": "fs-ga-e-commerce-checkout",
+      "source": "dataLayer",
+      "operators": [
+        { "name": "query", "select": "$.ecommerce.checkout.actionField" },
+        { "name": "insert", "value": "Commerce checkout" }
+      ],
+      "destination": "FS.event",
+      "readOnLoad": true,
+      "monitor": true
+    },
+    {
+      "id": "fs-ga-e-commerce-purchase",
+      "source": "dataLayer",
+      "operators": [
+        { "name": "query", "select": "$.ecommerce.purchase.actionField" },
+        { "name": "convert", "properties": "revenue,tax,shipping", "type": "real" },
+        { "name": "insert", "value": "Commerce purchase" }
+      ],
+      "destination": "FS.event",
+      "readOnLoad": true,
+      "monitor": true
+    },
+    {
+      "id": "fs-ga-e-commerce-refund",
+      "source": "dataLayer",
+      "operators": [
+        { "name": "query", "select": "$.ecommerce.refund.actionField" },
+        { "name": "insert", "value": "Commerce refund" }
+      ],
+      "destination": "FS.event",
+      "readOnLoad": true,
+      "monitor": true
+    },
+    {
       "id": "fs-ga-user-vars",
       "source": "dataLayer",
       "operators": [

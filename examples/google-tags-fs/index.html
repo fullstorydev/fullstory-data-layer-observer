@@ -167,6 +167,72 @@
           "gtm.uniqueEventId": 6
         },
         {
+          "event": "checkout",
+          "ecommerce": {
+            "checkout": {
+              "actionField": {
+                "step": 1,
+                "option": "Visa"
+              },
+              "products": [
+                {
+                  "name": "Heritage Huckleberries",
+                  "id": "P000525722",
+                  "price": "2.99",
+                  "brand": "Heritage",
+                  "category": "fruit",
+                  "variant": "",
+                  "quantity": 1
+                }
+              ]
+            }
+          },
+          "eventCallback": function() {
+            console.log("Callback called");
+          }
+        },
+        {
+          "ecommerce": {
+            "purchase": {
+              "actionField": {
+                "id": "T12345",
+                "affiliation": "Online Store",
+                "revenue": "35.43",
+                "tax":"4.90",
+                "shipping": "5.99",
+                "coupon": ""
+              },
+              "products": [
+                {
+                  "name": "Heritage Huckleberries",
+                  "id": "P000525722",
+                  "price": "2.99",
+                  "brand": "Heritage",
+                  "category": "fruit",
+                  "variant": "",
+                  "quantity": 1,
+                  "coupon": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "ecommerce": {
+            "refund": {
+              "actionField": {
+                "id": "T12345"
+              },
+              "products": [
+                {
+                  "id": "P000525722",
+                  "quantity": 1
+                }
+              ]
+            }
+          }
+        },
+        {
           "event": "gtm.dom",
           "gtm.uniqueEventId": 12
         },
@@ -303,6 +369,40 @@
         { "name": "query", "select": "$.ecommerce.promoClick.promotions" },
         { "name": "fan-out" },
         { "name": "insert", "value": "Commerce promotion click" }
+      ],
+      "destination": "FS.event",
+      "readOnLoad": true,
+      "monitor": true
+    },
+    {
+      "id": "fs-ga-e-commerce-checkout",
+      "source": "dataLayer",
+      "operators": [
+        { "name": "query", "select": "$.ecommerce.checkout.actionField" },
+        { "name": "insert", "value": "Commerce checkout" }
+      ],
+      "destination": "FS.event",
+      "readOnLoad": true,
+      "monitor": true
+    },
+    {
+      "id": "fs-ga-e-commerce-purchase",
+      "source": "dataLayer",
+      "operators": [
+        { "name": "query", "select": "$.ecommerce.purchase.actionField" },
+        { "name": "convert", "properties": "revenue,tax,shipping", "type": "real" },
+        { "name": "insert", "value": "Commerce purchase" }
+      ],
+      "destination": "FS.event",
+      "readOnLoad": true,
+      "monitor": true
+    },
+    {
+      "id": "fs-ga-e-commerce-refund",
+      "source": "dataLayer",
+      "operators": [
+        { "name": "query", "select": "$.ecommerce.refund.actionField" },
+        { "name": "insert", "value": "Commerce refund" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,

@@ -162,6 +162,72 @@ export const basicGoogleTags = [
     'gtm.uniqueEventId': 6,
   },
   {
+    event: 'checkout',
+    ecommerce: {
+      checkout: {
+        actionField: {
+          step: 1,
+          option: 'Visa',
+        },
+        products: [
+          {
+            name: 'Heritage Huckleberries',
+            id: 'P000525722',
+            price: '2.99',
+            brand: 'Heritage',
+            category: 'fruit',
+            variant: '',
+            quantity: 1,
+          },
+        ],
+      },
+    },
+    eventCallback() {
+      console.log('Callback called');
+    },
+  },
+  {
+    ecommerce: {
+      purchase: {
+        actionField: {
+          id: 'T12345',
+          affiliation: 'Online Store',
+          revenue: '35.43',
+          tax: '4.90',
+          shipping: '5.99',
+          coupon: '',
+        },
+        products: [
+          {
+            name: 'Heritage Huckleberries',
+            id: 'P000525722',
+            price: '2.99',
+            brand: 'Heritage',
+            category: 'fruit',
+            variant: '',
+            quantity: 1,
+            coupon: '',
+          },
+        ],
+      },
+    },
+  },
+  {
+    ecommerce: {
+      refund: {
+        actionField: {
+          id: 'T12345',
+        },
+        products: [
+          {
+            id: 'P000525722',
+            quantity: 1,
+          },
+        ],
+      },
+    },
+  },
+  {
     event: 'gtm.dom',
     'gtm.uniqueEventId': 12,
   },

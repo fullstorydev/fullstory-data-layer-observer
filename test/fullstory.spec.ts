@@ -189,6 +189,48 @@ describe('Google Tags to FullStory rules', () => {
     ExpectObserver.getInstance().cleanup(observer);
   });
 
+  it('should read purchases', () => {
+    const observer = ExpectObserver.getInstance().create({
+      rules: [
+        getRule('fs-ga-e-commerce-purchase'),
+      ],
+    });
+    expect(observer).to.not.be.undefined;
+    const [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('Commerce purchase');
+    expect(payload.shipping).to.eq(5.99);
+
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
+  it('should read commerce checkout', () => {
+    const observer = ExpectObserver.getInstance().create({
+      rules: [
+        getRule('fs-ga-e-commerce-checkout'),
+      ],
+    });
+    expect(observer).to.not.be.undefined;
+    const [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('Commerce checkout');
+    expect(payload.step).to.eq(1);
+
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
+  it('should read commerce refund', () => {
+    const observer = ExpectObserver.getInstance().create({
+      rules: [
+        getRule('fs-ga-e-commerce-refund'),
+      ],
+    });
+    expect(observer).to.not.be.undefined;
+    const [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('Commerce refund');
+    expect(payload.id).to.eq('T12345');
+
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
   it('should set the user', () => {
     const observer = ExpectObserver.getInstance().create({
       rules: [
