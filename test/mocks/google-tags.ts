@@ -18,37 +18,6 @@ export const basicGoogleTags = [
     },
   },
   {
-    event: 'impressions_loaded',
-    ecommerce: {
-      promoView: {
-        promotions: [
-          {
-            id: '1004-Blueberries123321',
-            name: 'Fruits',
-            creative: 'Blueberries123321',
-            position: 'Feature',
-          },
-          {
-            id: '1001-Strawberries222333',
-            name: 'Fruits',
-            creative: 'Strawberries222333',
-            position: 'Sub1',
-          },
-        ],
-      },
-    },
-    'gtm.uniqueEventId': 6,
-  },
-  {
-    event: 'gtm.dom',
-    'gtm.uniqueEventId': 12,
-  },
-  {
-    event: 'Social-media Loaded',
-    'gtm.uniqueEventId': 27,
-  },
-  {
-    event: 'recs loaded',
     ecommerce: {
       impressions: [
         {
@@ -74,6 +43,197 @@ export const basicGoogleTags = [
       ],
     },
     'gtm.uniqueEventId': 28,
+  },
+  {
+    event: 'productClick',
+    ecommerce: {
+      click: {
+        actionField: { list: 'Search Results' },
+        products: [
+          {
+            name: 'Heritage Huckleberries',
+            id: 'P000525722',
+            price: '2.99',
+            brand: 'Heritage',
+            category: 'homepage product recs',
+            variant: '',
+            position: 1,
+          },
+        ],
+      },
+    },
+    eventCallback() {
+      console.log('Callback called');
+    },
+  },
+  {
+    ecommerce: {
+      detail: {
+        actionField: { list: 'Product Gallery' },
+        products: [
+          {
+            name: 'Heritage Huckleberries',
+            id: 'P000525722',
+            price: '2.99',
+            brand: 'Heritage',
+            category: 'product gallery',
+            variant: '',
+          },
+        ],
+      },
+    },
+  },
+  {
+    event: 'addToCart',
+    ecommerce: {
+      currencyCode: 'USD',
+      add: {
+        products: [
+          {
+            name: 'Heritage Huckleberries',
+            id: 'P000525722',
+            price: '2.99',
+            brand: 'Heritage',
+            category: 'product',
+            variant: '',
+            quantity: 2,
+          },
+        ],
+      },
+    },
+  },
+  {
+    event: 'removeFromCart',
+    ecommerce: {
+      currencyCode: 'USD',
+      remove: {
+        products: [
+          {
+            name: 'Heritage Huckleberries',
+            id: 'P000525722',
+            price: '2.99',
+            brand: 'Heritage',
+            category: 'product',
+            variant: '',
+            quantity: 1,
+          },
+        ],
+      },
+    },
+  },
+  {
+    ecommerce: {
+      promoView: {
+        promotions: [
+          {
+            id: '1004-Blueberries123321',
+            name: 'Fruits',
+            creative: 'Blueberries123321',
+            position: 'Feature',
+          },
+          {
+            id: '1001-Strawberries222333',
+            name: 'Fruits',
+            creative: 'Strawberries222333',
+            position: 'Sub1',
+          },
+        ],
+      },
+    },
+    'gtm.uniqueEventId': 6,
+  },
+  {
+    event: 'promotionClick',
+    ecommerce: {
+      promoClick: {
+        promotions: [
+          {
+            id: '1004-Blueberries123321',
+            name: 'Fruits',
+            creative: 'Blueberries123321',
+            position: 'Feature',
+          },
+        ],
+      },
+    },
+    eventCallback() {
+      console.log('Callback called');
+    },
+    'gtm.uniqueEventId': 6,
+  },
+  {
+    event: 'checkout',
+    ecommerce: {
+      checkout: {
+        actionField: {
+          step: 1,
+          option: 'Visa',
+        },
+        products: [
+          {
+            name: 'Heritage Huckleberries',
+            id: 'P000525722',
+            price: '2.99',
+            brand: 'Heritage',
+            category: 'fruit',
+            variant: '',
+            quantity: 1,
+          },
+        ],
+      },
+    },
+    eventCallback() {
+      console.log('Callback called');
+    },
+  },
+  {
+    ecommerce: {
+      purchase: {
+        actionField: {
+          id: 'T12345',
+          affiliation: 'Online Store',
+          revenue: '35.43',
+          tax: '4.90',
+          shipping: '5.99',
+          coupon: '',
+        },
+        products: [
+          {
+            name: 'Heritage Huckleberries',
+            id: 'P000525722',
+            price: '2.99',
+            brand: 'Heritage',
+            category: 'fruit',
+            variant: '',
+            quantity: 1,
+            coupon: '',
+          },
+        ],
+      },
+    },
+  },
+  {
+    ecommerce: {
+      refund: {
+        actionField: {
+          id: 'T12345',
+        },
+        products: [
+          {
+            id: 'P000525722',
+            quantity: 1,
+          },
+        ],
+      },
+    },
+  },
+  {
+    event: 'gtm.dom',
+    'gtm.uniqueEventId': 12,
+  },
+  {
+    event: 'Social-media Loaded',
+    'gtm.uniqueEventId': 27,
   },
   {
     event: 'gtm.load',
