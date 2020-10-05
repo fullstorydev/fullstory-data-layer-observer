@@ -10,6 +10,12 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.2.0
+
+- Automatically monitor array `unshift` similar to existing `push` monitoring
+- Performance benchmarks added to docs
+- Convert operator supports arrays and reduces to a single value for single element arrays
+
 ### 1.1.0
 
 - Monitor property changes on data layer objects
