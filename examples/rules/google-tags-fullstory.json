@@ -5,20 +5,23 @@
       "source": "dataLayer",
       "operators": [
         { "name": "query", "select": "$[?(pageType, pageName)]" },
-        { "name": "insert", "value": "View Page Type" }
+        { "name": "insert", "value": "pageview" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
       "monitor": true
     },
     {
-      "id": "fs-ga-e-commerce-impressions",
+      "id": "fs-ga-e-commerce-action",
       "source": "dataLayer",
       "operators": [
-        { "name": "query", "select": "$.ecommerce.impressions" },
-        { "name": "fan-out" },
-        { "name": "convert", "properties": "price", "type": "real" },
-        { "name": "insert", "value": "Commerce impression" }
+        { "name": "query", "select": "$.ecommerce" },
+        { "name": "flatten" },
+        { "name": "query", "select": "$[?(action)]" },
+        { "name": "query", "select": "$[!(products,impressions,promotions)]" },
+        { "name": "convert", "properties": "revenue,tax,shipping", "type": "real" },
+        { "name": "convert", "properties": "step", "type": "int" },
+        { "name": "insert", "select": "action" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
@@ -31,7 +34,8 @@
         { "name": "query", "select": "$.ecommerce.detail.products" },
         { "name": "fan-out" },
         { "name": "convert", "properties": "price", "type": "real" },
-        { "name": "insert", "value": "Commerce product detail" }
+        { "name": "convert", "properties": "quantity,position", "type": "int" },
+        { "name": "insert", "value": "product_detail" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
@@ -44,7 +48,8 @@
         { "name": "query", "select": "$.ecommerce.click.products" },
         { "name": "fan-out" },
         { "name": "convert", "properties": "price", "type": "real" },
-        { "name": "insert", "value": "Commerce product click" }
+        { "name": "convert", "properties": "quantity,position", "type": "int" },
+        { "name": "insert", "value": "product_click" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
@@ -57,7 +62,8 @@
         { "name": "query", "select": "$.ecommerce.add.products" },
         { "name": "fan-out" },
         { "name": "convert", "properties": "price", "type": "real" },
-        { "name": "insert", "value": "Commerce cart add" }
+        { "name": "convert", "properties": "quantity,position", "type": "int" },
+        { "name": "insert", "value": "product_add" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
@@ -70,19 +76,8 @@
         { "name": "query", "select": "$.ecommerce.remove.products" },
         { "name": "fan-out" },
         { "name": "convert", "properties": "price", "type": "real" },
-        { "name": "insert", "value": "Commerce cart remove" }
-      ],
-      "destination": "FS.event",
-      "readOnLoad": true,
-      "monitor": true
-    },
-    {
-      "id": "fs-ga-e-commerce-promotion-impressions",
-      "source": "dataLayer",
-      "operators": [
-        { "name": "query", "select": "$.ecommerce.promoView.promotions" },
-        { "name": "fan-out" },
-        { "name": "insert", "value": "Commerce promotion impression" }
+        { "name": "convert", "properties": "quantity,position", "type": "int" },
+        { "name": "insert", "value": "product_remove" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
@@ -94,7 +89,7 @@
       "operators": [
         { "name": "query", "select": "$.ecommerce.promoClick.promotions" },
         { "name": "fan-out" },
-        { "name": "insert", "value": "Commerce promotion click" }
+        { "name": "insert", "value": "promotion_click" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
@@ -104,8 +99,11 @@
       "id": "fs-ga-e-commerce-checkout",
       "source": "dataLayer",
       "operators": [
-        { "name": "query", "select": "$.ecommerce.checkout.actionField" },
-        { "name": "insert", "value": "Commerce checkout" }
+        { "name": "query", "select": "$.ecommerce.checkout.products" },
+        { "name": "fan-out" },
+        { "name": "convert", "properties": "price", "type": "real" },
+        { "name": "convert", "properties": "quantity,position", "type": "int" },
+        { "name": "insert", "value": "product_checkout" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
@@ -115,9 +113,11 @@
       "id": "fs-ga-e-commerce-purchase",
       "source": "dataLayer",
       "operators": [
-        { "name": "query", "select": "$.ecommerce.purchase.actionField" },
-        { "name": "convert", "properties": "revenue,tax,shipping", "type": "real" },
-        { "name": "insert", "value": "Commerce purchase" }
+        { "name": "query", "select": "$.ecommerce.purchase.products" },
+        { "name": "fan-out" },
+        { "name": "convert", "properties": "price", "type": "real" },
+        { "name": "convert", "properties": "quantity,position", "type": "int" },
+        { "name": "insert", "value": "product_purchase" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
@@ -127,8 +127,11 @@
       "id": "fs-ga-e-commerce-refund",
       "source": "dataLayer",
       "operators": [
-        { "name": "query", "select": "$.ecommerce.refund.actionField" },
-        { "name": "insert", "value": "Commerce refund" }
+        { "name": "query", "select": "$.ecommerce.refund.products" },
+        { "name": "fan-out" },
+        { "name": "convert", "properties": "price", "type": "real" },
+        { "name": "convert", "properties": "quantity,position", "type": "int" },
+        { "name": "insert", "value": "product_refund" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,

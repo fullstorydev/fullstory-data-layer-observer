@@ -48,7 +48,7 @@ export const basicGoogleTags = [
     event: 'productClick',
     ecommerce: {
       click: {
-        actionField: { list: 'Search Results' },
+        actionField: { action: 'click', list: 'Search Results' },
         products: [
           {
             name: 'Heritage Huckleberries',
@@ -69,7 +69,7 @@ export const basicGoogleTags = [
   {
     ecommerce: {
       detail: {
-        actionField: { list: 'Product Gallery' },
+        actionField: { action: 'detail', list: 'Product Gallery' },
         products: [
           {
             name: 'Heritage Huckleberries',
@@ -88,6 +88,7 @@ export const basicGoogleTags = [
     ecommerce: {
       currencyCode: 'USD',
       add: {
+        actionField: { action: 'add' },
         products: [
           {
             name: 'Heritage Huckleberries',
@@ -107,6 +108,7 @@ export const basicGoogleTags = [
     ecommerce: {
       currencyCode: 'USD',
       remove: {
+        actionField: { action: 'remove' },
         products: [
           {
             name: 'Heritage Huckleberries',
@@ -146,6 +148,7 @@ export const basicGoogleTags = [
     event: 'promotionClick',
     ecommerce: {
       promoClick: {
+        actionField: { action: 'promo_click' },
         promotions: [
           {
             id: '1004-Blueberries123321',
@@ -166,6 +169,7 @@ export const basicGoogleTags = [
     ecommerce: {
       checkout: {
         actionField: {
+          action: 'checkout',
           step: 1,
           option: 'Visa',
         },
@@ -190,6 +194,7 @@ export const basicGoogleTags = [
     ecommerce: {
       purchase: {
         actionField: {
+          action: 'purchase',
           id: 'T12345',
           affiliation: 'Online Store',
           revenue: '35.43',
@@ -216,6 +221,7 @@ export const basicGoogleTags = [
     ecommerce: {
       refund: {
         actionField: {
+          action: 'refund',
           id: 'T12345',
         },
         products: [
