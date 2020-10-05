@@ -10,10 +10,12 @@ import * as pageRules from '../examples/rules/ceddl-page-fullstory.json';
 import * as productRules from '../examples/rules/ceddl-product-fullstory.json';
 import * as transactionRules from '../examples/rules/ceddl-transaction-fullstory.json';
 import * as googleTagsRules from '../examples/rules/google-tags-fullstory.json';
+import * as tealiumRetailRules from '../examples/rules/tealium-fullstory.json';
 
 import { basicAppMeasurement, AppMeasurement } from './mocks/adobe';
 import { CEDDL, basicDigitalData } from './mocks/CEDDL';
 import { basicGoogleTags } from './mocks/google-tags';
+import { tealiumRetail } from './mocks/tealium';
 import Console from './mocks/console';
 import FullStory from './mocks/fullstory-recording';
 import { expectParams, ExpectObserver } from './utils/mocha';
@@ -28,8 +30,10 @@ interface GlobalMock {
 
 let globalMock: GlobalMock;
 
-const rules = [...adobeRules.rules, ...cartRules.rules, ...pageRules.rules, ...userRules.rules, ...productRules.rules,
-  ...transactionRules.rules, ...googleTagsRules.rules];
+const rules = [
+  ...adobeRules.rules, ...cartRules.rules, ...pageRules.rules, ...userRules.rules, ...productRules.rules,
+  ...transactionRules.rules, ...googleTagsRules.rules, ...tealiumRetailRules.rules,
+];
 
 function getRule(id: string) {
   const rule = rules.find((r: DataLayerRule) => r.id === id);
@@ -421,5 +425,76 @@ describe('FullStory example rules unit tests', () => {
     expect(payload.eVar20).to.eq(eVar20);
     expect(payload.prop1).to.be.undefined;
     expect(payload.pageName).to.be.undefined;
+  });
+});
+
+describe('Tealium to FullStory rules', () => {
+  beforeEach(() => {
+    (globalThis as any).utag = { data: deepcopy(tealiumRetail) };
+    (globalThis as any).FS = new FullStory();
+
+    globalMock = globalThis as any;
+  });
+
+  afterEach(() => {
+    delete (globalThis as any).utag;
+    delete (globalThis as any).FS;
+  });
+
+  it('should read tealium_event', () => {
+    (globalThis as any).utag.data.tealium_event = 'product_view';
+
+    const observer = ExpectObserver.getInstance().create({
+      rules: [
+        getRule('fs-tealium-event'),
+      ],
+    });
+
+    const [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('product_view');
+    expect(payload.product_id).to.eql(tealiumRetail.product_id);
+    expect(payload.customer_first_name).to.be.undefined;
+    expect(payload.customer_last_name).to.be.undefined;
+    expect(payload.customer_email).to.be.undefined;
+
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
+  it('should identify user', () => {
+    (globalThis as any).utag.data.tealium_event = 'user_registration';
+
+    const observer = ExpectObserver.getInstance().create({
+      rules: [
+        getRule('fs-tealium-user-registration'),
+      ],
+    });
+
+    const [id, payload] = expectParams(globalMock.FS, 'identify');
+    expect(id).to.eq(payload.customer_id);
+    expect(payload.customer_first_name).to.be.undefined; // NOTE renamed to displayName
+    expect(payload.customer_last_name).to.eql(tealiumRetail.customer_last_name);
+    expect(payload.customer_city).to.eql(tealiumRetail.customer_city);
+
+    expect(payload.email).to.eql(tealiumRetail.customer_email);
+    expect(payload.displayName).to.eql(tealiumRetail.customer_first_name);
+
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
+  it('should setUserVars', () => {
+    (globalThis as any).utag.data.tealium_event = 'user_update';
+
+    const observer = ExpectObserver.getInstance().create({
+      rules: [
+        getRule('fs-tealium-user-update'),
+      ],
+    });
+
+    const [payload] = expectParams(globalMock.FS, 'setUserVars');
+    expect(payload.customer_first_name).to.eql(tealiumRetail.customer_first_name);
+    expect(payload.customer_last_name).to.eql(tealiumRetail.customer_last_name);
+    expect(payload.customer_city).to.eql(tealiumRetail.customer_city);
+
+    ExpectObserver.getInstance().cleanup(observer);
   });
 });
