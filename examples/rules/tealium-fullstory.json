@@ -1,206 +1,22 @@
 {
   "rules": [
     {
-      "id": "fs-tealium-page-view",
-      "description": "See https://community.tealiumiq.com/t5/Data-Layer/Data-Layer-Definition-Retail/ta-p/17227#toc-hId-1329375732.",
-      "source": "utag.data[?(tealium_event=page_view)]",
+      "id": "fs-tealium-event",
+      "description": "Send Tealium data (except for customer personal details) for FS.event. See https://community.tealiumiq.com/t5/Data-Layer/Data-Layer-Definition-Retail/ta-p/17227.",
+      "source": "utag.data[?(tealium_event)]",
       "operators": [
         {
           "name": "query",
-          "select": "$[^(brand_,browse_,cart_total_,category_,language_,page_,product_on_page,site_section)]"
+          "select": "$[^(brand_,browse_,cart_,category_,customer_,language_,page_,product_,search_,site_,tealium_event)]"
         },
-        {
-          "name": "convert",
-          "properties": "cart_total_items",
-          "type": "int"
-        },
-        {
-          "name": "convert",
-          "properties": "cart_total_value",
-          "type": "real"
-        },
-        {
-          "name": "convert",
-          "properties": "product_on_page",
-          "type": "string"
-        },
-        {
-          "name": "insert",
-          "value": "Page View"
-        }
-      ],
-      "destination": "FS.event",
-      "readOnLoad": true,
-      "monitor": true
-    },
-    {
-      "id": "fs-tealium-category-view",
-      "description": "See https://community.tealiumiq.com/t5/Data-Layer/Data-Layer-Definition-Retail/ta-p/17227#toc-hId--2078087883.",
-      "source": "utag.data[?(tealium_event=category_view)]",
-      "operators": [
         {
           "name": "query",
-          "select": "$[^(brand_,browse_,cart_total_,category_,country_code,language_code,page_,product_on_page,site_section)]"
+          "select": "$[!(customer_email,customer_first_name,customer_last_name)]"
         },
         {
           "name": "convert",
-          "properties": "cart_total_items",
+          "properties": "cart_product_quantity,cart_total_items,product_quantity,search_results",
           "type": "int"
-        },
-        {
-          "name": "convert",
-          "properties": "cart_total_value",
-          "type": "real"
-        },
-        {
-          "name": "convert",
-          "properties": "product_on_page",
-          "type": "string"
-        },
-        {
-          "name": "insert",
-          "value": "Category View"
-        }
-      ],
-      "destination": "FS.event",
-      "readOnLoad": true,
-      "monitor": true
-    },
-    {
-      "id": "fs-tealium-product-view",
-      "description": "See https://community.tealiumiq.com/t5/Data-Layer/Data-Layer-Definition-Retail/ta-p/17227#toc-hId--1190584202.",
-      "source": "utag.data[?(tealium_event=product_view)]",
-      "operators": [
-        {
-          "name": "query",
-          "select": "$[^(brand_,browse_,cart_total_,category_,country_code,language_code,page_,product_,site_section)]"
-        },
-        {
-          "name": "convert",
-          "properties": "cart_total_items,product_quantity",
-          "type": "int"
-        },
-        {
-          "name": "convert",
-          "properties": "product_id,product_sku,product_name,product_image_url",
-          "type": "string"
-        },
-        {
-          "name": "convert",
-          "properties": "cart_total_value,product_discount_amount,product_original_price,product_price",
-          "type": "real"
-        },
-        {
-          "name": "convert",
-          "properties": "product_brand,product_category,product_id,product_on_page,product_promo_code,product_subcategory,product_url",
-          "type": "string"
-        },
-        {
-          "name": "insert",
-          "value": "Product View"
-        }
-      ],
-      "destination": "FS.event",
-      "readOnLoad": true,
-      "monitor": true
-    },
-    {
-      "id": "fs-tealium-search",
-      "description": "See https://community.tealiumiq.com/t5/Data-Layer/Data-Layer-Definition-Retail/ta-p/17227#toc-hId--303080521.",
-      "source": "utag.data[?(tealium_event=search)]",
-      "operators": [
-        {
-          "name": "query",
-          "select": "$[^(browse_,cart_,country_code,language_code,page_,product_on_page,search_,site_section)]"
-        },
-        {
-          "name": "convert",
-          "properties": "cart_product_quantity,cart_total_items,search_results",
-          "type": "int"
-        },
-        {
-          "name": "convert",
-          "properties": "cart_total_value",
-          "type": "real"
-        },
-        {
-          "name": "insert",
-          "value": "Search"
-        }
-      ],
-      "destination": "FS.event",
-      "readOnLoad": true,
-      "monitor": true
-    },
-    {
-      "id": "fs-tealium-cart-view",
-      "description": "See https://community.tealiumiq.com/t5/Data-Layer/Data-Layer-Definition-Retail/ta-p/17227#toc-hId-584423160.",
-      "source": "utag.data[?(tealium_event=cart_view)]",
-      "operators": [
-        {
-          "select": "$[^(cart_,country_code,language_code,page_,product_)]",
-          "name": "query"
-        },
-        {
-          "name": "convert",
-          "properties": "cart_product_quantity,cart_total_items",
-          "type": "int"
-        },
-        {
-          "name": "convert",
-          "properties": "cart_total_value",
-          "type": "real"
-        },
-        {
-          "value": "Cart View",
-          "name": "insert"
-        }
-      ],
-      "destination": "FS.event",
-      "readOnLoad": true,
-      "monitor": true
-    },
-    {
-      "id": "fs-tealium-checkout",
-      "description": "See https://community.tealiumiq.com/t5/Data-Layer/Data-Layer-Definition-Retail/ta-p/17227#toc-hId-1471926841.",
-      "source": "utag.data[?(tealium_event=checkout)]",
-      "operators": [
-        {
-          "select": "$[^(cart_total_items,cart_total_value,country_code,language_code,page_)]",
-          "name": "query"
-        },
-        {
-          "name": "convert",
-          "properties": "cart_total_items",
-          "type": "int"
-        },
-        {
-          "name": "convert",
-          "properties": "cart_total_value",
-          "type": "real"
-        },
-        {
-          "value": "Checkout",
-          "name": "insert"
-        }
-      ],
-      "destination": "FS.event",
-      "readOnLoad": true,
-      "monitor": true
-    },
-    {
-      "id": "fs-tealium-purchase",
-      "description": "See https://community.tealiumiq.com/t5/Data-Layer/Data-Layer-Definition-Retail/ta-p/17227#toc-hId--1935536774.",
-      "source": "utag.data[?(tealium_event=purchase)]",
-      "operators": [
-        {
-          "select": "$[^(cart_,country_code,language_code,order_,page_,product_)]",
-          "name": "query"
-        },
-        {
-          "name": "convert",
-          "type": "int",
-          "properties": "cart_product_quantity,cart_total_items,product_quantity"
         },
         {
           "name": "convert",
@@ -208,74 +24,8 @@
           "type": "real"
         },
         {
-          "value": "Purchase",
-          "name": "insert"
-        }
-      ],
-      "destination": "FS.event",
-      "readOnLoad": true,
-      "monitor": true
-    },
-    {
-      "id": "fs-tealium-cart-add",
-      "description": "See https://community.tealiumiq.com/t5/Data-Layer/Data-Layer-Definition-Retail/ta-p/17227#toc-hId--907036408.",
-      "source": "utag.data[?(tealium_event=cart_add)]",
-      "operators": [
-        {
-          "select": "$[^(cart_,country_code,language_code,page_,product_)]",
-          "name": "query"
-        },
-        {
-          "name": "convert",
-          "properties": "cart_product_quantity,cart_total_items,product_quantity",
-          "type": "int"
-        },
-        {
-          "name": "convert",
-          "properties": "cart_product_price,cart_total_value,product_discount_amount,product_original_price,product_price",
-          "type": "real"
-        },
-        {
-          "name": "convert",
-          "properties": "cart_product_id,cart_product_sku,product_brand,product_category,product_id,product_image_url,product_name,product_on_page,product_promo_code,product_sku,product_subcategory,product_url",
-          "type": "string"
-        },
-        {
-          "value": "Cart Add",
-          "name": "insert"
-        }
-      ],
-      "destination": "FS.event",
-      "readOnLoad": true,
-      "monitor": true
-    },
-    {
-      "id": "fs-tealium-cart-remove",
-      "description": "See https://community.tealiumiq.com/t5/Data-Layer/Data-Layer-Definition-Retail/ta-p/17227#toc-hId--19532727.",
-      "source": "utag.data[?(tealium_event=cart_remove)]",
-      "operators": [
-        {
-          "select": "$[^(cart_,country_code,language_code,page_,product_)]",
-          "name": "query"
-        },
-        {
-          "name": "convert",
-          "properties": "cart_product_quantity,cart_total_items,product_quantity",
-          "type": "int"
-        },
-        {
-          "name": "convert",
-          "properties": "cart_product_price,cart_total_value,product_discount_amount,product_original_price,product_price",
-          "type": "real"
-        },
-        {
-          "name": "convert",
-          "properties": "cart_product_id,cart_product_sku,product_brand,product_category,product_id,product_image_url,product_name,product_on_page,product_promo_code,product_sku,product_subcategory,product_url",
-          "type": "string"
-        },
-        {
-          "value": "Cart Remove",
-          "name": "insert"
+          "name": "insert",
+          "select": "tealium_event"
         }
       ],
       "destination": "FS.event",
@@ -288,8 +38,15 @@
       "source": "utag.data[?(tealium_event=user_registration)]",
       "operators": [
         {
-          "select": "$[^(customer_,_membership)]",
+          "select": "$[^(customer_)]",
           "name": "query"
+        },
+        {
+          "name": "rename",
+          "properties": {
+            "customer_first_name": "displayName",
+            "customer_email": "email"
+          }
         },
         {
           "name": "insert",
@@ -307,7 +64,7 @@
       "operators": [
         {
           "name": "query",
-          "select": "$[^(customer_,membership_)]"
+          "select": "$[^(customer_)]"
         }
       ],
       "destination": "FS.setUserVars",
