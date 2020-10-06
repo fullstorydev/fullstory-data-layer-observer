@@ -10,6 +10,7 @@ Options with an asterisk are required.
 
 | Option | Type | Default | Description |
 | ------ | ---- | ------- | ----------- |
+| `force` | `boolean` | `false` | If the property is undefined or has value `null`, forcibly add the property with value `0`, `0.0`,`false` or empty string. |
 | `index` | `number` | `0` | Position of the object to convert in the operator input list. |
 | `preserveArray` | `boolean` | `false` | If the conversion value is a list, keep the array type even if the array has a single value. |
 | `properties`* | `string` or `string[]` | `undefined` | List of properties to convert. |
