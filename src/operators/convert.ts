@@ -4,6 +4,7 @@ import { Logger } from '../utils/logger';
 type ConvertibleType = 'bool' | 'date' | 'int' | 'real' | 'string';
 
 export interface ConvertOperatorOptions extends OperatorOptions {
+  force?: boolean;
   preserveArray?: boolean;
   properties: string | string[];
   type: ConvertibleType;
@@ -20,6 +21,7 @@ export interface ConvertOperatorOptions extends OperatorOptions {
  */
 export class ConvertOperator implements Operator {
   static specification = {
+    force: { required: false, type: ['boolean'] },
     index: { required: false, type: ['number'] },
     preserveArray: { required: false, type: ['boolean'] },
     properties: { required: true, type: ['string,object'] }, // NOTE an typeof array is object
@@ -54,7 +56,8 @@ export class ConvertOperator implements Operator {
         switch (typeof value) {
           case 'boolean': return Boolean(value).toString();
           case 'number': return (value as number).toString();
-          default: return value;
+          case 'undefined': return '';
+          default: return value === null ? '' : value;
         }
       default: return value;
     }
@@ -62,7 +65,7 @@ export class ConvertOperator implements Operator {
 
   handleData(data: any[]): any[] | null {
     let { properties } = this.options;
-    const { preserveArray, type } = this.options;
+    const { force, preserveArray, type } = this.options;
 
     if (typeof properties === 'string') {
       properties = properties.split(',');
@@ -75,23 +78,25 @@ export class ConvertOperator implements Operator {
     list.forEach((property) => {
       const original = data[this.index][property];
 
-      // if the intended conversion is on a list, convert all members in the list
-      if (Array.isArray(original)) {
-        // convert and set as a single value if it is a single item list
-        if ((original as any[]).length === 1 && !preserveArray) {
-          converted[property] = ConvertOperator.convert(type, (original as any[])[0]);
-          ConvertOperator.verifyConversion(type, property, converted, original);
-        } else {
-          converted[property] = []; // this prevents mutating the actual data layer
-          for (let i = 0; i < (original as any[]).length; i += 1) {
-            const item = (original as any[])[i];
-            converted[property].push(ConvertOperator.convert(type, item));
-            ConvertOperator.verifyConversion(type, i, converted, original);
+      if ((original !== undefined && original !== null) || force) {
+        // if the intended conversion is on a list, convert all members in the list
+        if (Array.isArray(original)) {
+          // convert and set as a single value if it is a single item list
+          if ((original as any[]).length === 1 && !preserveArray) {
+            converted[property] = ConvertOperator.convert(type, (original as any[])[0]);
+            ConvertOperator.verifyConversion(type, property, converted, original);
+          } else {
+            converted[property] = []; // this prevents mutating the actual data layer
+            for (let i = 0; i < (original as any[]).length; i += 1) {
+              const item = (original as any[])[i];
+              converted[property].push(ConvertOperator.convert(type, item));
+              ConvertOperator.verifyConversion(type, i, converted, original);
+            }
           }
+        } else {
+          converted[property] = ConvertOperator.convert(type, original);
+          ConvertOperator.verifyConversion(type, property, converted, original);
         }
-      } else {
-        converted[property] = ConvertOperator.convert(type, original);
-        ConvertOperator.verifyConversion(type, property, converted, original);
       }
     });
 
@@ -105,7 +110,16 @@ export class ConvertOperator implements Operator {
     const validator = new OperatorValidator(this.options);
     validator.validate(ConvertOperator.specification);
 
-    const { type } = this.options;
+    const { force, type } = this.options;
+
+    if (force !== undefined && typeof force !== 'boolean') {
+      throw validator.throwError('force', 'should be a boolean');
+    }
+
+    if (force !== undefined && force && type === 'date') {
+      throw validator.throwError('force', 'can not forcibly convert dates');
+    }
+
     if (type !== 'bool' && type !== 'int' && type !== 'real' && type !== 'string' && type !== 'date') {
       throw validator.throwError('type', `unknown type '${type}' used`);
     }
