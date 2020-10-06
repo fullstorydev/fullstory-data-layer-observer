@@ -46,8 +46,8 @@ describe('convert operator unit tests', () => {
     // @ts-ignore
     expect(() => new ConvertOperator({ name: 'convert', properties: 'quantity' }).validate())
       .to.throw();
-    // @ts-ignore
     expect(() => new ConvertOperator({
+    // @ts-ignore
       name: 'convert', properties: ['price', 'tax'], type: 'real', force: 1,
     }).validate())
       .to.throw();
