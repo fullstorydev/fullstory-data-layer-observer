@@ -1,0 +1,75 @@
+{
+  "rules": [
+    {
+      "id": "fs-tealium-event",
+      "description": "Send Tealium data (except for customer personal details) for FS.event. See https://community.tealiumiq.com/t5/Data-Layer/Data-Layer-Definition-Retail/ta-p/17227.",
+      "source": "utag.data[?(tealium_event)]",
+      "operators": [
+        {
+          "name": "query",
+          "select": "$[^(brand_,browse_,cart_,category_,customer_,language_,page_,product_,search_,site_,tealium_event)]"
+        },
+        {
+          "name": "query",
+          "select": "$[!(customer_email,customer_first_name,customer_last_name)]"
+        },
+        {
+          "name": "convert",
+          "properties": "cart_product_quantity,cart_total_items,product_quantity,search_results",
+          "type": "int"
+        },
+        {
+          "name": "convert",
+          "properties": "cart_product_price,cart_total_value,order_discount_amount,order_merchandise_total,order_shipping_amount,order_subtotal,order_tax_amount,order_total,product_discount_amount,product_original_price,product_price",
+          "type": "real"
+        },
+        {
+          "name": "insert",
+          "select": "tealium_event"
+        }
+      ],
+      "destination": "FS.event",
+      "readOnLoad": true,
+      "monitor": true
+    },
+    {
+      "id": "fs-tealium-user-registration",
+      "description": "See https://community.tealiumiq.com/t5/Data-Layer/Data-Layer-Definition-Retail/ta-p/17227#toc-hId-867970954.",
+      "source": "utag.data[?(tealium_event=user_registration)]",
+      "operators": [
+        {
+          "select": "$[^(customer_)]",
+          "name": "query"
+        },
+        {
+          "name": "rename",
+          "properties": {
+            "customer_first_name": "displayName",
+            "customer_email": "email"
+          }
+        },
+        {
+          "name": "insert",
+          "select": "customer_id"
+        }
+      ],
+      "destination": "FS.identify",
+      "readOnLoad": true,
+      "monitor": true
+    },
+    {
+      "id": "fs-tealium-user-update",
+      "description": "See https://community.tealiumiq.com/t5/Data-Layer/Data-Layer-Definition-Retail/ta-p/17227#toc-hId-1755474635.",
+      "source": "utag.data[?(tealium_event=user_update)]",
+      "operators": [
+        {
+          "name": "query",
+          "select": "$[^(customer_)]"
+        }
+      ],
+      "destination": "FS.setUserVars",
+      "readOnLoad": true,
+      "monitor": true
+    }
+  ]
+}
