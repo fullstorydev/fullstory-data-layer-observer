@@ -1,7 +1,7 @@
 {
   "rules": [
     {
-      "id": "fs-ga-page-type",
+      "id": "fs-ga-pageview",
       "source": "dataLayer",
       "operators": [
         { "name": "query", "select": "$[?(pageType, pageName)]" },
@@ -12,126 +12,209 @@
       "monitor": true
     },
     {
-      "id": "fs-ga-e-commerce-action",
+      "id": "fs-ga-e-commerce-detail-action",
       "source": "dataLayer",
       "operators": [
-        { "name": "query", "select": "$.ecommerce" },
-        { "name": "flatten" },
-        { "name": "query", "select": "$[?(action)]" },
-        { "name": "query", "select": "$[!(products,impressions,promotions)]" },
+        { "name": "query", "select": "$.ecommerce.detail.actionField" },
         { "name": "convert", "properties": "revenue,tax,shipping", "type": "real" },
         { "name": "convert", "properties": "step", "type": "int" },
-        { "name": "insert", "select": "action" }
+        { "name": "insert", "value": "detail" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
       "monitor": true
     },
     {
-      "id": "fs-ga-e-commerce-product-detail",
+      "id": "fs-ga-e-commerce-detail-product",
       "source": "dataLayer",
       "operators": [
-        { "name": "query", "select": "$.ecommerce.detail.products" },
-        { "name": "fan-out" },
+        { "name": "query", "select": "$.ecommerce.detail.products[0]" },
         { "name": "convert", "properties": "price", "type": "real" },
         { "name": "convert", "properties": "quantity,position", "type": "int" },
-        { "name": "insert", "value": "product_detail" }
+        { "name": "insert", "value": "detail_product" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
       "monitor": true
     },
     {
-      "id": "fs-ga-e-commerce-product-click",
+      "id": "fs-ga-e-commerce-click-action",
       "source": "dataLayer",
       "operators": [
-        { "name": "query", "select": "$.ecommerce.click.products" },
-        { "name": "fan-out" },
+        { "name": "query", "select": "$.ecommerce.click.actionField" },
+        { "name": "convert", "properties": "revenue,tax,shipping", "type": "real" },
+        { "name": "convert", "properties": "step", "type": "int" },
+        { "name": "insert", "value": "click" }
+      ],
+      "destination": "FS.event",
+      "readOnLoad": true,
+      "monitor": true
+    },
+    {
+      "id": "fs-ga-e-commerce-click-product",
+      "source": "dataLayer",
+      "operators": [
+        { "name": "query", "select": "$.ecommerce.click.products[0]" },
         { "name": "convert", "properties": "price", "type": "real" },
         { "name": "convert", "properties": "quantity,position", "type": "int" },
-        { "name": "insert", "value": "product_click" }
+        { "name": "insert", "value": "click_product" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
       "monitor": true
     },
     {
-      "id": "fs-ga-e-commerce-cart-add",
+      "id": "fs-ga-e-commerce-add-action",
       "source": "dataLayer",
       "operators": [
-        { "name": "query", "select": "$.ecommerce.add.products" },
-        { "name": "fan-out" },
+        { "name": "query", "select": "$.ecommerce.add.actionField" },
+        { "name": "convert", "properties": "revenue,tax,shipping", "type": "real" },
+        { "name": "convert", "properties": "step", "type": "int" },
+        { "name": "insert", "value": "add" }
+      ],
+      "destination": "FS.event",
+      "readOnLoad": true,
+      "monitor": true
+    },
+    {
+      "id": "fs-ga-e-commerce-add-product",
+      "source": "dataLayer",
+      "operators": [
+        { "name": "query", "select": "$.ecommerce.add.products[0]" },
         { "name": "convert", "properties": "price", "type": "real" },
         { "name": "convert", "properties": "quantity,position", "type": "int" },
-        { "name": "insert", "value": "product_add" }
+        { "name": "insert", "value": "add_product" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
       "monitor": true
     },
     {
-      "id": "fs-ga-e-commerce-cart-remove",
+      "id": "fs-ga-e-commerce-remove-action",
       "source": "dataLayer",
       "operators": [
-        { "name": "query", "select": "$.ecommerce.remove.products" },
-        { "name": "fan-out" },
+        { "name": "query", "select": "$.ecommerce.remove.actionField" },
+        { "name": "convert", "properties": "revenue,tax,shipping", "type": "real" },
+        { "name": "convert", "properties": "step", "type": "int" },
+        { "name": "insert", "value": "remove" }
+      ],
+      "destination": "FS.event",
+      "readOnLoad": true,
+      "monitor": true
+    },
+    {
+      "id": "fs-ga-e-commerce-remove-product",
+      "source": "dataLayer",
+      "operators": [
+        { "name": "query", "select": "$.ecommerce.remove.products[0]" },
         { "name": "convert", "properties": "price", "type": "real" },
         { "name": "convert", "properties": "quantity,position", "type": "int" },
-        { "name": "insert", "value": "product_remove" }
+        { "name": "insert", "value": "remove_product" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
       "monitor": true
     },
     {
-      "id": "fs-ga-e-commerce-promotion-clicks",
+      "id": "fs-ga-e-commerce-promo_click-action",
       "source": "dataLayer",
       "operators": [
-        { "name": "query", "select": "$.ecommerce.promoClick.promotions" },
-        { "name": "fan-out" },
-        { "name": "insert", "value": "promotion_click" }
+        { "name": "query", "select": "$.ecommerce.promoClick.actionField" },
+        { "name": "convert", "properties": "revenue,tax,shipping", "type": "real" },
+        { "name": "convert", "properties": "step", "type": "int" },
+        { "name": "insert", "value": "promo_click" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
       "monitor": true
     },
     {
-      "id": "fs-ga-e-commerce-checkout",
+      "id": "fs-ga-e-commerce-promo_click-promotion",
+      "source": "dataLayer",
+      "operators": [
+        { "name": "query", "select": "$.ecommerce.promoClick.promotions[0]" },
+        { "name": "insert", "value": "promo_click_promotion" }
+      ],
+      "destination": "FS.event",
+      "readOnLoad": true,
+      "monitor": true
+    },
+    {
+      "id": "fs-ga-e-commerce-checkout-action",
+      "source": "dataLayer",
+      "operators": [
+        { "name": "query", "select": "$.ecommerce.checkout.actionField" },
+        { "name": "convert", "properties": "revenue,tax,shipping", "type": "real" },
+        { "name": "convert", "properties": "step", "type": "int" },
+        { "name": "insert", "value": "checkout" }
+      ],
+      "destination": "FS.event",
+      "readOnLoad": true,
+      "monitor": true
+    },
+    {
+      "id": "fs-ga-e-commerce-checkout-product",
       "source": "dataLayer",
       "operators": [
         { "name": "query", "select": "$.ecommerce.checkout.products" },
         { "name": "fan-out" },
         { "name": "convert", "properties": "price", "type": "real" },
         { "name": "convert", "properties": "quantity,position", "type": "int" },
-        { "name": "insert", "value": "product_checkout" }
+        { "name": "insert", "value": "checkout_product" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
       "monitor": true
     },
     {
-      "id": "fs-ga-e-commerce-purchase",
+      "id": "fs-ga-e-commerce-purchase-action",
+      "source": "dataLayer",
+      "operators": [
+        { "name": "query", "select": "$.ecommerce.purchase.actionField" },
+        { "name": "convert", "properties": "revenue,tax,shipping", "type": "real" },
+        { "name": "convert", "properties": "step", "type": "int" },
+        { "name": "insert", "value": "purchase" }
+      ],
+      "destination": "FS.event",
+      "readOnLoad": true,
+      "monitor": true
+    },
+    {
+      "id": "fs-ga-e-commerce-purchase-product",
       "source": "dataLayer",
       "operators": [
         { "name": "query", "select": "$.ecommerce.purchase.products" },
         { "name": "fan-out" },
         { "name": "convert", "properties": "price", "type": "real" },
         { "name": "convert", "properties": "quantity,position", "type": "int" },
-        { "name": "insert", "value": "product_purchase" }
+        { "name": "insert", "value": "purchase_product" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
       "monitor": true
     },
     {
-      "id": "fs-ga-e-commerce-refund",
+      "id": "fs-ga-e-commerce-refund-action",
+      "source": "dataLayer",
+      "operators": [
+        { "name": "query", "select": "$.ecommerce.refund.actionField" },
+        { "name": "convert", "properties": "revenue,tax,shipping", "type": "real" },
+        { "name": "convert", "properties": "step", "type": "int" },
+        { "name": "insert", "value": "refund" }
+      ],
+      "destination": "FS.event",
+      "readOnLoad": true,
+      "monitor": true
+    },
+    {
+      "id": "fs-ga-e-commerce-refund-product",
       "source": "dataLayer",
       "operators": [
         { "name": "query", "select": "$.ecommerce.refund.products" },
         { "name": "fan-out" },
         { "name": "convert", "properties": "price", "type": "real" },
         { "name": "convert", "properties": "quantity,position", "type": "int" },
-        { "name": "insert", "value": "product_refund" }
+        { "name": "insert", "value": "refund_product" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,
