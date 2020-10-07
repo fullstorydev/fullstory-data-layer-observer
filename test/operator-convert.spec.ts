@@ -21,7 +21,9 @@ const item = {
 
 describe('convert operator unit tests', () => {
   it('it should validate options', () => {
-    expect(() => new ConvertOperator({ name: 'convert', properties: 'quantity', type: 'int' }).validate())
+    expect(() => new ConvertOperator({
+      name: 'convert', force: true, properties: 'quantity', type: 'int',
+    }).validate())
       .to.not.throw();
     expect(() => new ConvertOperator({
       name: 'convert', properties: 'salePrice', preserveArray: true, type: 'int',
@@ -43,6 +45,15 @@ describe('convert operator unit tests', () => {
       .to.throw();
     // @ts-ignore
     expect(() => new ConvertOperator({ name: 'convert', properties: 'quantity' }).validate())
+      .to.throw();
+    expect(() => new ConvertOperator({
+    // @ts-ignore
+      name: 'convert', properties: ['price', 'tax'], type: 'real', force: 1,
+    }).validate())
+      .to.throw();
+    expect(() => new ConvertOperator({
+      name: 'convert', properties: 'saleDate', type: 'date', force: true,
+    }).validate())
       .to.throw();
   });
 
@@ -172,16 +183,72 @@ describe('convert operator unit tests', () => {
     expect(real.empty).to.eq(0);
   });
 
-  it('it should convert null int or real to zero', () => {
+  it('it should convert undefined/null string to empty string when force is used', () => {
+    let operator = OperatorFactory.create('convert', { name: 'convert', properties: 'vat,nothing', type: 'string' });
+    let [string] = operator.handleData([item])!;
+
+    expect(string).to.not.be.null;
+    expect(string!.vat).to.be.null;
+    expect(string!.nothing).to.be.undefined;
+
+    operator = OperatorFactory.create('convert', {
+      name: 'convert', properties: 'vat,nothing', type: 'string', force: true,
+    });
+    [string] = operator.handleData([item])!;
+
+    expect(string).to.not.be.null;
+    expect(string!.vat).to.be.empty;
+    expect(string!.nothing).to.be.empty;
+  });
+
+  it('it should convert undefined/null boolean to false when force is used', () => {
+    let operator = OperatorFactory.create('convert', { name: 'convert', properties: 'vat,nothing', type: 'bool' });
+    let [bool] = operator.handleData([item])!;
+
+    expect(bool).to.not.be.null;
+    expect(bool!.vat).to.be.null;
+    expect(bool!.nothing).to.be.undefined;
+
+    operator = OperatorFactory.create('convert', {
+      name: 'convert', properties: 'vat,nothing', type: 'bool', force: true,
+    });
+    [bool] = operator.handleData([item])!;
+
+    expect(bool).to.not.be.null;
+    expect(bool!.vat).to.be.false;
+    expect(bool!.nothing).to.be.false;
+  });
+
+  it('it should convert undefined/null int or real to zero when force is used', () => {
     let operator = OperatorFactory.create('convert', { name: 'convert', properties: 'vat,nothing', type: 'real' });
-    const [real] = operator.handleData([item])!;
+    let [real] = operator.handleData([item])!;
+
+    expect(real).to.not.be.null;
+    expect(real!.vat).to.be.null;
+    expect(real!.nothing).to.be.undefined;
+
+    operator = OperatorFactory.create('convert', {
+      name: 'convert', properties: 'vat,nothing', type: 'real', force: true,
+    });
+    [real] = operator.handleData([item])!;
 
     expect(real).to.not.be.null;
     expect(real!.vat).to.eq(0.0);
     expect(real!.nothing).to.eq(0.0);
 
-    operator = OperatorFactory.create('convert', { name: 'convert', properties: 'vat,nothing', type: 'int' });
-    const [int] = operator.handleData([item])!;
+    operator = OperatorFactory.create('convert', {
+      name: 'convert', properties: 'vat,nothing', type: 'int', force: false,
+    });
+    let [int] = operator.handleData([item])!;
+
+    expect(int).to.not.be.null;
+    expect(int!.vat).to.be.null;
+    expect(int!.nothing).to.be.undefined;
+
+    operator = OperatorFactory.create('convert', {
+      name: 'convert', properties: 'vat,nothing', type: 'int', force: true,
+    });
+    [int] = operator.handleData([item])!;
 
     expect(int).to.not.be.null;
     expect(int!.vat).to.eq(0);
