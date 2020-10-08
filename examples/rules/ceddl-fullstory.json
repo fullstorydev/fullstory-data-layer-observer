@@ -1,0 +1,145 @@
+{
+  "rules": [
+    {
+      "id": "fs-event-ceddl-cart",
+      "description": "converts and sends CEDDL cart properties to FS.event",
+      "source": "digitalData.cart",
+      "operators": [
+        {
+          "name": "query",
+          "select": "$[!(item)]"
+        },
+        {
+          "name": "flatten"
+        },
+        {
+          "name": "convert",
+          "properties": "basePrice,voucherDiscount,taxRate,shipping,priceWithTax,cartTotal",
+          "type": "real"
+        },
+        {
+          "name": "insert",
+          "value": "cart"
+        }
+      ],
+      "destination": "FS.event"
+    },
+    {
+      "id": "fs-event-ceddl-page",
+      "description": "convert and send CEDDL page properties to FS.event as a 'Page' event",
+      "source": "digitalData.page",
+      "operators": [
+        {
+          "name": "flatten"
+        },
+        {
+          "name": "query",
+          "select": "$[!(destinationURL,referringURL)]"
+        },
+        {
+          "name": "convert",
+          "properties": "version",
+          "type": "real"
+        },
+        {
+          "name": "convert",
+          "properties": "issueDate,effectiveDate,expiryDate",
+          "type": "date"
+        },
+        {
+          "name": "insert",
+          "value": "page"
+        }
+      ],
+      "destination": "FS.event"
+    },
+    {
+      "id": "fs-event-ceddl-product",
+      "description": "sends the CEDDL product to FS.event",
+      "source": "digitalData.product[0]",
+      "operators": [
+        {
+          "name": "query",
+          "select": "$[!(linkedProduct)]"
+        },
+        {
+          "name": "flatten"
+        },
+        {
+          "name": "insert",
+          "value": "product"
+        }
+      ],
+      "destination": "FS.event"
+    },
+    {
+      "id": "fs-event-ceddl-transaction",
+      "description": "send CEDDL transaction to FS.event",
+      "source": "digitalData.transaction",
+      "operators": [
+        {
+          "name": "query",
+          "select": "$[!(profile,item)]"
+        },
+        {
+          "name": "flatten"
+        },
+        {
+          "name": "convert",
+          "properties": "basePrice,voucherDiscount,taxRate,shipping,priceWithTax,transactionTotal",
+          "type": "real"
+        },
+        {
+          "name": "insert",
+          "value": "transaction"
+        }
+      ],
+      "destination": "FS.event"
+    },
+    {
+      "id": "fs-uservars-ceddl-user-all",
+      "description": "send all CEDDL user properties to FS.setUserVars",
+      "source": "digitalData.user.profile[0]",
+      "operators": [
+        {
+          "name": "flatten"
+        }
+      ],
+      "destination": "FS.setUserVars"
+    },
+    {
+      "id": "fs-identify-ceddl-user-all",
+      "description": "send all CEDDL user properties to FS.identify using the profileID as the FullStory uid",
+      "source": "digitalData.user.profile[0]",
+      "operators": [
+        {
+          "name": "flatten"
+        },
+        {
+          "name": "insert",
+          "select": "profileID"
+        }
+      ],
+      "destination": "FS.identify"
+    },
+    {
+      "id": "fs-identify-ceddl-user-allowed",
+      "description": "send only known CEDDL user properties to FS.identify using the profileID as the FullStory uid",
+      "source": "digitalData.user.profile[0]",
+      "operators": [
+        {
+          "name": "flatten"
+        },
+        {
+          "name": "query",
+          "select": "$[(profileID,userName,line1,line2,city,stateProvince,postalCode,country)]"
+        },
+        {
+          "name": "insert",
+          "select": "profileID"
+        }
+      ],
+      "destination": "FS.identify"
+    }
+  ]
+}

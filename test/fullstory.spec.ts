@@ -4,11 +4,7 @@ import 'mocha';
 
 import { DataLayerObserver, DataLayerRule } from '../src/observer';
 import * as adobeRules from '../examples/rules/adobe-fullstory.json';
-import * as userRules from '../examples/rules/ceddl-user-fullstory.json';
-import * as cartRules from '../examples/rules/ceddl-cart-fullstory.json';
-import * as pageRules from '../examples/rules/ceddl-page-fullstory.json';
-import * as productRules from '../examples/rules/ceddl-product-fullstory.json';
-import * as transactionRules from '../examples/rules/ceddl-transaction-fullstory.json';
+import * as ceddlRules from '../examples/rules/ceddl-fullstory.json';
 import * as googleTagsRules from '../examples/rules/google-tags-fullstory.json';
 import * as tealiumRetailRules from '../examples/rules/tealium-fullstory.json';
 
@@ -31,8 +27,7 @@ interface GlobalMock {
 let globalMock: GlobalMock;
 
 const rules = [
-  ...adobeRules.rules, ...cartRules.rules, ...pageRules.rules, ...userRules.rules, ...productRules.rules,
-  ...transactionRules.rules, ...googleTagsRules.rules, ...tealiumRetailRules.rules,
+  ...adobeRules.rules, ...ceddlRules.rules, ...googleTagsRules.rules, ...tealiumRetailRules.rules,
 ];
 
 function getRule(id: string) {
@@ -262,17 +257,15 @@ describe('Google Tags to FullStory rules', () => {
   });
 });
 
-describe('FullStory example rules unit tests', () => {
+describe('CEDDL to FullStory rules', () => {
   beforeEach(() => {
-    (globalThis as any).digitalData = basicDigitalData;
-    (globalThis as any).s = basicAppMeasurement;
+    (globalThis as any).digitalData = deepcopy(basicDigitalData);
     (globalThis as any).FS = new FullStory();
     globalMock = globalThis as any;
   });
 
   afterEach(() => {
     delete (globalThis as any).digitalData;
-    delete (globalThis as any).s;
     delete (globalThis as any).FS;
   });
 
@@ -297,8 +290,6 @@ describe('FullStory example rules unit tests', () => {
     expect(payload.social).to.be.undefined;
     expect(payload.attributes).to.be.undefined;
     expect(payload.job).to.eq('developer'); // verify custom property
-
-    delete (globalThis as any).digitalData.user.profile[0].job; // remove custom property
   });
 
   it('it should send any CEDDL user property to FS.identify', () => {
@@ -327,12 +318,10 @@ describe('FullStory example rules unit tests', () => {
     expect(payload.userName).to.eq(profileInfo.userName);
     expect(payload.line1).to.eq(address.line1);
     expect(payload.password).to.be.undefined;
-
-    delete (globalThis as any).digitalData.user.profile[0].password; // remove sensitive property
   });
 
-  it('it should send latest CEDDL product properties to FS.event', () => {
-    const product = basicDigitalData.product[basicDigitalData.product.length - 1];
+  it('it should send the first CEDDL product to FS.event', () => {
+    const product = (globalThis as any).digitalData.product[0];
     (product as any).customProp = 'Foo'; // inject custom property
 
     const { primaryCategory } = product.category;
@@ -342,17 +331,15 @@ describe('FullStory example rules unit tests', () => {
     expect(observer).to.not.be.undefined;
 
     const [eventName, payload] = expectParams(globalMock.FS, 'event');
-    expect(eventName).to.eq('View Product');
+    expect(eventName).to.eq('product');
     expect(payload.sku).to.eq(sku);
     expect(payload.productID).to.eq(productID);
     expect(payload.productName).to.eq(productName);
     expect(payload.primaryCategory).to.eq(primaryCategory);
-    expect(payload.customProp).to.be.undefined;
-
-    delete (product as any).customProp; // remove custom property
+    expect(payload.customProp).to.eql((product as any).customProp);
   });
 
-  it('it should send CEDDL cart cartID and price properties to FS.event', () => {
+  it('it should send CEDDL cart to FS.event', () => {
     const { cartID, price } = basicDigitalData.cart;
 
     (globalThis as any).digitalData.cart.promotion = 'LaborDay2020'; // inject custom property
@@ -361,32 +348,10 @@ describe('FullStory example rules unit tests', () => {
     expect(observer).to.not.be.undefined;
 
     const [eventName, payload] = expectParams(globalMock.FS, 'event');
-    expect(eventName).to.eq('View Cart');
+    expect(eventName).to.eq('cart');
     expect(payload.cartID).to.eq(cartID);
-    expect(payload.price).to.eq(price);
-    expect(payload.promotion).to.be.undefined;
-
-    delete (globalThis as any).digitalData.cart.promotion; // remove custom property
-  });
-
-  it('it should send all CEDDL cart properties except items to FS.event', () => {
-    // NOTE that items is a list of complex objects that requires special transformations (see FS.event limitations)
-    const { cartID, price, attributes } = basicDigitalData.cart;
-
-    (globalThis as any).digitalData.cart.promotion = 'LaborDay2020'; // inject custom property
-
-    const observer = new DataLayerObserver({ rules: [getRule('fs-event-ceddl-cart-not-items')], readOnLoad: true });
-    expect(observer).to.not.be.undefined;
-
-    const [eventName, payload] = expectParams(globalMock.FS, 'event');
-    expect(eventName).to.eq('View Cart');
-    expect(payload.cartID).to.eq(cartID);
-    expect(payload.price).to.eq(price);
-    expect(payload.attributes).to.eq(attributes);
-    expect(payload.promotion).to.eq('LaborDay2020');
-    expect(payload.items).to.be.undefined;
-
-    delete (globalThis as any).digitalData.cart.promotion; // remove custom property
+    expect(payload.basePrice).to.eq(price.basePrice);
+    expect(payload.promotion).to.eq((globalThis as any).digitalData.cart.promotion);
   });
 
   it('it should convert strings to reals and send CEDDL cart properties to FS.event', () => {
@@ -401,11 +366,11 @@ describe('FullStory example rules unit tests', () => {
     expect(typeof (globalThis as any).digitalData.cart.price.priceWithTax).to.eq('string');
     expect(typeof (globalThis as any).digitalData.cart.price.cartTotal).to.eq('string');
 
-    const observer = new DataLayerObserver({ rules: [getRule('fs-event-ceddl-cart-convert')], readOnLoad: true });
+    const observer = new DataLayerObserver({ rules: [getRule('fs-event-ceddl-cart')], readOnLoad: true });
     expect(observer).to.not.be.undefined;
 
     const [eventName, payload] = expectParams(globalMock.FS, 'event');
-    expect(eventName).to.eq('View Cart');
+    expect(eventName).to.eq('cart');
 
     // NOTE these are flattened but you could also simply send digitalData.cart.price
     expect(payload.basePrice).to.eq(basePrice);
@@ -423,18 +388,18 @@ describe('FullStory example rules unit tests', () => {
 
     (globalThis as any).digitalData.page.framework = 'react'; // inject custom property
 
-    const observer = new DataLayerObserver({ rules: [getRule('fs-event-ceddl-page-omit-convert')], readOnLoad: true });
+    const observer = new DataLayerObserver({ rules: [getRule('fs-event-ceddl-page')], readOnLoad: true });
     expect(observer).to.not.be.undefined;
 
     const [eventName, payload] = expectParams(globalMock.FS, 'event');
-    expect(eventName).to.eq('digitalData.page');
+    expect(eventName).to.eq('page');
 
     // NOTE these are flattened but you could also simply send digitalData.page
     expect(payload.pageID).to.eq(pageInfo.pageID);
     expect(payload.pageName).to.eq(pageInfo.pageName);
     expect(payload.sysEnv).to.eq(pageInfo.sysEnv);
     expect(payload.variant).to.eq(pageInfo.variant);
-    expect(payload.breadcrumbs).to.eq(pageInfo.breadcrumbs);
+    expect(payload.breadcrumbs).to.eql(pageInfo.breadcrumbs);
     expect(payload.author).to.eq(pageInfo.author);
     expect(payload.language).to.eq(pageInfo.language);
     expect(payload.industryCodes).to.eq(pageInfo.industryCodes);
@@ -451,8 +416,6 @@ describe('FullStory example rules unit tests', () => {
     // NOTE we have other ways in FullStory to see these
     expect(payload.destinationURL).to.be.undefined;
     expect(payload.referringURL).to.be.undefined;
-
-    delete (globalThis as any).digitalData.page.framework; // remove custom property
   });
 
   it('it should send CEDDL transaction transactionID and total properties to FS.event', () => {
@@ -463,16 +426,14 @@ describe('FullStory example rules unit tests', () => {
       },
     } = basicDigitalData.transaction;
 
-    (globalThis as any).digitalData.transaction.token = 'a878b8219'; // inject custom property
-
     const observer = new DataLayerObserver({
-      rules: [getRule('fs-event-ceddl-transaction-id-total')],
+      rules: [getRule('fs-event-ceddl-transaction')],
       readOnLoad: true,
     });
     expect(observer).to.not.be.undefined;
 
     const [eventName, payload] = expectParams(globalMock.FS, 'event');
-    expect(eventName).to.eq('Order Completed');
+    expect(eventName).to.eq('transaction');
     expect(payload.transactionID).to.eq(transactionID);
     expect(payload.basePrice).to.eq(basePrice);
     expect(payload.voucherCode).to.eq(voucherCode);
@@ -483,10 +444,19 @@ describe('FullStory example rules unit tests', () => {
     expect(payload.shippingMethod).to.eq(shippingMethod);
     expect(payload.priceWithTax).to.eq(priceWithTax);
     expect(payload.transactionTotal).to.eq(transactionTotal);
+  });
+});
 
-    expect(payload.token).to.be.undefined;
+describe('Adobe to FullStory rules', () => {
+  beforeEach(() => {
+    (globalThis as any).s = basicAppMeasurement;
+    (globalThis as any).FS = new FullStory();
+    globalMock = globalThis as any;
+  });
 
-    delete (globalThis as any).digitalData.transaction.token; // remove custom property
+  afterEach(() => {
+    delete (globalThis as any).s;
+    delete (globalThis as any).FS;
   });
 
   it('it should send just Adobe eVars to FS.event', () => {
