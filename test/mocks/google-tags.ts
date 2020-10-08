@@ -48,7 +48,7 @@ export const basicGoogleTags = [
     event: 'productClick',
     ecommerce: {
       click: {
-        actionField: { list: 'Search Results' },
+        actionField: { action: 'click', list: 'Search Results' },
         products: [
           {
             name: 'Heritage Huckleberries',
@@ -69,7 +69,7 @@ export const basicGoogleTags = [
   {
     ecommerce: {
       detail: {
-        actionField: { list: 'Product Gallery' },
+        actionField: { action: 'detail', list: 'Product Gallery' },
         products: [
           {
             name: 'Heritage Huckleberries',
@@ -88,6 +88,7 @@ export const basicGoogleTags = [
     ecommerce: {
       currencyCode: 'USD',
       add: {
+        actionField: { action: 'add' },
         products: [
           {
             name: 'Heritage Huckleberries',
@@ -107,6 +108,7 @@ export const basicGoogleTags = [
     ecommerce: {
       currencyCode: 'USD',
       remove: {
+        actionField: { action: 'remove' },
         products: [
           {
             name: 'Heritage Huckleberries',
@@ -146,6 +148,7 @@ export const basicGoogleTags = [
     event: 'promotionClick',
     ecommerce: {
       promoClick: {
+        actionField: { action: 'promo_click' },
         promotions: [
           {
             id: '1004-Blueberries123321',
@@ -166,6 +169,7 @@ export const basicGoogleTags = [
     ecommerce: {
       checkout: {
         actionField: {
+          action: 'checkout',
           step: 1,
           option: 'Visa',
         },
@@ -175,6 +179,15 @@ export const basicGoogleTags = [
             id: 'P000525722',
             price: '2.99',
             brand: 'Heritage',
+            category: 'fruit',
+            variant: '',
+            quantity: 1,
+          },
+          {
+            name: 'Cosmic Crisp Apple',
+            id: '668ebb86-60b5-451e-92d3-044157d27823',
+            price: '15.55',
+            brand: 'Washington State Apple Farm',
             category: 'fruit',
             variant: '',
             quantity: 1,
@@ -190,6 +203,7 @@ export const basicGoogleTags = [
     ecommerce: {
       purchase: {
         actionField: {
+          action: 'purchase',
           id: 'T12345',
           affiliation: 'Online Store',
           revenue: '35.43',
@@ -208,6 +222,15 @@ export const basicGoogleTags = [
             quantity: 1,
             coupon: '',
           },
+          {
+            name: 'Cosmic Crisp Apple',
+            id: '668ebb86-60b5-451e-92d3-044157d27823',
+            price: '15.55',
+            brand: 'Washington State Apple Farm',
+            category: 'fruit',
+            variant: '',
+            quantity: 1,
+          },
         ],
       },
     },
@@ -216,6 +239,7 @@ export const basicGoogleTags = [
     ecommerce: {
       refund: {
         actionField: {
+          action: 'refund',
           id: 'T12345',
         },
         products: [

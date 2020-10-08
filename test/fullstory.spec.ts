@@ -54,15 +54,15 @@ describe('Google Tags to FullStory rules', () => {
     delete (globalThis as any).FS;
   });
 
-  it('should read page type', () => {
+  it('should read pageview', () => {
     const observer = ExpectObserver.getInstance().create({
       rules: [
-        getRule('fs-ga-page-type'),
+        getRule('fs-ga-pageview'),
       ],
     });
 
     const [id, payload] = expectParams(globalMock.FS, 'event');
-    expect(id).to.eq('View Page Type');
+    expect(id).to.eq('pageview');
     expect(payload.pageType).to.eq('Home');
 
     (globalThis as any).dataLayer.push({
@@ -70,167 +70,174 @@ describe('Google Tags to FullStory rules', () => {
       pageName: 'test',
     });
     const [id3, payload3] = expectParams(globalMock.FS, 'event');
-    expect(id3).to.eq('View Page Type');
+    expect(id3).to.eq('pageview');
     expect(payload3.pageName).to.eq('test');
 
     ExpectObserver.getInstance().cleanup(observer);
   });
 
-  it('should read commerce impressions', () => {
+  it('should read enhanced ecommerce detail', () => {
     const observer = ExpectObserver.getInstance().create({
       rules: [
-        getRule('fs-ga-e-commerce-impressions'),
-      ],
-    });
-
-    const [id, payload] = expectParams(globalMock.FS, 'event');
-    expect(id).to.eq('Commerce impression');
-    expect(payload.id).to.eq('P000614444');
-
-    const [id2, payload2] = expectParams(globalMock.FS, 'event');
-    expect(id2).to.eq('Commerce impression');
-    expect(payload2.id).to.eq('P000525722');
-
-    (globalThis as any).dataLayer.push({
-      event: 'impressions_loaded',
-      ecommerce: {
-        impressions: [
-          {
-            id: 'test',
-            name: 'Test',
-          },
-        ],
-      },
-    });
-    const [id3, payload3] = expectParams(globalMock.FS, 'event');
-    expect(id3).to.eq('Commerce impression');
-    expect(payload3.id).to.eq('test');
-
-    ExpectObserver.getInstance().cleanup(observer);
-  });
-
-  it('should read commerce product detail', () => {
-    const observer = ExpectObserver.getInstance().create({
-      rules: [
-        getRule('fs-ga-e-commerce-product-detail'),
-      ],
-    });
-
-    const [id2, payload2] = expectParams(globalMock.FS, 'event');
-    expect(id2).to.eq('Commerce product detail');
-    expect(payload2.id).to.eq('P000525722');
-
-    ExpectObserver.getInstance().cleanup(observer);
-  });
-
-  it('should read commerce product click', () => {
-    const observer = ExpectObserver.getInstance().create({
-      rules: [
-        getRule('fs-ga-e-commerce-product-click'),
-      ],
-    });
-
-    const [id2, payload2] = expectParams(globalMock.FS, 'event');
-    expect(id2).to.eq('Commerce product click');
-    expect(payload2.id).to.eq('P000525722');
-
-    ExpectObserver.getInstance().cleanup(observer);
-  });
-
-  it('should read commerce cart add', () => {
-    const observer = ExpectObserver.getInstance().create({
-      rules: [
-        getRule('fs-ga-e-commerce-cart-add'),
-      ],
-    });
-
-    const [id2, payload2] = expectParams(globalMock.FS, 'event');
-    expect(id2).to.eq('Commerce cart add');
-    expect(payload2.id).to.eq('P000525722');
-
-    ExpectObserver.getInstance().cleanup(observer);
-  });
-
-  it('should read commerce cart remove', () => {
-    const observer = ExpectObserver.getInstance().create({
-      rules: [
-        getRule('fs-ga-e-commerce-cart-remove'),
-      ],
-    });
-
-    const [id2, payload2] = expectParams(globalMock.FS, 'event');
-    expect(id2).to.eq('Commerce cart remove');
-    expect(payload2.id).to.eq('P000525722');
-
-    ExpectObserver.getInstance().cleanup(observer);
-  });
-
-  it('should read commerce promotion impressions', () => {
-    const observer = ExpectObserver.getInstance().create({
-      rules: [
-        getRule('fs-ga-e-commerce-promotion-impressions'),
+        getRule('fs-ga-e-commerce-detail-product'),
+        { ...getRule('fs-ga-e-commerce-detail-action'), source: 'dataLayer[5]' },
       ],
     });
     expect(observer).to.not.be.undefined;
-    const [id, payload] = expectParams(globalMock.FS, 'event');
-    expect(id).to.eq('Commerce promotion impression');
-    expect(payload.id).to.eq('1001-Strawberries222333');
+    let [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('detail');
+    expect(payload.list).to.eq('Product Gallery');
+
+    [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('detail_product');
+    expect(payload.id).to.eq('P000525722');
+    expect(payload.price).to.eq(2.99);
 
     ExpectObserver.getInstance().cleanup(observer);
   });
 
-  it('should read commerce promotion clicks', () => {
+  it('should read enhanced ecommerce click', () => {
     const observer = ExpectObserver.getInstance().create({
       rules: [
-        getRule('fs-ga-e-commerce-promotion-clicks'),
+        getRule('fs-ga-e-commerce-click-product'),
+        { ...getRule('fs-ga-e-commerce-click-action'), source: 'dataLayer[4]' },
       ],
     });
     expect(observer).to.not.be.undefined;
-    const [id, payload] = expectParams(globalMock.FS, 'event');
-    expect(id).to.eq('Commerce promotion click');
+    let [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('click');
+    expect(payload.list).to.eq('Search Results');
+
+    [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('click_product');
+    expect(payload.id).to.eq('P000525722');
+    expect(payload.price).to.eq(2.99);
+
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
+  it('should read enhanced ecommerce add', () => {
+    const observer = ExpectObserver.getInstance().create({
+      rules: [
+        getRule('fs-ga-e-commerce-add-product'),
+        { ...getRule('fs-ga-e-commerce-add-action'), source: 'dataLayer[6]' },
+      ],
+    });
+    expect(observer).to.not.be.undefined;
+    let [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('add');
+
+    [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('add_product');
+    expect(payload.id).to.eq('P000525722');
+    expect(payload.price).to.eq(2.99);
+
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
+  it('should read enhanced ecommerce remove', () => {
+    const observer = ExpectObserver.getInstance().create({
+      rules: [
+        getRule('fs-ga-e-commerce-remove-product'),
+        { ...getRule('fs-ga-e-commerce-remove-action'), source: 'dataLayer[7]' },
+      ],
+    });
+    expect(observer).to.not.be.undefined;
+    let [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('remove');
+
+    [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('remove_product');
+    expect(payload.id).to.eq('P000525722');
+    expect(payload.price).to.eq(2.99);
+
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
+  it('should read enhanced ecommerce promo_click', () => {
+    const observer = ExpectObserver.getInstance().create({
+      rules: [
+        getRule('fs-ga-e-commerce-promo_click-promotion'),
+        { ...getRule('fs-ga-e-commerce-promo_click-action'), source: 'dataLayer[9]' },
+      ],
+    });
+    expect(observer).to.not.be.undefined;
+    let [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('promo_click');
+
+    [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('promo_click_promotion');
     expect(payload.id).to.eq('1004-Blueberries123321');
 
     ExpectObserver.getInstance().cleanup(observer);
   });
 
-  it('should read purchases', () => {
+  it('should read enhanced ecommerce purchase', () => {
     const observer = ExpectObserver.getInstance().create({
       rules: [
-        getRule('fs-ga-e-commerce-purchase'),
+        getRule('fs-ga-e-commerce-purchase-product'),
+        { ...getRule('fs-ga-e-commerce-purchase-action'), source: 'dataLayer[11]' },
       ],
     });
     expect(observer).to.not.be.undefined;
-    const [id, payload] = expectParams(globalMock.FS, 'event');
-    expect(id).to.eq('Commerce purchase');
+    let [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('purchase');
     expect(payload.shipping).to.eq(5.99);
 
+    [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('purchase_product');
+    expect(payload.id).to.eq('668ebb86-60b5-451e-92d3-044157d27823');
+    expect(payload.price).to.eq(15.55);
+
+    [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('purchase_product');
+    expect(payload.id).to.eq('P000525722');
+    expect(payload.price).to.eq(2.99);
+
     ExpectObserver.getInstance().cleanup(observer);
   });
 
-  it('should read commerce checkout', () => {
+  it('should read enhanced ecommerce checkout', () => {
     const observer = ExpectObserver.getInstance().create({
       rules: [
-        getRule('fs-ga-e-commerce-checkout'),
+        { ...getRule('fs-ga-e-commerce-checkout-product') },
+        { ...getRule('fs-ga-e-commerce-checkout-action'), source: 'dataLayer[10]' },
       ],
     });
     expect(observer).to.not.be.undefined;
-    const [id, payload] = expectParams(globalMock.FS, 'event');
-    expect(id).to.eq('Commerce checkout');
+    let [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('checkout');
     expect(payload.step).to.eq(1);
 
+    [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('checkout_product');
+    expect(payload.id).to.eq('668ebb86-60b5-451e-92d3-044157d27823');
+    expect(payload.price).to.eq(15.55);
+
+    [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('checkout_product');
+    expect(payload.id).to.eq('P000525722');
+    expect(payload.price).to.eq(2.99);
+
     ExpectObserver.getInstance().cleanup(observer);
   });
 
-  it('should read commerce refund', () => {
+  it('should read enhanced ecommerce refund', () => {
     const observer = ExpectObserver.getInstance().create({
       rules: [
-        getRule('fs-ga-e-commerce-refund'),
+        { ...getRule('fs-ga-e-commerce-refund-product') },
+        { ...getRule('fs-ga-e-commerce-refund-action'), source: 'dataLayer[12]' },
       ],
     });
     expect(observer).to.not.be.undefined;
-    const [id, payload] = expectParams(globalMock.FS, 'event');
-    expect(id).to.eq('Commerce refund');
+    let [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('refund');
     expect(payload.id).to.eq('T12345');
+
+    [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.eq('refund_product');
+    expect(payload.id).to.eq('P000525722');
+    expect(payload.quantity).to.eq(1);
 
     ExpectObserver.getInstance().cleanup(observer);
   });
