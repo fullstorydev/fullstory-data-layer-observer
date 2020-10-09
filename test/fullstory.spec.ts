@@ -461,7 +461,7 @@ describe('CEDDL to FullStory rules', () => {
     expect(observer).to.not.be.undefined;
 
     let [eventName, payload] = expectParams(globalMock.FS, 'event');
-    expect(eventName).to.eq('event');
+    expect(eventName).to.eq('event'); // NOTE this tests non-compliant data layers that do not defined eventName
     expect(payload.eventAction).to.eq('cart-item-removed');
     expect(payload.primaryCategory).to.eq('cart');
 
