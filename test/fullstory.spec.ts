@@ -466,7 +466,7 @@ describe('CEDDL to FullStory rules', () => {
     expect(payload.primaryCategory).to.eq('cart');
 
     [eventName, payload] = expectParams(globalMock.FS, 'event');
-    expect(eventName).to.eq('event');
+    expect(eventName).to.eq('Cart Item Added');
     expect(payload.eventAction).to.eq('cart-item-added');
     expect(payload.primaryCategory).to.eq('cart');
   });

@@ -107,7 +107,8 @@
 
         {
           "name": "insert",
-          "value": "event"
+          "select": "eventName",
+          "defaultValue": "event"
         }
       ],
       "destination": "FS.event"

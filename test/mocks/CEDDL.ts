@@ -516,8 +516,8 @@ export const basicDigitalData: CEDDL = {
     },
   },
   {
+    // @ts-ignore NOTE this has no eventName to test non-compliant implementations
     eventInfo: {
-      eventName: 'Cart Item Removed',
       eventAction: 'cart-item-removed',
       eventPoints: 11,
       type: 'cart-modifier',

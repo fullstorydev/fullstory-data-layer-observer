@@ -6,7 +6,7 @@ import { InsertOperator } from '../src/operators';
 describe('insert operator unit tests', () => {
   it('it should validate options', () => {
     expect(() => new InsertOperator({
-      name: 'insert', select: 'user.profile[0].profileID',
+      name: 'insert', select: 'user.profile[0].profileID', defaultValue: 'user',
     }).validate()).to.not.throw();
 
     expect(() => new InsertOperator({
@@ -65,6 +65,22 @@ describe('insert operator unit tests', () => {
     const [baz, obj] = operator.handleData(data)!;
     expect(baz).to.eq('baz');
     expect(obj).to.eq(data[0]);
+  });
+
+  it('it should insert using defaultValue if selection syntax fails', () => {
+    const data: any[] = [{ foo: 'foo', bar: [{ baz: 'baz' }] }];
+    const operator = new InsertOperator({ name: 'insert', select: 'bar[0].bazzz', defaultValue: 'default' });
+
+    const [baz, obj] = operator.handleData(data)!;
+    expect(baz).to.eq('default');
+    expect(obj).to.eq(data[0]);
+  });
+
+  it('it should throw an error if no value can be found', () => {
+    const data: any[] = [{ foo: 'foo', bar: [{ baz: 'baz' }] }];
+    const operator = new InsertOperator({ name: 'insert', select: 'bar[0].bazzz' });
+
+    expect(() => operator.handleData(data)).to.throw();
   });
 
   it('it should insert using selection syntax for an object at a specific index', () => {
