@@ -514,6 +514,20 @@ export const basicDigitalData: CEDDL = {
       primaryCategory: 'cart',
       attributes: {},
     },
+  },
+  {
+    eventInfo: {
+      eventName: 'Cart Item Removed',
+      eventAction: 'cart-item-removed',
+      eventPoints: 11,
+      type: 'cart-modifier',
+      timeStamp: new Date(),
+      effect: 'cart has removed an item',
+    },
+    category: {
+      primaryCategory: 'cart',
+      attributes: {},
+    },
   }],
   component: [{
     componentInfo: {

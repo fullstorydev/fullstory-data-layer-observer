@@ -97,6 +97,22 @@
       "destination": "FS.event"
     },
     {
+      "id": "fs-event-ceddl-event",
+      "description": "send CEDDL event to FS.event",
+      "source": "digitalData.event",
+      "operators": [
+        {
+          "name": "flatten"
+        },
+
+        {
+          "name": "insert",
+          "value": "event"
+        }
+      ],
+      "destination": "FS.event"
+    },
+    {
       "id": "fs-uservars-ceddl-user-all",
       "description": "send all CEDDL user properties to FS.setUserVars",
       "source": "digitalData.user.profile[0]",
