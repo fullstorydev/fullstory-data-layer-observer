@@ -69,10 +69,28 @@ describe('insert operator unit tests', () => {
 
   it('it should insert using defaultValue if selection syntax fails', () => {
     const data: any[] = [{ foo: 'foo', bar: [{ baz: 'baz' }] }];
-    const operator = new InsertOperator({ name: 'insert', select: 'bar[0].bazzz', defaultValue: 'default' });
+    let operator = new InsertOperator({ name: 'insert', select: 'bar[0].bazzz', defaultValue: 'default' });
 
-    const [baz, obj] = operator.handleData(data)!;
+    let [baz, obj] = operator.handleData(data)!;
     expect(baz).to.eq('default');
+    expect(obj).to.eq(data[0]);
+
+    operator = new InsertOperator({ name: 'insert', select: 'bar[0].bazzz', defaultValue: false });
+
+    [baz, obj] = operator.handleData(data)!;
+    expect(baz).to.eq(false);
+    expect(obj).to.eq(data[0]);
+
+    operator = new InsertOperator({ name: 'insert', select: 'bar[0].bazzz', defaultValue: 1 });
+
+    [baz, obj] = operator.handleData(data)!;
+    expect(baz).to.eq(1);
+    expect(obj).to.eq(data[0]);
+
+    operator = new InsertOperator({ name: 'insert', select: 'bar[0].bazzz', defaultValue: { options: true } });
+
+    [baz, obj] = operator.handleData(data)!;
+    expect(baz).to.eql({ options: true });
     expect(obj).to.eq(data[0]);
   });
 
