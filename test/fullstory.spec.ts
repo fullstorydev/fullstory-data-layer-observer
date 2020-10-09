@@ -452,6 +452,24 @@ describe('CEDDL to FullStory rules', () => {
     expect(payload.priceWithTax).to.eq(priceWithTax);
     expect(payload.transactionTotal).to.eq(transactionTotal);
   });
+
+  it('it should send CEDDL event to FS.event', () => {
+    const observer = new DataLayerObserver({
+      rules: [getRule('fs-event-ceddl-event')],
+      readOnLoad: true,
+    });
+    expect(observer).to.not.be.undefined;
+
+    let [eventName, payload] = expectParams(globalMock.FS, 'event');
+    expect(eventName).to.eq('event'); // NOTE this tests non-compliant data layers that do not defined eventName
+    expect(payload.eventAction).to.eq('cart-item-removed');
+    expect(payload.primaryCategory).to.eq('cart');
+
+    [eventName, payload] = expectParams(globalMock.FS, 'event');
+    expect(eventName).to.eq('Cart Item Added');
+    expect(payload.eventAction).to.eq('cart-item-added');
+    expect(payload.primaryCategory).to.eq('cart');
+  });
 });
 
 describe('Adobe to FullStory rules', () => {

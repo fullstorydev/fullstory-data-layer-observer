@@ -2,6 +2,7 @@ import { Operator, OperatorOptions, OperatorValidator } from '../operator';
 import { select } from '../selector';
 
 export interface InsertOperatorOptions extends OperatorOptions {
+  defaultValue?: boolean | string | number | object; // a default value if the select fails
   select?: string; // a value found using selection syntax
   value?: boolean | string | number | object; // a given value to insert
   position?: number; // the location where the value will be inserted
@@ -26,6 +27,7 @@ export class InsertOperator implements Operator {
   }
 
   static specification = {
+    defaultValue: { required: false, type: ['boolean,string,number,object'] },
     index: { required: false, type: ['number'] },
     select: { required: false, type: ['string'] },
     value: { required: false, type: ['boolean,string,number,object'] },
@@ -33,13 +35,22 @@ export class InsertOperator implements Operator {
   };
 
   handleData(data: any[]): any[] | null {
-    const { select: selection, value } = this.options;
+    const { defaultValue, select: selection, value } = this.options;
 
     if (selection && value !== undefined) {
-      throw new Error('function operator has both \'select\' and \'value\' options set');
+      throw new Error('insert operator has both \'select\' and \'value\' options set');
     }
 
-    const insertedValue = value || select(selection!, data[this.index]);
+    let insertedValue = value || select(selection!, data[this.index]);
+
+    if (insertedValue === undefined && defaultValue !== undefined) {
+      insertedValue = defaultValue;
+    }
+
+    // if it's still undefined, don't proceed with the operator chain
+    if (insertedValue === undefined) {
+      throw new Error('insert operator failed to find a value to insert');
+    }
 
     const clone = data.slice();
     clone.splice(this.position >= 0 ? this.position : clone.length - this.position, 0, insertedValue);

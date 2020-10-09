@@ -15,6 +15,7 @@ Options with an asterisk are required.
 
 | Option | Type | Default | Description |
 | ------ | ---- | ------- | ----------- |
+| `defaultValue`  | `any` | `undefined` | The value used if `select` fails to find a value. |
 | `index`  | `number` | `0` | Index of the object from the operator input list to apply `select` on. |
 | `position` | `number` | `0` | Where to insert in the output list, negative position will insert from the end. |
 | `select`* | `string` |  `undefined` | Value inserted, which is found using selector syntax. |
