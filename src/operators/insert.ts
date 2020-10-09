@@ -43,7 +43,7 @@ export class InsertOperator implements Operator {
 
     let insertedValue = value || select(selection!, data[this.index]);
 
-    if (insertedValue === undefined && defaultValue) {
+    if (insertedValue === undefined && defaultValue !== undefined) {
       insertedValue = defaultValue;
     }
 
