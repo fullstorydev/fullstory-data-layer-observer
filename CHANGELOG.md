@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.3.0
+
+- Added `defaultValue` option for insert operator
+
 ### 1.2.1
 
 - Addressed bug in convert operator where an undefined property is created and set to a value of `0`, `0.0`, or `false` depending on the conversion type
