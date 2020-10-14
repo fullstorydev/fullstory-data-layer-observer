@@ -402,16 +402,42 @@ class PathElement {
 }
 
 export class Path {
-  tokens: string[];
+  tokens: string[] = [];
 
   elements: PathElement[] = [];
 
   constructor(public path: string) {
     this.path = path.trim();
-    this.tokens = this.path.split('.');
-    this.tokens.forEach((token) => {
-      this.elements.push(new PathElement(token)); // Will throw an exception if it can't parse
-    });
+
+    let inBrackets = false;
+    let token = '';
+
+    // parse the path looking for dot notation but not within brackets
+    // "digitalData.page[?(some.prop)].components" -> [digitalData,page[?(some.prop)],components]
+    for (let i = 0; i < this.path.length; i += 1) {
+      // check if the . denotes a child object and if so push a token
+      if (this.path[i] === '.' && !inBrackets) {
+        this.tokens.push(token);
+        this.elements.push(new PathElement(token));
+        token = '';
+      } else {
+        // build the token char by char
+        token += this.path[i];
+
+        // within brackets, dot notation is acceptable
+        if (this.path[i] === '[') {
+          inBrackets = true;
+        }
+
+        if (this.path[i] === ']') {
+          inBrackets = false;
+        }
+      }
+    }
+
+    // add the remaining token (e.g. page[?(some.prop)] or dataLayer)
+    this.tokens.push(token);
+    this.elements.push(new PathElement(token));
   }
 
   select(target: object): any | undefined {

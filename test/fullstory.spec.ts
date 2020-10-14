@@ -262,6 +262,21 @@ describe('Google Tags to FullStory rules', () => {
 
     ExpectObserver.getInstance().cleanup(observer);
   });
+
+  it('should read any event but remove ecommerce and event ID', () => {
+    const observer = ExpectObserver.getInstance().create({
+      rules: [
+        getRule('fs-ga-event'),
+      ],
+    });
+    expect(observer).to.not.be.undefined;
+    const [id, payload] = expectParams(globalMock.FS, 'event');
+    expect(id).to.not.be.empty;
+    expect(payload.ecommerce).to.be.undefined;
+    expect(payload['gtm.uniqueEventId']).to.be.undefined;
+
+    ExpectObserver.getInstance().cleanup(observer);
+  });
 });
 
 describe('CEDDL to FullStory rules', () => {
