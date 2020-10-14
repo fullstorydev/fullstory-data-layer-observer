@@ -232,6 +232,18 @@
       "destination": "FS.setUserVars",
       "readOnLoad": true,
       "monitor": true
+    },
+    {
+      "id": "fs-ga-event",
+      "source": "dataLayer",
+      "operators": [
+        { "name": "query", "select": "$[?(event)]" },
+        { "name": "query", "select": "$[!(ecommerce,gtm.uniqueEventId)]" },
+        { "name": "insert","select": "event" }
+      ],
+      "destination": "FS.event",
+      "readOnLoad": true,
+      "monitor": true
     }
   ]
 }

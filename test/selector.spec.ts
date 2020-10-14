@@ -15,6 +15,7 @@ const testData = {
       'rom com': "Isn't it romantic",
     },
     bool: false,
+    'dot.prop': '1.0',
   },
   cities: ['Seattle', 'Atlanta', 'San Francisco', 'New York City'],
 };
@@ -53,12 +54,14 @@ describe('test selection paths', () => {
     expect(() => { new Path('films[(action)]'); }).to.not.throw();
     expect(() => { new Path('films[(action,adventure)]'); }).to.not.throw();
     expect(() => { new Path('films[(action, adventure)]'); }).to.not.throw();
+    expect(() => { new Path('films[(action)].credits'); }).to.not.throw();
     expect(() => { new Path('films[()]'); }).to.throw(Error);
 
     // Omit
     expect(() => { new Path('films[!(action)]'); }).to.not.throw();
     expect(() => { new Path('films[!(action,adventure)]'); }).to.not.throw();
     expect(() => { new Path('films[!(action, adventure)]'); }).to.not.throw();
+    expect(() => { new Path('films[!(dot.prop)]'); }).to.not.throw();
     expect(() => { new Path('films[!()]'); }).to.throw(Error);
     expect(() => { new Path('films[!]'); }).to.throw(Error);
 
@@ -66,6 +69,7 @@ describe('test selection paths', () => {
     expect(() => { new Path('films[^(act)]'); }).to.not.throw();
     expect(() => { new Path('films[^(act,adventure)]'); }).to.not.throw();
     expect(() => { new Path('films[^(act, adventure)]'); }).to.not.throw();
+    expect(() => { new Path('films[^(dot.)]'); }).to.not.throw();
     expect(() => { new Path('films[^()]'); }).to.throw(Error);
     expect(() => { new Path('films[^]'); }).to.throw(Error);
 
@@ -82,6 +86,7 @@ describe('test selection paths', () => {
     expect(() => { new Path('films[?(act, adventure)]'); }).to.not.throw();
     expect(() => { new Path('films[?(action=Armageddon, adventure)]'); }).to.not.throw();
     expect(() => { new Path('films[?(action, adventure=Atomic Blonde)]'); }).to.not.throw();
+    expect(() => { new Path('films[?(dot.prop=1.0)]'); }).to.not.throw();
     expect(() => { new Path('films[?()]'); }).to.throw(Error);
     expect(() => { new Path('films[?]'); }).to.throw(Error);
 
@@ -123,7 +128,7 @@ describe('test selection paths', () => {
 
   it('pick notation should return a new object', () => {
     expect(select('favorites.films[(action,adventure,rom com)]', testData)).to.not.eq(testData.favorites.films);
-    expect(select('favorites.films[(action,adventure,rom com)]', testData)).to.eql(testData.favorites.films);
+    expect(select('favorites.films[(action,adventure,rom com,dot\\.prop)]', testData)).to.eql(testData.favorites.films);
   });
 
   it('should respect omit notation', () => {
@@ -133,6 +138,10 @@ describe('test selection paths', () => {
     expect(select('favorites[!(color, number)]', testData).color).to.be.undefined;
     expect(select('favorites[!(color, number)]', testData).number).to.be.undefined;
     expect(select('favorites[!(color, number)]', testData).pickle).to.eq('dill');
+  });
+
+  it('omit should work on special props', () => {
+    expect(select('favorites[!(dot.prop)]', testData)['dot.prop']).to.be.undefined;
   });
 
   it('omit notation should return a new object', () => {
@@ -182,6 +191,10 @@ describe('test selection paths', () => {
     expect(select('favorites[?(color)]', testData)).to.eq(testData.favorites);
     expect(select('favorites[?(bogus)]', testData)).to.be.undefined;
     expect(select('favorites[?(color=red)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(color=red)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(dot.prop)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(dot.prop=1.0)]', testData)).to.eq(testData.favorites);
+    expect(select('favorites[?(dot.prop=2.0)]', testData)).to.be.undefined;
     expect(select('favorites[?(bogus=totally)]', testData)).to.be.undefined;
     expect(select('favorites[?(color, number)]', testData)).to.eq(testData.favorites);
     expect(select('favorites[?(bogus, number)]', testData)).to.be.undefined;
