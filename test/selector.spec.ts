@@ -52,14 +52,14 @@ describe('test selection paths', () => {
 
     // Pick
     expect(() => { new Path('films[(action)]'); }).to.not.throw();
-    expect(() => { new Path('films[(action,adventure)]'); }).to.not.throw();
+    expect(() => { new Path('films[(action,adventure,dot.prop)]'); }).to.not.throw();
     expect(() => { new Path('films[(action, adventure)]'); }).to.not.throw();
     expect(() => { new Path('films[(action)].credits'); }).to.not.throw();
     expect(() => { new Path('films[()]'); }).to.throw(Error);
 
     // Omit
     expect(() => { new Path('films[!(action)]'); }).to.not.throw();
-    expect(() => { new Path('films[!(action,adventure)]'); }).to.not.throw();
+    expect(() => { new Path('films[!(action,adventure,dot.prop)]'); }).to.not.throw();
     expect(() => { new Path('films[!(action, adventure)]'); }).to.not.throw();
     expect(() => { new Path('films[!(dot.prop)]'); }).to.not.throw();
     expect(() => { new Path('films[!()]'); }).to.throw(Error);
@@ -67,7 +67,7 @@ describe('test selection paths', () => {
 
     // Prefix
     expect(() => { new Path('films[^(act)]'); }).to.not.throw();
-    expect(() => { new Path('films[^(act,adventure)]'); }).to.not.throw();
+    expect(() => { new Path('films[^(act,adventure,dot.)]'); }).to.not.throw();
     expect(() => { new Path('films[^(act, adventure)]'); }).to.not.throw();
     expect(() => { new Path('films[^(dot.)]'); }).to.not.throw();
     expect(() => { new Path('films[^()]'); }).to.throw(Error);
@@ -75,14 +75,14 @@ describe('test selection paths', () => {
 
     // Suffix
     expect(() => { new Path('films[$(act)]'); }).to.not.throw();
-    expect(() => { new Path('films[$(act,adventure)]'); }).to.not.throw();
+    expect(() => { new Path('films[$(act,adventure,.prop)]'); }).to.not.throw();
     expect(() => { new Path('films[$(act, adventure)]'); }).to.not.throw();
     expect(() => { new Path('films[$()]'); }).to.throw(Error);
     expect(() => { new Path('films[$]'); }).to.throw(Error);
 
     // Filter
     expect(() => { new Path('films[?(act)]'); }).to.not.throw();
-    expect(() => { new Path('films[?(act,adventure)]'); }).to.not.throw();
+    expect(() => { new Path('films[?(act,adventure,dot.prop)]'); }).to.not.throw();
     expect(() => { new Path('films[?(act, adventure)]'); }).to.not.throw();
     expect(() => { new Path('films[?(action=Armageddon, adventure)]'); }).to.not.throw();
     expect(() => { new Path('films[?(action, adventure=Atomic Blonde)]'); }).to.not.throw();
@@ -116,8 +116,10 @@ describe('test selection paths', () => {
   it('should respect pick notation', () => {
     expect(select('favorites[(color)]', testData).color).to.eq('red');
     expect(select('favorites[(color)]', testData).number).to.be.undefined;
+    expect(select('favorites[(dot.prop)]', testData)['dot.prop']).to.eq('1.0');
     expect(select('favorites[(color,number)]', testData).color).to.eq('red');
     expect(select('favorites[(color,number)]', testData).number).to.eq(25);
+    expect(select('favorites[(color,dot.prop)]', testData)['dot.prop']).to.eq('1.0');
     expect(select('favorites[(color,number)]', testData).pickle).to.be.undefined;
     expect(select('favorites[(color, number)]', testData).color).to.eq('red');
     expect(select('favorites[(color, number)]', testData).number).to.eq(25);
@@ -128,20 +130,17 @@ describe('test selection paths', () => {
 
   it('pick notation should return a new object', () => {
     expect(select('favorites.films[(action,adventure,rom com)]', testData)).to.not.eq(testData.favorites.films);
-    expect(select('favorites.films[(action,adventure,rom com,dot\\.prop)]', testData)).to.eql(testData.favorites.films);
+    expect(select('favorites.films[(action,adventure,rom com)]', testData)).to.eql(testData.favorites.films);
   });
 
   it('should respect omit notation', () => {
     expect(select('favorites[!(color)]', testData).color).to.be.undefined;
     expect(select('favorites[!(color)]', testData).number).to.eq(25);
     expect(select('favorites[!(color)]', testData).pickle).to.eq('dill');
+    expect(select('favorites[!(dot.prop)]', testData)['dot.prop']).to.be.undefined;
     expect(select('favorites[!(color, number)]', testData).color).to.be.undefined;
     expect(select('favorites[!(color, number)]', testData).number).to.be.undefined;
     expect(select('favorites[!(color, number)]', testData).pickle).to.eq('dill');
-  });
-
-  it('omit should work on special props', () => {
-    expect(select('favorites[!(dot.prop)]', testData)['dot.prop']).to.be.undefined;
   });
 
   it('omit notation should return a new object', () => {
@@ -154,6 +153,7 @@ describe('test selection paths', () => {
   it('should respect prefix notation', () => {
     expect(select('favorites[^(color)]', testData).color).to.eq('red');
     expect(select('favorites[^(co)]', testData).color).to.eq('red');
+    expect(select('favorites[^(dot.)]', testData)['dot.prop']).to.eq('1.0');
     expect(select('favorites[^(colr)]', testData)).to.be.undefined;
     expect(select('favorites[^(bogus)]', testData)).to.be.undefined;
     expect(select('favorites[^(bogus, col)]', testData).color).to.eq('red');
@@ -171,6 +171,7 @@ describe('test selection paths', () => {
 
   it('should respect suffix notation', () => {
     expect(select('favorites[$(color)]', testData).color).to.eq('red');
+    expect(select('favorites[$(.prop)]', testData)['dot.prop']).to.eq('1.0');
     expect(select('favorites[$(olor)]', testData).color).to.eq('red');
     expect(select('favorites[$(clor)]', testData)).to.be.undefined;
     expect(select('favorites[$(bogus)]', testData)).to.be.undefined;
