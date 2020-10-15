@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.3.2
+
+- Fix bug related to usage of `globalThis` in older browsers
+
 ### 1.3.1
 
 - Fix bug in query selector syntax that prevented parsing rules with `.` in the property or value
