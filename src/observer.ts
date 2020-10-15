@@ -277,7 +277,7 @@ export class DataLayerObserver {
    * @param rule to parse and process
    * @throws error if the rule has missing data or an error occurs during processing
    */
-  registerRule(rule: DataLayerRule) {
+  registerRule(rule: DataLayerRule, attempt = 0, wait = 300) {
     const { readOnLoad: globalReadOnLoad } = this.config;
 
     const {
@@ -307,8 +307,20 @@ export class DataLayerObserver {
     try {
       const target = DataLayerTarget.find(source);
       this.registerTarget(target, operators, destination, readOnLoad, monitor, debug);
-    } catch (err) {
-      Logger.getInstance().error('Failed register rule');
+    } catch (_) {
+      // schedule subsequent attempts at (attempt * wait) later
+      setTimeout(() => {
+        try {
+          const target = DataLayerTarget.find(source);
+          this.registerTarget(target, operators, destination, readOnLoad, monitor, debug);
+        } catch (err) {
+          if (attempt > 3) {
+            Logger.getInstance().error('Rule failed to register', { rule: id, source, reason: err.message });
+          } else {
+            this.registerRule(rule, attempt + 1);
+          }
+        }
+      }, attempt * wait);
     }
   }
 

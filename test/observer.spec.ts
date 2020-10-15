@@ -64,6 +64,11 @@ class UppercaseOperator implements Operator {
   }
 }
 
+class MockAppender extends MockClass {
+  /* eslint-disable class-methods-use-this, @typescript-eslint/no-unused-vars */
+  log(event: LogEvent) { }
+}
+
 const originalConsole = console;
 
 interface GlobalMock {
@@ -339,20 +344,14 @@ describe('DataLayerObserver unit tests', () => {
   it('it should register a custom log appender', () => {
     expectNoCalls(globalMock.FS, 'event');
 
-    class MockAppender extends MockClass {
-      /* eslint-disable class-methods-use-this, @typescript-eslint/no-unused-vars */
-      log(event: LogEvent) { }
-    }
-
     const appender = new MockAppender();
 
     const observer = ExpectObserver.getInstance().create({
       appender,
       readOnLoad: true,
       rules: [
-        {
-          source: 'digitalData.nonExistent', operators: [], destination: 'console.log', monitor: false,
-        },
+        // @ts-ignore NOTE The missing destination throws an exception before registerRule's setTimeout
+        { source: 'digitalData.page', operators: [], monitor: false },
       ],
     }, false);
 
@@ -544,5 +543,71 @@ describe('DataLayerObserver unit tests', () => {
     }, DataHandler.debounceTime * 1.5);
 
     ExpectObserver.getInstance().cleanup(observer);
+  });
+
+  it('it should reschedule registration for failed rules', (done) => {
+    expectNoCalls(globalMock.console, 'log');
+
+    const appender = new MockAppender();
+
+    const observer = ExpectObserver.getInstance().create({
+      appender,
+      rules: [
+        {
+          source: 'digitalData.missing',
+          operators: [],
+          destination: 'console.log',
+          readOnLoad: true,
+        },
+      ],
+    });
+
+    expectNoCalls(globalMock.console, 'log');
+
+    // the registration will reschedule itself for 300 ms
+
+    (globalMock.digitalData as any).missing = { found: true };
+
+    setTimeout(() => {
+      expectNoCalls(appender, 'log');
+
+      const [found] = expectParams(globalMock.console, 'log');
+      expect(found).to.not.be.undefined;
+
+      ExpectObserver.getInstance().cleanup(observer);
+
+      done();
+    }, 400);
+  });
+
+  it('it should fail registration after 1.8 seconds by default', (done) => {
+    expectNoCalls(globalMock.console, 'log');
+
+    const appender = new MockAppender();
+
+    const observer = ExpectObserver.getInstance().create({
+      appender,
+      rules: [
+        {
+          source: 'digitalData.missing',
+          operators: [],
+          destination: 'console.log',
+          readOnLoad: true,
+        },
+      ],
+    });
+
+    expectNoCalls(globalMock.console, 'log');
+
+    // the registration will reschedule itself but quit after 1.8 seconds by default
+
+    setTimeout(() => {
+      const [message] = expectParams(appender, 'log');
+      expect(message).to.not.be.undefined;
+
+      ExpectObserver.getInstance().cleanup(observer);
+
+      done();
+    }, 1850);
   });
 });
