@@ -60,13 +60,14 @@ export class FullStoryAppender implements LogAppender {
 }
 
 /**
- * LogContext provides context for debugging and understand log error messages.
+ * LogContext provides context for debugging and understanding log error messages.
  */
 export interface LogContext {
   rule?: string;
   source?: string;
   path?: string;
   selector?: string;
+  reason?: string;
 }
 
 /**
