@@ -1,4 +1,5 @@
 import { parsePath, ElementKind, select } from './selector';
+import { getGlobal } from './utils/object';
 
 /**
  * To observe a data layer, additional metadata about the data layer must be known. DataLayerTarget retain metadata
@@ -122,7 +123,7 @@ export default class DataLayerTarget {
 
     // if the path is something like `s` the subject is unknown due to an empty subjectPath
     // so use the globalThis as the subject
-    const subject = !subjectPath ? globalThis : select(subjectPath);
+    const subject = !subjectPath ? getGlobal() : select(subjectPath);
 
     return new DataLayerTarget(subject, property, targetPath, selector);
   }

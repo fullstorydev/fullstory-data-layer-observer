@@ -1,5 +1,6 @@
 import { Operator, OperatorOptions, OperatorValidator } from '../operator';
 import { select } from '../selector';
+import { getGlobal } from '../utils/object';
 
 export interface FunctionOperatorOptions extends OperatorOptions {
   func: string | Function;
@@ -22,7 +23,7 @@ export class FunctionOperator implements Operator {
   handleData(data: any[]): any[] | null {
     const { func, thisArg } = this.options as FunctionOperatorOptions;
 
-    let actualThisArg: object = globalThis;
+    let actualThisArg: object = getGlobal();
 
     if (thisArg) {
       switch (typeof thisArg) {

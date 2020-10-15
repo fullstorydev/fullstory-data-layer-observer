@@ -1,6 +1,8 @@
 /* eslint-disable max-classes-per-file */
 /* eslint prefer-destructuring: ["error", {AssignmentExpression: {array: false}}] */
 
+import { getGlobal } from './utils/object';
+
 // Memoized Paths or false if the path cannot be parsed
 const parsedPaths: { [path: string]: Path | false } = {};
 
@@ -489,7 +491,7 @@ export function select(path: string, target?: object): any | undefined {
   if (parsedPath === false) {
     return undefined;
   }
-  return parsedPath.select(target || globalThis);
+  return parsedPath.select(target || getGlobal());
 }
 
 /**
