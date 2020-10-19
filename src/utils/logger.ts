@@ -109,7 +109,7 @@ export interface LogContext {
  * LogEvent defines a message to be sent to a sink for a given level.
  */
 export interface LogEvent {
-  context?: string | LogContext;
+  context?: LogContext;
   level: LogLevel;
   message: string;
 }
@@ -162,7 +162,7 @@ export class Logger {
    * @param message the informational message
    * @param context provides additional metadata related to the log event
    */
-  private log(level: LogLevel, message: string, context?: string | LogContext) {
+  private log(level: LogLevel, message: string, context?: LogContext) {
     if (level <= this.level) {
       this.appender.log({
         level,
@@ -172,19 +172,19 @@ export class Logger {
     }
   }
 
-  error(message: string, data?: string | LogContext) {
-    this.log(LogLevel.ERROR, message, data);
+  error(message: string, context?: LogContext) {
+    this.log(LogLevel.ERROR, message, context);
   }
 
-  warn(message: string, data?: string | LogContext) {
-    this.log(LogLevel.WARN, message, data);
+  warn(message: string, context?: LogContext) {
+    this.log(LogLevel.WARN, message, context);
   }
 
-  info(message: string, data?: string | LogContext) {
-    this.log(LogLevel.INFO, message, data);
+  info(message: string, context?: LogContext) {
+    this.log(LogLevel.INFO, message, context);
   }
 
-  debug(message: string, data?: string | LogContext) {
-    this.log(LogLevel.DEBUG, message, data);
+  debug(message: string, context?: LogContext) {
+    this.log(LogLevel.DEBUG, message, context);
   }
 }
