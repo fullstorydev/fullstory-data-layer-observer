@@ -34,12 +34,12 @@ export class FunctionOperator implements Operator {
           actualThisArg = select(thisArg);
           break;
         default:
-          throw new Error('FunctionOperator has unsupported this');
+          throw new Error('Unsupported this context used');
       }
     }
 
     if (!actualThisArg) {
-      throw new Error('FunctionOperator has no this');
+      throw new Error('No this context set');
     }
 
     let val = null;

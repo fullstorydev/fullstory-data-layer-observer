@@ -1,5 +1,5 @@
 import Monitor from './monitor';
-import { Logger } from './utils/logger';
+import { Logger, LogMessage, LogMessageType } from './utils/logger';
 
 /**
  * ShimMonitor watches for changes and function calls through a shim technique.
@@ -17,11 +17,11 @@ export default class ShimMonitor extends Monitor {
    */
   static checkShimAllowed(object: any) {
     if (Object.isFrozen(object)) {
-      throw new Error('Object is frozen');
+      throw new Error(Logger.format(LogMessage.ShimFail, 'frozen'));
     }
 
     if (Object.isSealed(object)) {
-      throw new Error('Object is sealed');
+      throw new Error(Logger.format(LogMessage.ShimFail, 'sealed'));
     }
   }
 
@@ -58,7 +58,8 @@ export default class ShimMonitor extends Monitor {
         writable: this.writable,
       });
     } catch (err) {
-      Logger.getInstance().error(`Failed to remove listener on ${this.property}`, this.path);
+      Logger.getInstance().error(LogMessageType.MonitorRemoveError,
+        { path: this.path, property: this.property, reason: err.message });
     }
   }
 
@@ -70,7 +71,8 @@ export default class ShimMonitor extends Monitor {
         this.emit(args);
         return this.state.apply(this.object, args);
       } catch (err) {
-        Logger.getInstance().error(`Function ${this.property} exception`);
+        Logger.getInstance().error(LogMessageType.MonitorCallError,
+          { path: this.property, property: this.property, reason: err.message });
         return null;
       }
     };

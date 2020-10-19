@@ -14,6 +14,39 @@ export enum LogLevel {
   DEBUG
 }
 
+export enum LogMessageType {
+  EventEmpty = 'Empty Event',
+  EventUnexpected = 'Unexpected Event',
+  MonitorCallError = 'Monitor Call Error',
+  MonitorCreateError = 'Monitor Creation Error',
+  MonitorDuplicateProp = 'Monitor Duplicate Property',
+  MonitorEmitError = 'Monitor Emit Error',
+  MonitorRemoveError = 'Monitor Removal Error',
+  OperatorError = 'Operator Error',
+  ObserverMultipleLoad = 'Duplicate Observer',
+  ObserverReadError = 'Read Error',
+  ObserverRulesNone = 'No Rules Defined',
+  RuleInvalid = 'Invalid Rule',
+  RuleRegistrationError = 'Rule Registration Error',
+}
+
+export enum LogMessage {
+  DataLayerMissing = 'Data layer not found',
+  DuplicateValue = 'Value $0 already used',
+  ShimFail = 'Shim not allowed because object is $0',
+  SelectorInvalidIndex = 'Selector index $0 is not a number in $1',
+  SelectorIncorrectTokenCount = 'Selector has incorrect number ($0) of tokens in $1',
+  SelectorMalformed = 'Selector $0 is malformed',
+  SelectorMissingToken = 'Selector is missing $0 in $1',
+  SelectorNoProps = 'Selector is missing properties',
+  SelectorSyntaxUnsupported = 'Selector syntax $0 is unsupported',
+  TargetSubjectObject = 'Target subject must be an object',
+  TargetPropertyMissing = 'Target property is missing',
+  TargetPathMissing = 'Target path is missing',
+  UnknownValue = 'Unknown value $0',
+  UnsupportedType = 'Unsupported type $0',
+}
+
 /**
  * ConsoleAppender serializes LogEvents to the browser's console.
  */
@@ -65,7 +98,9 @@ export class FullStoryAppender implements LogAppender {
 export interface LogContext {
   rule?: string;
   source?: string;
+  operator?: string;
   path?: string;
+  property?: string;
   selector?: string;
   reason?: string;
 }
@@ -100,6 +135,16 @@ export class Logger {
       default:
         this.appender = new ConsoleAppender();
     }
+  }
+
+  static format(message: string, ...substitutions: string[]) {
+    let formatted = message;
+
+    for (let i = 0; i < substitutions.length; i += 1) {
+      formatted = formatted.replace(`$${i}`, substitutions[i]);
+    }
+
+    return formatted.trim();
   }
 
   static getInstance(appender?: string): Logger {

@@ -1,4 +1,4 @@
-import { Logger } from './utils/logger';
+import { Logger, LogMessageType } from './utils/logger';
 import { Operator } from './operator';
 import { DataLayerDetail, createEventType } from './event';
 import DataLayerTarget from './target';
@@ -53,7 +53,7 @@ export default class DataHandler {
     const { path } = this.target;
 
     if (value === undefined && args === undefined) {
-      Logger.getInstance().warn(`${path} emitted no data`, path);
+      Logger.getInstance().warn(LogMessageType.EventEmpty, { path });
     } else if (type === createEventType(path)) {
       if (value) {
         // debounce events so multiple, related property assignments don't create multiple events
@@ -75,7 +75,7 @@ export default class DataHandler {
         this.handleData(args || []);
       }
     } else {
-      Logger.getInstance().warn(`EventListener received unexpected event ${type}`, path);
+      Logger.getInstance().warn(LogMessageType.EventUnexpected, { path });
     }
   }
 
@@ -129,8 +129,7 @@ export default class DataHandler {
 
         this.runDebugger(`[${i}] ${name} output ${stats}`, handledData, '  ');
       } catch (err) {
-        Logger.getInstance().error(`Operator ${name} failed for ${path} at step ${i}`,
-          path);
+        Logger.getInstance().error(LogMessageType.OperatorError, { operator: name, path, reason: err.message });
         return null;
       }
     }

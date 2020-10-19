@@ -1,5 +1,5 @@
 import { Operator, OperatorOptions, OperatorValidator } from '../operator';
-import { Logger } from '../utils/logger';
+import { Logger, LogMessageType } from '../utils/logger';
 
 type ConvertibleType = 'bool' | 'date' | 'int' | 'real' | 'string';
 
@@ -140,7 +140,11 @@ export class ConvertOperator implements Operator {
 
     // log error and reset to the original value
     if (!verified) {
-      Logger.getInstance().error(`Unable to convert ${property} to ${type} for value ${oldValue}`);
+      Logger.getInstance().error(LogMessageType.OperatorError, {
+        operator: 'convert',
+        property: property.toString(),
+        reason: `Failed to convert to ${type} for value ${oldValue}`,
+      });
       converted[property] = oldValue; // eslint-disable-line no-param-reassign
     }
   }

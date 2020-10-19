@@ -110,4 +110,11 @@ describe('logger unit tests', () => {
     expect(event.message).to.eq('Data layer not found');
     expect(event.context.source).to.eq(mockDatalayer);
   });
+
+  it('it should format using substitution', () => {
+    expect(Logger.format('Hello $0', 'World')).to.eql('Hello World');
+    expect(Logger.format('$0 $1', 'Hello', 'World')).to.eql('Hello World');
+    expect(Logger.format('$0 $1', 'Hello', 'World', '!')).to.eql('Hello World');
+    expect(Logger.format('$0 $1 $0', 'Hello', 'World')).to.eql('Hello World $0'); // NOTE re-use is unsupported
+  });
 });

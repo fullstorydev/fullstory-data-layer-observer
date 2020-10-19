@@ -1,4 +1,5 @@
 import { parsePath, ElementKind, select } from './selector';
+import { Logger, LogMessage } from './utils/logger';
 import { getGlobal } from './utils/object';
 
 /**
@@ -46,15 +47,15 @@ export default class DataLayerTarget {
   constructor(public subject: Object, public property: string, public path: string,
     public selector = '') {
     if (typeof subject !== 'object') {
-      throw new Error('Data layer subject must be an object');
+      throw new Error(LogMessage.TargetSubjectObject);
     }
 
     if (!property) {
-      throw new Error('Data layer target property is missing');
+      throw new Error(LogMessage.TargetPropertyMissing);
     }
 
     if (!path) {
-      throw new Error('Data layer subject must also have a path to broadcast changes or function calls');
+      throw new Error(LogMessage.TargetPathMissing);
     }
 
     // NOTE select using the path because a filter could not yet be valid
@@ -67,7 +68,7 @@ export default class DataLayerTarget {
         this.type = type;
         break;
       default:
-        throw new Error('Data layer not found');
+        throw new Error(LogMessage.DataLayerMissing);
     }
   }
 
@@ -86,7 +87,7 @@ export default class DataLayerTarget {
     const parsedPath = parsePath(selector);
 
     if (!parsedPath) {
-      throw new Error('Failed to parse selector');
+      throw new Error(Logger.format(LogMessage.SelectorMalformed, selector));
     }
 
     let subjectPath: string = '';
