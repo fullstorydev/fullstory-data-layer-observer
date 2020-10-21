@@ -2,6 +2,7 @@
 /* eslint prefer-destructuring: ["error", {AssignmentExpression: {array: false}}] */
 
 import { getGlobal } from './utils/object';
+import { Logger, LogMessage } from './utils/logger';
 
 // Memoized Paths or false if the path cannot be parsed
 const parsedPaths: { [path: string]: Path | false } = {};
@@ -75,8 +76,14 @@ class OpProp {
 
     if (operator.length !== 0) {
       const tokens = this.raw.split(operator);
-      if (tokens.length > 2) throw new Error(`Invalid OpProp: ${raw}`);
-      if (tokens.length !== 2) throw new Error(`Invalid OpProp: ${raw}`);
+      if (tokens.length > 2) {
+        throw new Error(Logger.format(LogMessage.SelectorIncorrectTokenCount,
+          tokens.length.toString(), raw));
+      }
+      if (tokens.length !== 2) {
+        throw new Error(Logger.format(LogMessage.SelectorIncorrectTokenCount,
+          tokens.length.toString(), raw));
+      }
       this.name = tokens[0];
       this.value = tokens[1];
       // NOTE use loose equality because opValue is always a string (= can be shorthand for ==)
@@ -107,37 +114,55 @@ class Op {
     this.raw = raw.trim();
     switch (this.raw[0]) {
       case '(':
-        if (this.raw[this.raw.length - 1] !== ')') throw new Error(`Could not parse Op: ${raw}`);
+        if (this.raw[this.raw.length - 1] !== ')') {
+          throw new Error(Logger.format(LogMessage.SelectorMissingToken, ')',
+            raw));
+        }
         this.kind = OpKind.Pick;
         this.parseProps(this.raw.substring(1, this.raw.length - 1));
         break;
       case '!':
-        if (this.raw[1] !== '(') throw new Error(`Could not parse Op: ${raw}`);
-        if (this.raw[this.raw.length - 1] !== ')') throw new Error(`Could not parse Op: ${raw}`);
+        if (this.raw[1] !== '(') throw new Error(Logger.format(LogMessage.SelectorMissingToken, '(', raw));
+        if (this.raw[this.raw.length - 1] !== ')') {
+          throw new Error(Logger.format(LogMessage.SelectorMissingToken, ')',
+            raw));
+        }
         this.kind = OpKind.Omit;
         this.parseProps(this.raw.substring(2, this.raw.length - 1));
         break;
       case '^':
-        if (this.raw[1] !== '(') throw new Error(`Could not parse Op: ${raw}`);
-        if (this.raw[this.raw.length - 1] !== ')') throw new Error(`Could not parse Op: ${raw}`);
+        if (this.raw[1] !== '(') throw new Error(Logger.format(LogMessage.SelectorMissingToken, '(', raw));
+        if (this.raw[this.raw.length - 1] !== ')') {
+          throw new Error(Logger.format(LogMessage.SelectorMissingToken, ')',
+            raw));
+        }
         this.kind = OpKind.Prefix;
         this.parseProps(this.raw.substring(2, this.raw.length - 1));
         break;
       case '$':
-        if (this.raw[1] !== '(') throw new Error(`Could not parse Op: ${raw}`);
-        if (this.raw[this.raw.length - 1] !== ')') throw new Error(`Could not parse Op: ${raw}`);
+        if (this.raw[1] !== '(') throw new Error(Logger.format(LogMessage.SelectorMissingToken, '(', raw));
+        if (this.raw[this.raw.length - 1] !== ')') {
+          throw new Error(Logger.format(LogMessage.SelectorMissingToken, ')',
+            raw));
+        }
         this.kind = OpKind.Suffix;
         this.parseProps(this.raw.substring(2, this.raw.length - 1));
         break;
       case '?':
-        if (this.raw[1] !== '(') throw new Error(`Could not parse Op: ${raw}`);
-        if (this.raw[this.raw.length - 1] !== ')') throw new Error(`Could not parse Op: ${raw}`);
+        if (this.raw[1] !== '(') throw new Error(Logger.format(LogMessage.SelectorMissingToken, '(', raw));
+        if (this.raw[this.raw.length - 1] !== ')') {
+          throw new Error(Logger.format(LogMessage.SelectorMissingToken, ')',
+            raw));
+        }
         this.kind = OpKind.Filter;
         this.parseProps(this.raw.substring(2, this.raw.length - 1));
         break;
       default:
         this.index = Number.parseInt(this.raw, 10);
-        if (Number.isNaN(this.index)) throw new Error(`Could not parse the Op: ${raw}`);
+        if (Number.isNaN(this.index)) {
+          throw new Error(Logger.format(LogMessage.SelectorInvalidIndex,
+            this.index.toString(), raw));
+        }
         this.kind = OpKind.Index;
     }
     this.propNames = this.props.map((op) => op.name);
@@ -145,7 +170,7 @@ class Op {
 
   parseProps(rawProps: string) {
     const raw = rawProps.trim();
-    if (raw.length === 0) throw new Error(`Could not parse operation properties: ${raw}`);
+    if (raw.length === 0) throw new Error(LogMessage.SelectorNoProps);
     const tokens = raw.split(',');
     tokens.forEach((token) => {
       this.props.push(new OpProp(token));
@@ -163,10 +188,13 @@ class Brackets {
 
   constructor(public raw: string) {
     this.raw = this.raw.trim();
-    if (this.raw.includes('[') === false) throw new Error(`Could not parse brackets: ${this.raw}`);
-    if (this.raw.endsWith(']') === false) throw new Error(`Could not parse brackets: ${this.raw}`);
+    if (this.raw.includes('[') === false) throw new Error(Logger.format(LogMessage.SelectorMissingToken, '[', raw));
+    if (this.raw.endsWith(']') === false) throw new Error(Logger.format(LogMessage.SelectorMissingToken, ']', raw));
     const tokens = this.raw.split('[');
-    if (tokens.length !== 2) throw new Error(`Could not parse brackets: ${this.raw}`);
+    if (tokens.length !== 2) {
+      throw new Error(Logger.format(LogMessage.SelectorIncorrectTokenCount,
+        tokens.length.toString(), raw));
+    }
     this.prop = tokens[0];
     this.op = new Op(tokens[1].substring(0, tokens[1].length - 1));
   }
@@ -202,7 +230,7 @@ class PathElement {
       case ElementKind.Filter:
         return this.selectFilter(target);
       default:
-        throw new Error(`Unknown PathElement.kind: ${this.kind}`);
+        throw new Error(Logger.format(LogMessage.SelectorSyntaxUnsupported, this.kind));
     }
   }
 
@@ -220,7 +248,7 @@ class PathElement {
         this.brackets = new Brackets(this.raw);
         break;
       default:
-        throw new Error(`Invalid PathElement kind: ${this.kind}`);
+        throw new Error(Logger.format(LogMessage.SelectorSyntaxUnsupported, this.kind));
     }
   }
 
@@ -230,7 +258,7 @@ class PathElement {
 
   selectIndex(target: any): any | undefined {
     if (!this.brackets || this.brackets.op.kind !== OpKind.Index) {
-      throw new Error(`Invalid brackets state!${this}`);
+      throw new Error(Logger.format(LogMessage.SelectorMissingToken, '[i]', this.raw));
     }
 
     const prop = target[this.brackets.prop];
@@ -253,7 +281,7 @@ class PathElement {
 
   selectPick(target: any): any | undefined {
     if (!this.brackets || this.brackets.op.kind !== OpKind.Pick) {
-      throw new Error(`Invalid brackets state!${this}`);
+      throw new Error(Logger.format(LogMessage.SelectorMissingToken, '[()]', this.raw));
     }
 
     const prop: any = target[this.brackets.prop];
@@ -273,7 +301,7 @@ class PathElement {
 
   selectOmit(target: any): any | undefined {
     if (!this.brackets || this.brackets.op.kind !== OpKind.Omit) {
-      throw new Error(`Invalid brackets state!${this}`);
+      throw new Error(Logger.format(LogMessage.SelectorMissingToken, '![()', this.raw));
     }
 
     const prop: any = target[this.brackets.prop];
@@ -294,7 +322,7 @@ class PathElement {
 
   selectPrefix(target: any): any | undefined {
     if (!this.brackets || this.brackets.op.kind !== OpKind.Prefix) {
-      throw new Error(`Invalid brackets state!${this}`);
+      throw new Error(Logger.format(LogMessage.SelectorMissingToken, '^[()]', this.raw));
     }
 
     const prop: any = target[this.brackets.prop];
@@ -320,7 +348,7 @@ class PathElement {
 
   selectSuffix(target: any): any | undefined {
     if (!this.brackets || this.brackets.op.kind !== OpKind.Suffix) {
-      throw new Error(`Invalid brackets state!${this}`);
+      throw new Error(Logger.format(LogMessage.SelectorMissingToken, '$[()]', this.raw));
     }
 
     const prop: any = target[this.brackets.prop];
@@ -345,7 +373,7 @@ class PathElement {
 
   selectFilter(target: any): any | undefined {
     if (!this.brackets || this.brackets.op.kind !== OpKind.Filter) {
-      throw new Error(`Invalid brackets state!${this}`);
+      throw new Error(Logger.format(LogMessage.SelectorMissingToken, '?[()]', this.raw));
     }
 
     const prop: any = target[this.brackets.prop];
@@ -360,32 +388,28 @@ class PathElement {
       /*
       Values come in as strings so we use loose matching (== not ===) to take advantage of JS's built-in fast parsing and evaluation
       */
-      try {
-        switch (typeof prop[opProp.name]) {
-          case 'boolean':
-            if (prop[opProp.name] !== (opProp.value.toLowerCase() === 'true')) return undefined;
-            break;
-          case 'string':
-            // eslint-disable-next-line eqeqeq
-            if (opProp.operator === '==' && prop[opProp.name] != opProp.value) return undefined;
-            // eslint-disable-next-line eqeqeq
-            if (opProp.operator != '==' && prop[opProp.name] == opProp.value) return undefined;
-            break;
-          case 'number':
-            // eslint-disable-next-line eqeqeq
-            if (opProp.operator === '==' && prop[opProp.name] != opProp.value) return undefined;
-            // eslint-disable-next-line eqeqeq
-            if (opProp.operator === '!=' && prop[opProp.name] == opProp.value) return undefined;
-            if (opProp.operator === '>=' && prop[opProp.name] < opProp.value) return undefined;
-            if (opProp.operator === '<=' && prop[opProp.name] > opProp.value) return undefined;
-            if (opProp.operator === '>' && prop[opProp.name] <= opProp.value) return undefined;
-            if (opProp.operator === '<' && prop[opProp.name] >= opProp.value) return undefined;
-            break;
-          default:
-            throw new Error(`Unsupported comparison ${opProp.raw}`);
-        }
-      } catch (err) {
-        throw new Error(`Failed to compare ${opProp.raw} ${err.message}`);
+      switch (typeof prop[opProp.name]) {
+        case 'boolean':
+          if (prop[opProp.name] !== (opProp.value.toLowerCase() === 'true')) return undefined;
+          break;
+        case 'string':
+          // eslint-disable-next-line eqeqeq
+          if (opProp.operator === '==' && prop[opProp.name] != opProp.value) return undefined;
+          // eslint-disable-next-line eqeqeq
+          if (opProp.operator != '==' && prop[opProp.name] == opProp.value) return undefined;
+          break;
+        case 'number':
+          // eslint-disable-next-line eqeqeq
+          if (opProp.operator === '==' && prop[opProp.name] != opProp.value) return undefined;
+          // eslint-disable-next-line eqeqeq
+          if (opProp.operator === '!=' && prop[opProp.name] == opProp.value) return undefined;
+          if (opProp.operator === '>=' && prop[opProp.name] < opProp.value) return undefined;
+          if (opProp.operator === '<=' && prop[opProp.name] > opProp.value) return undefined;
+          if (opProp.operator === '>' && prop[opProp.name] <= opProp.value) return undefined;
+          if (opProp.operator === '<' && prop[opProp.name] >= opProp.value) return undefined;
+          break;
+        default:
+          throw new Error(Logger.format(LogMessage.SelectorSyntaxUnsupported, opProp.raw));
       }
     }
 
@@ -393,13 +417,15 @@ class PathElement {
   }
 
   static sniffKind(raw: string): ElementKind {
-    if (raw.length === 0) throw new Error(`Invalid path element: ${raw}`);
+    if (raw.length === 0) {
+      throw new Error(Logger.format(LogMessage.SelectorMalformed, raw));
+    }
     const snifferKeys = Object.keys(kindSniffers);
     for (let i = 0; i < snifferKeys.length; i += 1) {
       const kind = snifferKeys[i];
       if (kindSniffers[kind](raw)) return kind as ElementKind;
     }
-    throw new Error(`Could not sniff kind of ${raw}`);
+    throw new Error(Logger.format(LogMessage.SelectorMalformed, raw));
   }
 }
 

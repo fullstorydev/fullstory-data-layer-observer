@@ -1,5 +1,5 @@
 /* eslint-disable no-underscore-dangle, camelcase */
-import { Logger } from '../utils/logger';
+import { Logger, LogMessages } from '../utils/logger';
 import { DataLayerObserver } from '../observer';
 
 /*
@@ -55,7 +55,8 @@ function _dlo_collectRules(): any[] {
 
     const prop = (window as { [key: string]: any })[propName];
     if (Array.isArray(prop) === false) {
-      Logger.getInstance().warn(`window[${propName}] is not an array of Data Layer Observer rules so will be ignored`);
+      Logger.getInstance().warn(LogMessages.RuleInvalid,
+        { property: prop, reason: 'Rules list must be an array' });
       return;
     }
 
@@ -70,14 +71,14 @@ function _dlo_initializeFromWindow() {
   const win = (window as { [key: string]: any });
 
   if (win._dlo_observer) {
-    Logger.getInstance().error('The Data Layer Observer script is loaded twice! Canceling the second load.');
+    Logger.getInstance().warn(LogMessages.ObserverMultipleLoad);
     return;
   }
 
   // Read rules
   const rules = _dlo_collectRules();
   if (rules.length === 0) {
-    Logger.getInstance().warn('No rules for the Data Layer Observer');
+    Logger.getInstance().warn(LogMessages.ObserverRulesNone);
   }
 
   win._dlo_observer = new DataLayerObserver({

@@ -38,7 +38,7 @@ export class InsertOperator implements Operator {
     const { defaultValue, select: selection, value } = this.options;
 
     if (selection && value !== undefined) {
-      throw new Error('insert operator has both \'select\' and \'value\' options set');
+      throw new Error('Both \'select\' and \'value\' options set');
     }
 
     let insertedValue = value || select(selection!, data[this.index]);
@@ -49,7 +49,7 @@ export class InsertOperator implements Operator {
 
     // if it's still undefined, don't proceed with the operator chain
     if (insertedValue === undefined) {
-      throw new Error('insert operator failed to find a value to insert');
+      throw new Error('Failed to find a value to insert');
     }
 
     const clone = data.slice();

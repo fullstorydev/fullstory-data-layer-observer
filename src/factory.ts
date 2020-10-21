@@ -9,6 +9,7 @@ import {
   FanOutOperator, FanOutOperatorOptions,
 } from './operators';
 import { Operator } from './operator';
+import { Logger, LogMessage } from './utils/logger';
 
 /**
  * Declares known, built-in Operators.
@@ -47,7 +48,7 @@ export class OperatorFactory {
    */
   static create(name: string, options: BuiltinOptions): Operator {
     if (!OperatorFactory.hasOperator(name)) {
-      throw new Error(`Operator ${name} is unknown`);
+      throw new Error(Logger.format(LogMessage.UnknownValue, name));
     }
 
     return new (this.operators[name] as any)(options);

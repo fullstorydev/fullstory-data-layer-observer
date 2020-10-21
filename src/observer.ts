@@ -2,7 +2,9 @@
 import { OperatorOptions, Operator } from './operator';
 import { BuiltinOptions, OperatorFactory } from './factory';
 import DataHandler from './handler';
-import { Logger, LogAppender } from './utils/logger';
+import {
+  Logger, LogAppender, LogMessageType, LogMessage,
+} from './utils/logger';
 import { FunctionOperator } from './operators';
 import DataLayerTarget from './target';
 import MonitorFactory from './monitor-factory';
@@ -246,14 +248,26 @@ export class DataLayerObserver {
           try {
             handler.fireEvent(targetValue[i]);
           } catch (err) {
-            Logger.getInstance().error('Failed to read-on-load data layer array');
+            Logger.getInstance().error(LogMessageType.ObserverReadError,
+              {
+                path: workingTarget.path,
+                property: workingTarget.property,
+                selector: workingTarget.selector,
+                reason: err.message,
+              });
           }
         }
       } else if (workingTarget.type === 'object') {
         try {
           handler.fireEvent();
         } catch (err) {
-          Logger.getInstance().error('Failed to read data layer');
+          Logger.getInstance().error(LogMessageType.ObserverReadError,
+            {
+              path: workingTarget.path,
+              property: workingTarget.property,
+              selector: workingTarget.selector,
+              reason: err.message,
+            });
         }
       }
     }
@@ -263,7 +277,13 @@ export class DataLayerObserver {
       try {
         this.addMonitor(workingTarget);
       } catch (err) {
-        Logger.getInstance().warn('Monitor creation failed');
+        Logger.getInstance().warn(LogMessageType.MonitorCreateError,
+          {
+            path: workingTarget.path,
+            property: workingTarget.property,
+            selector: workingTarget.selector,
+            reason: err.message,
+          });
       }
     }
 
@@ -295,7 +315,8 @@ export class DataLayerObserver {
     const readOnLoad = ruleReadOnLoad || globalReadOnLoad;
 
     if (!source || !destination) {
-      Logger.getInstance().error(`Rule ${id} is missing ${source ? 'destination' : 'source'}`, source);
+      Logger.getInstance().error(LogMessageType.RuleInvalid,
+        { rule: id, source, reason: `Missing ${source ? 'destination' : 'source'}` });
       return;
     }
 
@@ -315,7 +336,7 @@ export class DataLayerObserver {
           this.registerTarget(target, operators, destination, readOnLoad, monitor, debug);
         } catch (err) {
           if (attempt > 3) {
-            Logger.getInstance().error('Rule failed to register', { rule: id, source, reason: err.message });
+            Logger.getInstance().error(LogMessageType.RuleRegistrationError, { rule: id, source, reason: err.message });
           } else {
             this.registerRule(rule, attempt + 1);
           }
@@ -331,7 +352,7 @@ export class DataLayerObserver {
    */
   registerOperator(name: string, operator: Operator) {
     if (OperatorFactory.hasOperator(name) || this.customOperators[name]) {
-      throw new Error(`Operator ${name} already exists`);
+      throw new Error(Logger.format(LogMessage.DuplicateValue, name));
     }
 
     this.customOperators[name] = operator;

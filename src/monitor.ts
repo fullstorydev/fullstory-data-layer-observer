@@ -1,5 +1,5 @@
 import { createEvent } from './event';
-import { Logger } from './utils/logger';
+import { Logger, LogMessage, LogMessageType } from './utils/logger';
 
 /**
  * Monitor watches for property changes or function calls.
@@ -15,17 +15,17 @@ export default abstract class Monitor {
    */
   constructor(protected object: any, protected property: string, protected path: string) {
     if (!object) {
-      throw new Error('Monitor could not find target');
+      throw new Error(LogMessage.DataLayerMissing);
     } else {
       if (path.endsWith(property) && typeof object[property] !== 'function') {
         // this could be an error or just a poorly structured data layer object
-        Logger.getInstance().warn(`Monitor path appears to include property ${property}`, path);
+        Logger.getInstance().warn(LogMessageType.MonitorDuplicateProp, { path, property });
       }
 
       this.copy();
 
       if (typeof object !== 'object' && typeof object[property] !== 'function') {
-        throw new Error(`Unsupported type ${typeof object}`);
+        throw new Error(Logger.format(LogMessage.UnsupportedType, typeof object));
       }
 
       if (typeof object[property] === 'function') {
@@ -52,7 +52,8 @@ export default abstract class Monitor {
     try {
       window.dispatchEvent(createEvent(this.object, this.property, value, this.path));
     } catch (err) {
-      Logger.getInstance().error(`Failed to broadcast change for ${this.property}`, this.path);
+      Logger.getInstance().error(LogMessageType.MonitorEmitError,
+        { path: this.path, property: this.property, reason: err.message });
     }
   }
 

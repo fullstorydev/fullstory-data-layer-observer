@@ -25,23 +25,23 @@ describe('logger unit tests', () => {
   });
 
   it('a console logger with warn and error levels is configured by default', () => {
-    const mockDatalayer = 'digitalData.user';
+    const path = 'digitalData.user';
 
     const logger = Logger.getInstance();
 
-    logger.error('Data layer not found', mockDatalayer);
-    logger.warn('Data layer not ready', mockDatalayer);
+    logger.error('Data layer not found', { path });
+    logger.warn('Data layer not ready', { path });
 
     const [error] = expectParams(console, 'error');
-    expect(error).to.eq(`Data layer not found "${mockDatalayer}"`);
+    expect(error).to.eq(`Data layer not found {"path":"${path}"}`);
 
     const [warn] = expectParams(console, 'warn');
-    expect(warn).to.eq(`Data layer not ready "${mockDatalayer}"`);
+    expect(warn).to.eq(`Data layer not ready {"path":"${path}"}`);
 
-    logger.info('Data layer rules loaded', mockDatalayer);
+    logger.info('Data layer rules loaded', { path });
     expectNoCalls(console, 'info');
 
-    logger.debug('Operator output', mockDatalayer);
+    logger.debug('Operator output', { path });
     expectNoCalls(console, 'debug');
   });
 
@@ -109,5 +109,12 @@ describe('logger unit tests', () => {
     expect(event.level).to.eq(LogLevel.ERROR);
     expect(event.message).to.eq('Data layer not found');
     expect(event.context.source).to.eq(mockDatalayer);
+  });
+
+  it('it should format using substitution', () => {
+    expect(Logger.format('Hello $0', 'World')).to.eql('Hello World');
+    expect(Logger.format('$0 $1', 'Hello', 'World')).to.eql('Hello World');
+    expect(Logger.format('$0 $1', 'Hello', 'World', '!')).to.eql('Hello World');
+    expect(Logger.format('$0 $1 $0', 'Hello', 'World')).to.eql('Hello World $0'); // NOTE re-use is unsupported
   });
 });
