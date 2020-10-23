@@ -5,7 +5,7 @@ executors:
       - image: circleci/node:12-browsers
     working_directory: ~/repo
 jobs:
-  test:
+  build:
     executor: browser-executor
     steps:
       - checkout
@@ -20,6 +20,17 @@ jobs:
             - node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
       - run:
+          name: Build
+          command: npm run build
+      - persist_to_workspace:
+          root: .
+          paths: .
+  test:
+    executor: browser-executor
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - run:
           name: Audit
           command: npm audit --audit-level=low --production
       - run:
@@ -31,8 +42,10 @@ jobs:
       - persist_to_workspace:
           root: .
           paths: .
+  
 workflows:
   version: 2
   test:
     jobs:
+      - build
       - test
