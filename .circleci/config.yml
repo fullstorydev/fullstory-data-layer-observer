@@ -30,9 +30,6 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/repo
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "package.json" }}
       - run:
           name: Audit
           command: npm audit --audit-level=low --production
@@ -45,10 +42,12 @@ jobs:
       - persist_to_workspace:
           root: .
           paths: .
-  
+
 workflows:
   version: 2
-  test:
+  build-test:
     jobs:
       - build
-      - test
+      - test:
+          requires:
+            - build
