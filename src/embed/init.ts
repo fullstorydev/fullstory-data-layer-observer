@@ -1,5 +1,5 @@
 /* eslint-disable no-underscore-dangle, camelcase */
-import { Logger, LogMessages } from '../utils/logger';
+import { Logger, LogMessageType } from '../utils/logger';
 import { DataLayerObserver } from '../observer';
 
 /*
@@ -55,7 +55,7 @@ function _dlo_collectRules(): any[] {
 
     const prop = (window as { [key: string]: any })[propName];
     if (Array.isArray(prop) === false) {
-      Logger.getInstance().warn(LogMessages.RuleInvalid,
+      Logger.getInstance().warn(LogMessageType.RuleInvalid,
         { property: prop, reason: 'Rules list must be an array' });
       return;
     }
@@ -71,14 +71,14 @@ function _dlo_initializeFromWindow() {
   const win = (window as { [key: string]: any });
 
   if (win._dlo_observer) {
-    Logger.getInstance().warn(LogMessages.ObserverMultipleLoad);
+    Logger.getInstance().warn(LogMessageType.ObserverMultipleLoad);
     return;
   }
 
   // Read rules
   const rules = _dlo_collectRules();
   if (rules.length === 0) {
-    Logger.getInstance().warn(LogMessages.ObserverRulesNone);
+    Logger.getInstance().warn(LogMessageType.ObserverRulesNone);
   }
 
   win._dlo_observer = new DataLayerObserver({
