@@ -30,6 +30,9 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/repo
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package.json" }}
       - run:
           name: Audit
           command: npm audit --audit-level=low --production
