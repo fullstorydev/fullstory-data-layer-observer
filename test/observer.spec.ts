@@ -419,6 +419,37 @@ describe('DataLayerObserver unit tests', () => {
     }, DataHandler.debounceTime * 1.5);
   });
 
+  it('updating properties not included in result should not trigger the data handler', (done) => {
+    let changes: any[] = [];
+
+    const observer = ExpectObserver.getInstance().create({
+      rules: [
+        {
+          source: 'digitalData.cart[(cartID,price)]',
+          operators: [],
+          destination: (...data: any[]) => {
+            // NOTE use a local destination to prevent cross-test pollution
+            changes = data;
+          },
+          readOnLoad: false,
+          // monitor: true, // NOTE the default is true
+        },
+      ],
+    }, true);
+
+    expect(globalMock.digitalData.cart).to.not.be.undefined;
+
+    // NOTE this property is not part of the [(cartID,price)] selector
+    globalMock.digitalData.cart.attributes = { ignored: true };
+
+    // check the assignment
+    setTimeout(() => {
+      expect(changes.length).to.eq(0);
+      ExpectObserver.getInstance().cleanup(observer);
+      done();
+    }, DataHandler.debounceTime * 1.5);
+  });
+
   it('it should not add monitors for an invalid rule', () => {
     const observer = ExpectObserver.getInstance().create({
       rules: [

@@ -128,16 +128,16 @@ export class DataLayerObserver {
     if (type === 'function') {
       MonitorFactory.getInstance().create(subject, property, targetPath);
     } else {
-      // when a selector gets used, we know the full path through the data layer and can monitor note
+      // when a selector gets used, we know the full path through the data layer and can monitor
       if (selector) {
         MonitorFactory.getInstance().create(subject, property, subjectPath); // monitor the subject for re-assignments
       }
 
-      // monitor all child properties
-      // NOTE this results in all properties firing changes but the query result ensures that only desired events
-      // are sent to the destination
+      // NOTE only the properties that would be returned from a query
+      // else we'll create events for changed properties that are never included in the data
       const subjectRef = target.value;
-      Object.getOwnPropertyNames(subjectRef).forEach((childProperty: string) => {
+      const subjectProps = Object.getOwnPropertyNames(target.query());
+      subjectProps.forEach((childProperty: string) => {
         MonitorFactory.getInstance().create(subjectRef, childProperty, targetPath);
       });
     }

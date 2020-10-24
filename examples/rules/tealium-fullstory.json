@@ -3,11 +3,11 @@
     {
       "id": "fs-tealium-event",
       "description": "Send Tealium data (except for customer personal details) for FS.event. See https://community.tealiumiq.com/t5/Data-Layer/Data-Layer-Definition-Retail/ta-p/17227.",
-      "source": "utag.data[?(tealium_event)]",
+      "source": "utag.data[^(brand_,browse_,cart_,category_,customer_,language_,page_,product_,search_,site_,tealium_event)]",
       "operators": [
         {
           "name": "query",
-          "select": "$[^(brand_,browse_,cart_,category_,customer_,language_,page_,product_,search_,site_,tealium_event)]"
+          "select": "$[?(tealium_event)]"
         },
         {
           "name": "query",
