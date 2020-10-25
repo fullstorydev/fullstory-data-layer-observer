@@ -253,7 +253,7 @@
       "source": "dataLayer",
       "operators": [
         { "name": "query", "select": "$[?(event!^gtm)]" },
-        { "name": "query", "select": "$[!(gtm.uniqueEventId)]" },
+        { "name": "query", "select": "$[!(ecommerce,gtm.uniqueEventId)]" },
         { "name": "insert", "select": "event" }
       ],
       "destination": "FS.event",
