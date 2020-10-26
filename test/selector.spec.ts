@@ -18,6 +18,8 @@ const testData = {
     'dot.prop': '1.0',
   },
   cities: ['Seattle', 'Atlanta', 'San Francisco', 'New York City'],
+  gtmEvent: { event: 'gtm.dom' },
+  myEvent: { event: 'myEvent' },
 };
 
 describe('test selection paths', () => {
@@ -89,6 +91,7 @@ describe('test selection paths', () => {
     expect(() => { new Path('films[?(dot.prop=1.0)]'); }).to.not.throw();
     expect(() => { new Path('films[?()]'); }).to.throw(Error);
     expect(() => { new Path('films[?]'); }).to.throw(Error);
+    expect(() => { new Path('myEvent[?(event!^gtm.)]'); }).to.not.throw();
 
     expect(validate('favorites.films.action')).to.be.true;
     expect(validate('.')).to.be.false;
@@ -220,6 +223,12 @@ describe('test selection paths', () => {
     expect(select('favorites[?(number!=25)]', testData)).to.be.undefined;
     expect(select('favorites[?(number!=12)]', testData)).to.eq(testData.favorites);
     expect(select('favorites[?(number+=25)]', testData)).to.be.undefined;
+    expect(select('gtmEvent[?(event!^gtm.)]', testData)).to.be.undefined;
+    expect(select('gtmEvent[?(event=^gtm.)]', testData)).to.not.be.undefined;
+    expect(select('myEvent[?(event!^gtm.)]', testData)).to.not.be.undefined;
+    expect(select('myEvent[?(event=^gtm.)]', testData)).to.be.undefined;
+    expect(select('myEvent[?(event=^my)]', testData)).to.not.be.undefined;
+    expect(select('favorites[?(missing=^my)]', testData)).to.be.undefined;
   });
 
   it('filter notation should return a reference to the object', () => {
