@@ -3,11 +3,11 @@
     {
       "id": "fs-tealium-event",
       "description": "Send Tealium data (except for customer personal details) for FS.event. See https://community.tealiumiq.com/t5/Data-Layer/Data-Layer-Definition-Retail/ta-p/17227.",
-      "source": "utag.data[?(tealium_event)]",
+      "source": "utag.data[^(brand_,browse_,cart_,category_,customer_,language_,page_,product_,search_,site_,tealium_event)]",
       "operators": [
         {
           "name": "query",
-          "select": "$[^(brand_,browse_,cart_,category_,customer_,language_,page_,product_,search_,site_,tealium_event)]"
+          "select": "$[?(tealium_event)]"
         },
         {
           "name": "query",
@@ -35,10 +35,10 @@
     {
       "id": "fs-tealium-user-registration",
       "description": "See https://community.tealiumiq.com/t5/Data-Layer/Data-Layer-Definition-Retail/ta-p/17227#toc-hId-867970954.",
-      "source": "utag.data[?(tealium_event=user_registration)]",
+      "source": "utag.data[^(customer_,tealium_event)]",
       "operators": [
         {
-          "select": "$[^(customer_)]",
+          "select": "$[?(tealium_event=user_registration)]",
           "name": "query"
         },
         {
@@ -60,11 +60,11 @@
     {
       "id": "fs-tealium-user-update",
       "description": "See https://community.tealiumiq.com/t5/Data-Layer/Data-Layer-Definition-Retail/ta-p/17227#toc-hId-1755474635.",
-      "source": "utag.data[?(tealium_event=user_update)]",
+      "source": "utag.data[^(customer_,tealium_event)]",
       "operators": [
         {
           "name": "query",
-          "select": "$[^(customer_)]"
+          "select": "$[?(tealium_event=user_update)]"
         }
       ],
       "destination": "FS.setUserVars",

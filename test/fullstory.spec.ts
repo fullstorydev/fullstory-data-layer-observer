@@ -14,7 +14,8 @@ import { basicGoogleTags } from './mocks/google-tags';
 import { tealiumRetail } from './mocks/tealium';
 import Console from './mocks/console';
 import FullStory from './mocks/fullstory-recording';
-import { expectParams, ExpectObserver } from './utils/mocha';
+import { expectParams, ExpectObserver, expectNoCalls } from './utils/mocha';
+import DataHandler from '../src/handler';
 
 interface GlobalMock {
   digitalData: CEDDL,
@@ -563,6 +564,36 @@ describe('Tealium to FullStory rules', () => {
     expect(payload.customer_email).to.be.undefined;
 
     ExpectObserver.getInstance().cleanup(observer);
+  });
+
+  it('should not monitor properties not included in the source', (done) => {
+    (globalThis as any).utag.data.tealium_event = 'product_view';
+
+    const observer = ExpectObserver.getInstance().create({
+      rules: [
+        { ...getRule('fs-tealium-event'), readOnLoad: false },
+      ],
+    });
+
+    // NOTE this is a valid property to monitor
+    (globalThis as any).utag.data.product_id = ['PROD789'];
+
+    // check the assignment
+    setTimeout(() => {
+      const [id, payload] = expectParams(globalMock.FS, 'event');
+      expect(id).to.eq('product_view');
+      expect(payload.product_id).to.eql(['PROD789']);
+    }, DataHandler.debounceTime * 1.5);
+
+    // NOTE this is an invalid property to monitor because it is not picked
+    (globalThis as any).utag.data.outsideScope = true;
+
+    // check the assignment
+    setTimeout(() => {
+      expectNoCalls(globalMock.FS, 'event');
+      ExpectObserver.getInstance().cleanup(observer);
+      done();
+    }, DataHandler.debounceTime * 1.5);
   });
 
   it('should identify user', () => {
