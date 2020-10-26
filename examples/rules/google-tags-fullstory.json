@@ -12,6 +12,21 @@
       "monitor": true
     },
     {
+      "id": "fs-gtg-event",
+      "source": "dataLayer",
+      "operators": [
+        { "name": "query", "select": "$[(0,1,2)]" },
+        { "name": "query", "select": "$[?(0=event)]" },
+        { "name": "flatten" },
+        { "name": "query", "select": "$[?(0=event)]" },
+        { "name": "rename", "properties": { "0": "gtgCommand", "1": "gtgAction" } },
+        { "name": "insert", "select": "gtgAction" }
+      ],
+      "destination": "FS.event",
+      "readOnLoad": true,
+      "monitor": true
+    },
+    {
       "id": "fs-ga-e-commerce-detail-action",
       "source": "dataLayer",
       "operators": [
@@ -237,9 +252,9 @@
       "id": "fs-ga-event",
       "source": "dataLayer",
       "operators": [
-        { "name": "query", "select": "$[?(event)]" },
+        { "name": "query", "select": "$[?(event!^gtm)]" },
         { "name": "query", "select": "$[!(ecommerce,gtm.uniqueEventId)]" },
-        { "name": "insert","select": "event" }
+        { "name": "insert", "select": "event" }
       ],
       "destination": "FS.event",
       "readOnLoad": true,

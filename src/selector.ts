@@ -56,7 +56,7 @@ class OpProp {
     for (let i = 0; i < raw.length; i += 1) {
       const codePoint = raw.charCodeAt(i);
       // the codePoint appears to be some form of comparison operator we support
-      if (codePoint === 33 || (codePoint >= 60 && codePoint <= 62)) {
+      if (codePoint === 33 || (codePoint >= 60 && codePoint <= 62) || codePoint === 94) {
         // mark the start pos of the operator
         if (start === 0) {
           start = i;
@@ -397,6 +397,8 @@ class PathElement {
           if (opProp.operator === '==' && prop[opProp.name] != opProp.value) return undefined;
           // eslint-disable-next-line eqeqeq
           if (opProp.operator != '==' && prop[opProp.name] == opProp.value) return undefined;
+          if (opProp.operator === '=^' && !prop[opProp.name].startsWith(opProp.value)) return undefined;
+          if (opProp.operator === '!^' && prop[opProp.name].startsWith(opProp.value)) return undefined;
           break;
         case 'number':
           // eslint-disable-next-line eqeqeq
