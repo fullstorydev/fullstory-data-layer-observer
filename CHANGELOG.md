@@ -10,6 +10,13 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.4.0
+
+- Monitoring properties is limited to only the properties in the object returned from the `source` selector, which may be a subset of all properties
+- Added `!^` and `=^` comparison for query operator
+- Updated Google rules to better ignore `gtm.*` events
+- Added Google rule to support `gtg` `Arguments` object in the `dataLayer`
+
 ### 1.3.3
 
 - Log message cleanup
