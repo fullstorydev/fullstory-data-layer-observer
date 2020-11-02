@@ -10,6 +10,7 @@ Options with an asterisk are required.
 | ------ | ---- | ------- | ----------- |
 | `index` | `number` | `0` | Position of the object to suffix in the operator input list. |
 | `maxDepth` | `number` | `10` | Maximum depth to search for properties to be suffixed. |
+| `preferReal` | `boolean` | `true` | When false whole numbers like `200.00` will be suffixed `int` and not `real`. |
 
 ## Usage
 
@@ -50,7 +51,7 @@ Options with an asterisk are required.
  {
   basePrice_real: 15.55,
   voucherCode_str: '',
-  voucherDiscount_int: 0,
+  voucherDiscount_real: 0,
   currency_str: 'USD',
   taxRate_real: 0.09,
   shipping_real: 5.0,
