@@ -39,39 +39,30 @@ export class SuffixOperator implements Operator {
   static specification = {
     index: { required: false, type: ['number'] },
     maxDepth: { required: false, type: ['number'] },
-    preferReal: { required: false, type: ['boolean'] },
   };
 
   readonly index: number;
 
   readonly maxDepth: number;
 
-  readonly preferReal: boolean;
-
   constructor(public options: SuffixOperatorOptions) {
     // NOTE the index is -1 because payloads to FS.event or FS.setUserVars are the last in the list of args
-    const { index = -1, maxDepth = 10, preferReal = true } = options;
+    const { index = -1, maxDepth = 10 } = options;
 
     this.index = index;
     this.maxDepth = maxDepth;
-    this.preferReal = preferReal;
   }
 
   /**
    * Infers the type suffix for a numeric value (i.e. Int or Real).
    * @param value value property value used to infer type and return suffix
-   * @param preferReal when true will treat whole numbers as a Real and not Int (default is true)
    */
-  static coerceNumSuffix(value: number, preferReal = true): string {
+  static coerceNumSuffix(): string {
     // NOTE numbers are a Real by default
     // this addresses a more difficult historical problem where
     // 1.00 will return _int but you might expect 1.00 as a _real suffix
     // this dual type situation makes searching difficult
-    if (preferReal) {
-      return Suffixes.Real;
-    }
-
-    return value % 1 === 0 ? Suffixes.Int : Suffixes.Real;
+    return Suffixes.Real;
   }
 
   /**
@@ -79,9 +70,8 @@ export class SuffixOperator implements Operator {
    * There are 10 valid type suffixes:
    * _bool, _date, _int, _real, _str, _bools, _dates, _ints, _reals, and _strs.
    * @param value the object to inspect and return suffix
-   * @param preferReal when true will treat whole numbers as a Real and not Int (default is true)
    */
-  static coerceSuffix(value: SuffixableValue, preferReal = true): string {
+  static coerceSuffix(value: SuffixableValue): string {
     // arrays are pluralized
     if (Array.isArray(value)) {
       if (value.every((v: any) => typeof v === 'string')) {
@@ -93,11 +83,7 @@ export class SuffixOperator implements Operator {
       }
 
       if (value.every((v: any) => typeof v === 'number')) {
-        // NOTE [1.00, 1.99] is actually _int, _real types respectively
-        // so favor _reals over _ints if the list is mixed
-        return (value as number[]).filter((v: number) => SuffixOperator.coerceNumSuffix(v,
-          preferReal) === '_real').length === 0
-          ? Suffixes.Ints : Suffixes.Reals;
+        return Suffixes.Reals;
       }
 
       if (value.every((v: any) => v instanceof Date)) {
@@ -123,7 +109,7 @@ export class SuffixOperator implements Operator {
       case 'boolean':
         return Suffixes.Bool;
       case 'number':
-        return SuffixOperator.coerceNumSuffix(value, preferReal);
+        return SuffixOperator.coerceNumSuffix();
       case 'object':
         return Suffixes.Obj;
       default:
@@ -149,7 +135,7 @@ export class SuffixOperator implements Operator {
 
     Object.getOwnPropertyNames(obj).forEach((prop: string) => {
       const value = obj[prop];
-      const suffix = SuffixOperator.coerceSuffix(value, this.preferReal);
+      const suffix = SuffixOperator.coerceSuffix(value);
       const suffixedProp = `${prop}${suffix}`;
 
       // if a suffix exists, it means we support the value

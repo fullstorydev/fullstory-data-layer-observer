@@ -82,11 +82,11 @@ describe('suffix operator unit test', () => {
     });
   });
 
-  it('it should prefer real versus int', () => {
-    let operator = new SuffixOperator({ name: 'suffix' });
+  it('all numbers are suffixed as a real', () => {
+    const operator = new SuffixOperator({ name: 'suffix' });
     expect(operator).to.not.be.undefined;
 
-    let [suffixedObject] = operator.handleData([testData])!;
+    const [suffixedObject] = operator.handleData([testData])!;
 
     expect(suffixedObject.quantity_real).to.not.be.undefined;
     expect(suffixedObject.quantity_real).to.eql(testData.quantity);
@@ -96,20 +96,6 @@ describe('suffix operator unit test', () => {
 
     expect(suffixedObject.region_real).to.not.be.undefined;
     expect(suffixedObject.region_real).to.eql(testData.region);
-
-    operator = new SuffixOperator({ name: 'suffix', preferReal: false });
-    expect(operator).to.not.be.undefined;
-
-    [suffixedObject] = operator.handleData([testData])!;
-
-    expect(suffixedObject.quantity_int).to.not.be.undefined;
-    expect(suffixedObject.quantity_int).to.eql(testData.quantity);
-
-    expect(suffixedObject.discountTiers_ints).to.not.be.undefined;
-    expect(suffixedObject.discountTiers_ints).to.eql(testData.discountTiers);
-
-    expect(suffixedObject.region_int).to.not.be.undefined;
-    expect(suffixedObject.region_int).to.eql(testData.region);
   });
 
   it('it should suffix child properties in object', () => {

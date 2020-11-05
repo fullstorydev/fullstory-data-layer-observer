@@ -10,7 +10,6 @@ Options with an asterisk are required.
 | ------ | ---- | ------- | ----------- |
 | `index` | `number` | `0` | Position of the object to suffix in the operator input list. |
 | `maxDepth` | `number` | `10` | Maximum depth to search for properties to be suffixed. |
-| `preferReal` | `boolean` | `true` | When false whole numbers like `200.00` will be suffixed `int` and not `real`. |
 
 ## Usage
 
