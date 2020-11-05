@@ -50,7 +50,7 @@ Options with an asterisk are required.
  {
   basePrice_real: 15.55,
   voucherCode_str: '',
-  voucherDiscount_int: 0,
+  voucherDiscount_real: 0,
   currency_str: 'USD',
   taxRate_real: 0.09,
   shipping_real: 5.0,

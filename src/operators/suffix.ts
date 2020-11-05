@@ -57,9 +57,12 @@ export class SuffixOperator implements Operator {
    * Infers the type suffix for a numeric value (i.e. Int or Real).
    * @param value value property value used to infer type and return suffix
    */
-  static coerceNumSuffix(value: number): string {
-    // NOTE 1.00 will return _int but you might expect 1.00 as a _real suffix
-    return value % 1 === 0 ? Suffixes.Int : Suffixes.Real;
+  static coerceNumSuffix(): string {
+    // NOTE numbers are a Real by default
+    // this addresses a more difficult historical problem where
+    // 1.00 will return _int but you might expect 1.00 as a _real suffix
+    // this dual type situation makes searching difficult
+    return Suffixes.Real;
   }
 
   /**
@@ -80,10 +83,7 @@ export class SuffixOperator implements Operator {
       }
 
       if (value.every((v: any) => typeof v === 'number')) {
-        // NOTE [1.00, 1.99] is actually _int, _real types respectively
-        // so favor _reals over _ints if the list is mixed
-        return (value as number[]).filter((v: number) => SuffixOperator.coerceNumSuffix(v) === '_real').length === 0
-          ? Suffixes.Ints : Suffixes.Reals;
+        return Suffixes.Reals;
       }
 
       if (value.every((v: any) => v instanceof Date)) {
@@ -109,7 +109,7 @@ export class SuffixOperator implements Operator {
       case 'boolean':
         return Suffixes.Bool;
       case 'number':
-        return SuffixOperator.coerceNumSuffix(value);
+        return SuffixOperator.coerceNumSuffix();
       case 'object':
         return Suffixes.Obj;
       default:

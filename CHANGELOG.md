@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.4.1
+
+- Normalized numbers as `real` by default to prevent ambiguous `int` for numbers like `200.00`
+
 ### 1.4.0
 
 - Monitoring properties is limited to only the properties in the object returned from the `source` selector, which may be a subset of all properties

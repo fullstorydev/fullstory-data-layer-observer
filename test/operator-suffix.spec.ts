@@ -13,6 +13,7 @@ const testData: any = {
   last_name: 'Falco',
   price: 49.99,
   quantity: 1,
+  region: 0,
   isFeatured: true,
   listedPages: [true, false, false],
   created: date,
@@ -79,6 +80,22 @@ describe('suffix operator unit test', () => {
     Object.getOwnPropertyNames(suffixedObject).forEach((prop) => {
       expect(prop).to.not.contain('fn');
     });
+  });
+
+  it('all numbers are suffixed as a real', () => {
+    const operator = new SuffixOperator({ name: 'suffix' });
+    expect(operator).to.not.be.undefined;
+
+    const [suffixedObject] = operator.handleData([testData])!;
+
+    expect(suffixedObject.quantity_real).to.not.be.undefined;
+    expect(suffixedObject.quantity_real).to.eql(testData.quantity);
+
+    expect(suffixedObject.discountTiers_reals).to.not.be.undefined;
+    expect(suffixedObject.discountTiers_reals).to.eql(testData.discountTiers);
+
+    expect(suffixedObject.region_real).to.not.be.undefined;
+    expect(suffixedObject.region_real).to.eql(testData.region);
   });
 
   it('it should suffix child properties in object', () => {
@@ -154,12 +171,12 @@ describe('suffix operator unit test', () => {
 
     expect(suffixedObject).to.haveOwnProperty('id_str');
     expect(suffixedObject).to.haveOwnProperty('price_real');
-    expect(suffixedObject).to.haveOwnProperty('quantity_int');
+    expect(suffixedObject).to.haveOwnProperty('quantity_real');
     expect(suffixedObject).to.haveOwnProperty('isFeatured_bool');
     expect(suffixedObject).to.haveOwnProperty('listedPages_bools');
     expect(suffixedObject).to.haveOwnProperty('created_date');
     expect(suffixedObject).to.haveOwnProperty('shippingDates_dates');
-    expect(suffixedObject).to.haveOwnProperty('discountTiers_ints');
+    expect(suffixedObject).to.haveOwnProperty('discountTiers_reals');
     expect(suffixedObject).to.haveOwnProperty('discountPrices_reals');
     expect(suffixedObject).to.haveOwnProperty('variants_strs');
   });
