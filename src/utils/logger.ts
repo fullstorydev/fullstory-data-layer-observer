@@ -73,6 +73,12 @@ export class ConsoleAppender implements LogAppender {
  * FullStoryAppender serializes LogEvents to FullStory using FS.event.
  */
 export class FullStoryAppender implements LogAppender {
+  static readonly debounceTime = 250;
+
+  private prevEvent?: LogEvent;
+
+  private timeoutId: number | null = null;
+
   /* eslint-disable class-methods-use-this */
   log(event: LogEvent): void {
     const fs = (window as any)[(window as any)._fs_namespace]; // eslint-disable-line no-underscore-dangle
@@ -83,12 +89,44 @@ export class FullStoryAppender implements LogAppender {
     if (fs) {
       /* eslint-disable camelcase */
       const { context, level: level_int, message } = event;
-      if (context) {
-        fs.event(customEventName, { level_int, message, context }, customEventSource);
+
+      const customEventPayload = context ? { level_int, message, context } : { level_int, message };
+
+      if (this.isDuplicate(event)) {
+        // begin debouncing log events so multiple instances don't cause rate limiting issue
+        if (typeof this.timeoutId === 'number') {
+          window.clearTimeout(this.timeoutId);
+        }
+
+        this.timeoutId = window.setTimeout(() => {
+          this.timeoutId = null;
+          fs.event(customEventName, customEventPayload, customEventSource);
+        }, FullStoryAppender.debounceTime);
       } else {
-        fs.event(customEventName, { level_int, message }, customEventSource);
+        fs.event(customEventName, customEventPayload, customEventSource);
       }
+
+      this.prevEvent = event;
     }
+  }
+
+  /**
+   * Checks if a LogEvent is a duplicate of the previous LogEvent.
+   * This checks the message, source, and reason.  All 3 need to match to be considered a
+   * duplicate.
+   * @param event to compare against the last LogEvent
+   */
+  private isDuplicate(event: LogEvent) {
+    const { context, message } = event;
+
+    if (!this.prevEvent || !context || !this.prevEvent.context) {
+      return false;
+    }
+
+    const { source, reason } = context;
+    const { message: prevMessage, context: { source: prevSource, reason: prevReason } } = this.prevEvent;
+
+    return message === prevMessage && source === prevSource && reason === prevReason;
   }
 }
 

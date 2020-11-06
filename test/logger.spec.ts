@@ -117,4 +117,64 @@ describe('logger unit tests', () => {
     expect(Logger.format('$0 $1', 'Hello', 'World', '!')).to.eql('Hello World');
     expect(Logger.format('$0 $1 $0', 'Hello', 'World')).to.eql('Hello World $0'); // NOTE re-use is unsupported
   });
+
+  it('the FullStory appender does not debounce different events', () => {
+    const context: LogContext = {
+      rule: 'fs-event-ceddl-cart',
+      path: 'digitalData.cart',
+      selector: 'digitalData.cart[(cartID,price)]',
+      source: 'digitalData.cart[(cartID,price)]',
+    };
+
+    const logger = Logger.getInstance('fullstory'); // technically the singleton prevents reconfiguring
+    logger.appender = new FullStoryAppender(); // so manually assign
+
+    logger.error('Data layer not found', context);
+    expect(expectParams((window as any).FS, 'event')).to.not.be.undefined;
+
+    logger.error('Data layer threw and error', context);
+    expect(expectParams((window as any).FS, 'event')).to.not.be.undefined;
+  });
+
+  it('the FullStory appender must have context.source and context.reason to debounce', () => {
+    const logger = Logger.getInstance('fullstory'); // technically the singleton prevents reconfiguring
+    logger.appender = new FullStoryAppender(); // so manually assign
+
+    logger.error('Data layer not found');
+    expect(expectParams((window as any).FS, 'event')).to.not.be.undefined;
+
+    logger.error('Data layer not found');
+    expect(expectParams((window as any).FS, 'event')).to.not.be.undefined;
+  });
+
+  it('the FullStory appender debounces duplicate events', (done) => {
+    const context: LogContext = {
+      rule: 'fs-event-ceddl-cart',
+      path: 'digitalData.cart',
+      selector: 'digitalData.cart[(cartID,price)]',
+      source: 'digitalData.cart[(cartID,price)]',
+    };
+
+    const logger = Logger.getInstance('fullstory'); // technically the singleton prevents reconfiguring
+    logger.appender = new FullStoryAppender(); // so manually assign
+
+    logger.error('Data layer not found', context);
+
+    const [eventName, event, source] = expectParams((window as any).FS, 'event');
+    expect(eventName).to.not.be.undefined;
+    expect(event).to.not.be.undefined;
+    expect(source).to.not.be.undefined;
+
+    logger.error('Data layer not found', context); // debouncing starts
+    logger.error('Data layer not found', context);
+    logger.error('Data layer not found', context);
+    expectNoCalls((window as any).FS, 'event');
+
+    setTimeout(() => {
+      // NOTE that because of debouncing, multiple errors become one event
+      expect(expectParams((window as any).FS, 'event')).to.not.be.undefined;
+      expectNoCalls((window as any).FS, 'event');
+      done();
+    }, FullStoryAppender.debounceTime * 1.5);
+  });
 });
