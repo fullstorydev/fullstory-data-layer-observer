@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.4.2
+
+- Debouncing added to limit the number of log events for similar error messages
+
 ### 1.4.1
 
 - Normalized numbers as `real` by default to prevent ambiguous `int` for numbers like `200.00`
