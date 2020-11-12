@@ -9,6 +9,10 @@ This is where we initialize the DataLayerObserver from this info:
 // Default is null
 window['_dlo_appender'] = null;
 
+// Log message level, NONE = -1, ERROR = 0, WARN = 1, INFO = 2, DEBUG = 3
+// Default is null
+window['_dlo_logLevel'] = 1;
+
 // OperatorOptions that is always used just before before the destination
 // Default is null
 window['_dlo_beforeDestination'] = null;
@@ -84,6 +88,7 @@ function _dlo_initializeFromWindow() {
   win._dlo_observer = new DataLayerObserver({
     appender: win._dlo_appender || undefined,
     beforeDestination: win._dlo_beforeDestination || undefined,
+    logLevel: win._dlo_logLevel || undefined,
     previewMode: win._dlo_previewMode === true,
     previewDestination: win._dlo_previewDestination || undefined,
     readOnLoad: win._dlo_readOnLoad === true,

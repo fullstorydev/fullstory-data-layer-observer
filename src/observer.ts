@@ -3,7 +3,7 @@ import { OperatorOptions, Operator } from './operator';
 import { BuiltinOptions, OperatorFactory } from './factory';
 import DataHandler from './handler';
 import {
-  Logger, LogAppender, LogMessageType, LogMessage,
+  Logger, LogAppender, LogMessageType, LogMessage, LogLevel,
 } from './utils/logger';
 import { FunctionOperator } from './operators';
 import DataLayerTarget from './target';
@@ -17,6 +17,7 @@ import MonitorFactory from './monitor-factory';
  * Optional
  *  appender: a custom log appender or string alias (e.g. fullstory or console)
  *  beforeDestination: OperatorOptions that is always used just before before the destination
+ *  logLevel: LogLevel for debugging; levels at this value and below will be logged
  *  previewMode: redirects output from a destination to previewDestination when testing rules
  *  previewDestination: output destination using selection syntax for with previewMode
  *  readOnLoad: when true reads data layer target(s) and emit the initial value(s)
@@ -26,6 +27,7 @@ import MonitorFactory from './monitor-factory';
 export interface DataLayerConfig {
   appender?: string | LogAppender;
   beforeDestination?: OperatorOptions;
+  logLevel?: LogLevel;
   previewDestination?: string;
   previewMode?: boolean;
   readOnLoad?: boolean;
@@ -89,13 +91,19 @@ export class DataLayerObserver {
     readOnLoad: false,
     validateRules: true,
   }) {
-    const { appender, rules } = config;
+    const { appender, logLevel, rules } = config;
     if (appender) {
       if (typeof appender === 'string') {
         Logger.getInstance(appender);
       } else {
         Logger.getInstance().appender = appender;
       }
+    }
+
+    // set the level after the appender is assigned since the first call to getInstance()
+    // inits the Logger; else the Logger will use the default appender (e.g. console)
+    if (logLevel) {
+      Logger.getInstance().level = logLevel;
     }
 
     if (rules) {
