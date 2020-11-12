@@ -90,6 +90,7 @@ Additional configuration can be added using the below options.
 | ------ | ---- | ------- | ----------- |
 | _dlo_appender | LogAppender or string | `console` | Defines a custom log appender to redirect log messages. |
 | _dlo_beforeDestination | OperatorOptions | `undefined` | An optional operator that is always used just before before the destination. |
+| _dlo_logLevel | number | `1` | Log messages at this level and below will be logged by the LogAppender. Defaults to WARN. |
 | _dlo_previewDestination | string | `'console.log'` | Output destination using rule selector syntax for use with previewMode. |
 | _dlo_previewMode | boolean | `true` | Redirects output from a destination to previewDestination when testing rules. |
 | _dlo_readOnLoad | boolean | `false` | When true reads data layer target(s) and emits the initial value(s). |

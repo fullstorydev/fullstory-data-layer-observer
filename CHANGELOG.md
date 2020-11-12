@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.4.3
+
+- Expose logging level as config option `_dlo_logLevel`
+
 ### 1.4.2
 
 - Debouncing added to limit the number of log events for similar error messages
