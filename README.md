@@ -4,8 +4,6 @@
 
 FullStory Data Layer Observer (DLO) is a small but powerful JavaScript utility that makes integrating analytics data easier.  Through a flexible syntax and rules-driven approach, you can reference data from a data layer, perform intermediate changes, and send the result to FullStory - all without writing any custom JavaScript.
 
-**Data Layer Observer is currently in a private beta.**
-
 ## Quick Start
 
 ### Snippet
@@ -16,13 +14,14 @@ Add Data Layer Observer to your web site or web app by including the following s
 <script>
  window['_dlo_appender'] = 'fullstory';
  window['_dlo_beforeDestination'] = { name: 'suffix' };
- window['_dlo_previewMode'] = true;   // false in production
- window['_dlo_readOnLoad'] = true;    // see docs on usage
+ window['_dlo_previewMode'] = true;     // set to false in production to send data to the destination
+ window['_dlo_readOnLoad'] = true;      // see docs on usage
  window['_dlo_validateRules'] = true;
- window['_dlo_rules'] = [{
+ window['_dlo_rules'] = [
   // add your rules here
- }];
+ ];
  </script>
+ <script async="true" src="https://edge.fullstory.com/datalayer/v1/latest.js"></script>
 ```
 
 ### Examples
@@ -54,15 +53,18 @@ Sensitive, private, and confidential information should never be added to a data
 
 ## Deployment
 
-**Private beta customers should work directly with FullStory to obtain access to the script.**
+DLO is a JavaScript asset that is included on a web page.  FullStory hosts versions of DLO on our CDN.  Versioned releases have the naming convention `<version>.js`, and the most recent version is named `latest.js`:
 
-DLO is a JavaScript asset that is included on a web page.  FullStory hosts versions of DLO on our CDN.  Versioned releases have the naming convention `dlo-<version>.js`, and the most recent version is named `dlo-latest.js`.  If you would like the most up to date version of DLO on your site always, use `dlo-latest.js`.  If you'd rather use stable releases and perform manual upgrades, use `dlo-<version>.js`.  See the [CHANGELOG](./CHANGELOG.md) for features and fixes.
+- https://edge.fullstory.com/datalayer/v1/1.4.3.js
+- https://edge.fullstory.com/datalayer/v1/latest.js
+
+If you would like the most up to date version of DLO on your site always, use `latest.js`.  If you'd rather use stable releases and perform manual upgrades, use `<version>.js`.  See the [CHANGELOG](./CHANGELOG.md) for features and fixes.
 
 To include DLO on a webpage, simply add the script to source code or load the script dynamically using a tag manager.  The DLO asset should be loaded after the [FullStory recording snippet](https://help.fullstory.com/hc/en-us/articles/360020623514-How-do-I-get-FullStory-up-and-running-on-my-site-) has been added to the page.
 
 If you would prefer to self-host the asset, use the `npm run build` command to create `dlo.js` and `dlo.min.js` files.  The latter is a minified script suitable for production.  You should also gzip compress the asset and set appropriate `Cache-Control` headers when self-hosting.
 
-FullStory’s hosted asset is less than 8KB minified, compressed and has `Cache-Control` set to one month.
+FullStory’s hosted asset is around 8.4KB minified, compressed and has `Cache-Control` set to one month.
 
 ## Configuration
 
@@ -153,7 +155,9 @@ Each rule provides a set of options for configuration.  Options with an asterisk
 
 ## Data Handling
 
-The configuration option `window['_dlo_readOnLoad'] = true;` can be used on static data layers, which should exist on the page prior to loading DLO.  Many data layers are however dynamic: values change as the user interacts with the page.  By default, DLO will attempt to monitor for changes to a data layer's object or any property within an object.  An observed change will cause the data to be handled.  Functions can be observed as well (e.g. `trackEvent()`).  When functions are called, the arguments passed to the function will be provided to data handlers.
+The configuration option `window['_dlo_readOnLoad'] = true;` can be used on static data layers, which should exist on the page prior to loading DLO.  Many data layers are however dynamic: values change as the user interacts with the page.  By default, DLO will attempt to monitor for changes to a data layer's object or any property within an object.  (See the details on source selection on how this is done.)  An observed change will cause the data to be handled.  Note that property changes are debounced, which allows multiple property changes to a single object appear as a single data layer event.
+
+Functions can be observed as well (e.g. `trackEvent()`).  When functions are called, the arguments passed to the function will be provided to data handlers.
 
 ## Source Selection
 
@@ -173,6 +177,8 @@ The `source` property uses a custom selector syntax.  It’s most often seen as 
 | object[?(property=value, ...)] | `digitalData.cart.price[?(basePrice>=10)]` | Returns the object or null if the object's `property` does not compare to `value`. Comparison can be `=`, `<=`, `>=`, `<`, `>`, `!=`, `!^`, and `=^`. |
 
 Selector syntax can be combined to create sophisticated queries to the data layer.  For example, `digitalData.products[-1].attributes.availability[?(pickup)]` can be read as, "From the products list, return the last product's availability if it has the `pickup` property."  This usage of selection can be helpful to record only significant events and disregard others.
+
+The properties in the object returned from source selection will be monitored for changes.  For example, using the selector `digitalData.cart` will observe *all* properties in the `digitalData.cart` object because no refinement of the data is done by the selector.  Alternatively, `digitalData.cart[(cartID,price)]` will only observe *only* `cartID` and `price` in `digitalData.cart`.  Similarly, `digitalData.cart.price[^(shipping)]` would observe all properties beginning with shipping.  Selectors allow you to be specific about which data to send to a destination and only monitor changes on desired properties.
 
 > **Tip:** A selector returns the most current subject from the data layer at the lowest level. For example, `digitalData.cart.price[?(basePrice>=10)]` returns the `price` object - not `cart`. If you need `cart` returned, use `digitalData.cart` as the selector and the use the query operator.
 
@@ -255,15 +261,22 @@ After new rules are deployed, visit the site and ensure the data is being sent t
 
 ## Monitoring
 
-The Quick Start snippet provides a FullStory log appender.  When a log event is generated by DLO, it will be sent to FullStory as a custom event.  You should periodically review the `Data Layer Observer` custom event to monitor data layer events.
+The Quick Start snippet provides a FullStory log appender.  When a log event is generated by DLO, it will be sent to FullStory as a custom event.  You should periodically review the `Data Layer Observer` custom event to monitor data layer events.  Logging can be disabled by setting `window['_dlo_logLevel']` to the value `-1`.
 
 ![Data Layer Observer Custom Event](./images/fullstory_appender.png)
 
 The following properties are included in a log event.
 
-- `datalayer` contains the source selector.
-- `level` corresponds to the log level: `0` for error, `1` for warn, `2` for info, and `3` for debug.
-- `message` provides additional context about the log event.
+- `level` corresponds to the log level: `-1` for none, `0` for error, `1` for warn, `2` for info, and `3` for debug.
+- `message` provides information about the log event.
+- `context` may provide the following addition detail for troubleshooting purposes.
+  - `rule` contains the rule ID.
+  - `source` selector used in a rule.
+  - `operator` name that generated the log event.
+  - `path` to the object in the data layer.
+  - `property` that relates to the log event.
+  - `selector` selector used in a target.
+  - `reason` underlying error message - usually obtained from a JavaScript Error.
 
 Be mindful of [rate limiting](https://help.fullstory.com/hc/en-us/articles/360020623234#custom-property-rate-limiting) when sending logs to FullStory; however, DLO defaults to log only errors and warnings to reduce the likelihood of rate limiting.
 
