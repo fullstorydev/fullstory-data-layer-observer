@@ -58,13 +58,13 @@ DLO is a JavaScript asset that is included on a web page.  FullStory hosts versi
 - https://edge.fullstory.com/datalayer/v1/1.4.3.js
 - https://edge.fullstory.com/datalayer/v1/latest.js
 
-If you would like the most up to date version of DLO on your site always, use `latest.js`.  If you'd rather use stable releases and perform manual upgrades, use `<version>.js`.  See the [CHANGELOG](./CHANGELOG.md) for features and fixes.
+If you would like the most up to date version of DLO on your site always, use `latest.js`.  If you'd rather use stable releases and perform manual upgrades, use `<version>.js`.
 
 To include DLO on a webpage, simply add the script to source code or load the script dynamically using a tag manager.  The DLO asset should be loaded after the [FullStory recording snippet](https://help.fullstory.com/hc/en-us/articles/360020623514-How-do-I-get-FullStory-up-and-running-on-my-site-) has been added to the page.
 
 If you would prefer to self-host the asset, use the `npm run build` command to create `dlo.js` and `dlo.min.js` files.  The latter is a minified script suitable for production.  You should also gzip compress the asset and set appropriate `Cache-Control` headers when self-hosting.
 
-FullStory’s hosted asset is around 8.4KB minified, compressed and has `Cache-Control` set to one month.
+FullStory’s hosted asset is around 8.4KB minified, compressed and has `Cache-Control` set to one month for versioned scripts and ten minutes for the latest script.
 
 ## Configuration
 
@@ -281,3 +281,7 @@ The following properties are included in a log event.
 Be mindful of [rate limiting](https://help.fullstory.com/hc/en-us/articles/360020623234#custom-property-rate-limiting) when sending logs to FullStory; however, DLO defaults to log only errors and warnings to reduce the likelihood of rate limiting.
 
 A custom log appender can also be registered.  For details on writing a custom appender, see the `LogAppender` interface and `ConsoleAppender` class in logger.ts.
+
+## Changelog
+
+See the [CHANGELOG](./CHANGELOG.md) for features and fixes.
