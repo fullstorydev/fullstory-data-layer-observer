@@ -383,7 +383,8 @@ class PathElement {
 
     for (let i = 0; i < this.brackets.op.props.length; i += 1) {
       const opProp = this.brackets.op.props[i];
-      if (typeof prop[opProp.name] === 'undefined') return undefined;
+      // checking for opProp.value set to 'undefined' allows us to check if a property is missing
+      if (typeof prop[opProp.name] === 'undefined' && opProp.value !== 'undefined') return undefined;
       if (opProp.value === null) continue; // Existance is enough
       /*
       Values come in as strings so we use loose matching (== not ===) to take advantage of JS's built-in fast parsing and evaluation
@@ -409,6 +410,12 @@ class PathElement {
           if (opProp.operator === '<=' && prop[opProp.name] > opProp.value) return undefined;
           if (opProp.operator === '>' && prop[opProp.name] <= opProp.value) return undefined;
           if (opProp.operator === '<' && prop[opProp.name] >= opProp.value) return undefined;
+          break;
+        case 'undefined':
+          // eslint-disable-next-line eqeqeq
+          if (opProp.operator === '==' && prop[opProp.name] != undefined) return undefined;
+          // eslint-disable-next-line eqeqeq
+          if (opProp.operator === '!=' && prop[opProp.name] == undefined) return undefined;
           break;
         default:
           throw new Error(Logger.format(LogMessage.SelectorSyntaxUnsupported, opProp.raw));

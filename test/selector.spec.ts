@@ -200,6 +200,8 @@ describe('test selection paths', () => {
     expect(select('favorites[?(dot.prop=1.0)]', testData)).to.eq(testData.favorites);
     expect(select('favorites[?(dot.prop=2.0)]', testData)).to.be.undefined;
     expect(select('favorites[?(bogus=totally)]', testData)).to.be.undefined;
+    expect(select('favorites[?(bogus=undefined)]', testData)).to.not.be.undefined;
+    expect(select('favorites[?(bogus!=undefined)]', testData)).to.be.undefined;
     expect(select('favorites[?(color, number)]', testData)).to.eq(testData.favorites);
     expect(select('favorites[?(bogus, number)]', testData)).to.be.undefined;
     expect(select('favorites[?(color=red, number)]', testData)).to.eq(testData.favorites);
