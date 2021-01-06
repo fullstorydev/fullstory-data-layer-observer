@@ -397,7 +397,7 @@ class PathElement {
           // eslint-disable-next-line eqeqeq
           if (opProp.operator === '==' && prop[opProp.name] != opProp.value) return undefined;
           // eslint-disable-next-line eqeqeq
-          if (opProp.operator != '==' && prop[opProp.name] == opProp.value) return undefined;
+          if (opProp.operator == '!=' && prop[opProp.name] == opProp.value) return undefined;
           if (opProp.operator === '=^' && !prop[opProp.name].startsWith(opProp.value)) return undefined;
           if (opProp.operator === '!^' && prop[opProp.name].startsWith(opProp.value)) return undefined;
           break;
