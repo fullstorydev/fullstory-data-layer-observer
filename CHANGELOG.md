@@ -10,14 +10,13 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
-### 1.4.5
+### 1.5.0
 
-- Fix `undefined` comparisons for properties with defined values
+- Added `=` and `!=` `undefined` comparison for object properties
 
 ### 1.4.4
 
 - Bug fix in string `!=` comparison
-- Added `undefined` comparison
 
 ### 1.4.3
 
