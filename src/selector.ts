@@ -417,6 +417,12 @@ class PathElement {
           // eslint-disable-next-line eqeqeq
           if (opProp.operator === '!=' && prop[opProp.name] == undefined) return undefined;
           break;
+        case 'object':
+          // eslint-disable-next-line eqeqeq
+          if (opProp.operator === '==' && prop[opProp.name] != undefined) return undefined;
+          // eslint-disable-next-line eqeqeq
+          if (opProp.operator === '!=' && prop[opProp.name] == undefined) return undefined;
+          break;
         default:
           throw new Error(Logger.format(LogMessage.SelectorSyntaxUnsupported, opProp.raw));
       }

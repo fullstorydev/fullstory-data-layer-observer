@@ -10,6 +10,14 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.5.0
+
+- Added `=` and `!=` `undefined` comparison for object properties
+
+### 1.4.4
+
+- Bug fix in string `!=` comparison
+
 ### 1.4.3
 
 - Expose logging level as config option `_dlo_logLevel`

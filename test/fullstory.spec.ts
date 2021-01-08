@@ -264,7 +264,7 @@ describe('Google Tags to FullStory rules', () => {
     ExpectObserver.getInstance().cleanup(observer);
   });
 
-  it('should read any event but remove ecommerce and event ID', () => {
+  it('should read any event not containing ecommerce and remove event ID', () => {
     const observer = ExpectObserver.getInstance().create({
       rules: [
         getRule('fs-ga-event'),
