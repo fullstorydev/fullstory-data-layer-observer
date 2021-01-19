@@ -12,6 +12,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ### 1.5.0
 
+- Fix `convert` operator to trim spaces if a space separated CSV is supplied
+
+### 1.5.0
+
 - Added `=` and `!=` `undefined` comparison for object properties
 
 ### 1.4.4
