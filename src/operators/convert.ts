@@ -68,7 +68,7 @@ export class ConvertOperator implements Operator {
     const { force, preserveArray, type } = this.options;
 
     if (typeof properties === 'string') {
-      properties = properties.split(',');
+      properties = properties.split(',').map((property) => property.trim()); // auto-correct if the CSV has spaces
     }
 
     // NOTE if * is supplied, convert all properties
