@@ -47,7 +47,7 @@ describe('convert operator unit tests', () => {
     expect(() => new ConvertOperator({ name: 'convert', properties: 'quantity' }).validate())
       .to.throw();
     expect(() => new ConvertOperator({
-    // @ts-ignore
+      // @ts-ignore
       name: 'convert', properties: ['price', 'tax'], type: 'real', force: 1,
     }).validate())
       .to.throw();
@@ -139,6 +139,18 @@ describe('convert operator unit tests', () => {
     expect(int!.stock).to.eq(10);
     expect(quantity).to.eq('10'); // don't mutate the actual data layer
     expect(stock).to.eq('10'); // don't mutate the actual data layer
+  });
+
+  it('it should convert space separated props', () => {
+    const operator = OperatorFactory.create('convert', { name: 'convert', properties: 'quantity, stock', type: 'int' });
+    const { quantity, stock } = item;
+    const [int] = operator.handleData([{ quantity, stock }])!;
+
+    expect(int).to.not.be.null;
+    expect(int!.quantity).to.eq(10);
+    expect(int!.stock).to.eq(10);
+    expect(quantity).to.eq('10');
+    expect(stock).to.eq('10');
   });
 
   it('it should not convert unsupported types', () => {
