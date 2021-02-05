@@ -237,11 +237,11 @@ export class DataLayerObserver {
     let workingTarget = target;
     const targetValue = workingTarget.value;
 
-    /*
-    * We do a bit of magic when monitoring an Array target.
-    * We create separate targets for the `push` and `unshift` methods.
-    */
-    if (monitor && Array.isArray(targetValue)) {
+    /**
+     * When the target is an Array, we create separate targets for the `push` and `unshift` methods.
+     * Some older browsers may not have these methods, so check before trying to shim.
+     */
+    if (monitor && Array.isArray(targetValue) && targetValue.push && targetValue.unshift) {
       this.registerTarget(DataLayerTarget.find(`${target.path}.unshift`), options, destination, false, true, debug);
       workingTarget = DataLayerTarget.find(`${target.path}.push`);
     }

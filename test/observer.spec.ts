@@ -544,6 +544,33 @@ describe('DataLayerObserver unit tests', () => {
     ExpectObserver.getInstance().cleanup(observer);
   });
 
+  it('missing push and unshift in older browsers should not error', () => {
+    // @ts-ignore
+    globalMock.dataLayer.push = undefined;
+    // @ts-ignore
+    globalMock.dataLayer.unshift = undefined;
+
+    expect(globalMock.dataLayer.push).to.be.undefined;
+    expect(globalMock.dataLayer.unshift).to.be.undefined;
+
+    const observer = ExpectObserver.getInstance().create({
+      rules: [
+        {
+          source: 'dataLayer',
+          operators: [],
+          destination: 'console.log',
+          readOnLoad: false,
+        },
+      ],
+    }, true);
+
+    expect(globalMock.dataLayer).to.not.be.undefined;
+    expect(globalMock.dataLayer.length).to.eq(0);
+    expect(globalMock.console.error.length).to.eq(0);
+    expect(globalMock.console.warn.length).to.eq(0);
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
   it('a developer can programmatically observe an object by reference', (done) => {
     let changes: any[] = [];
 
