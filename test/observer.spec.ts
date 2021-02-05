@@ -568,6 +568,8 @@ describe('DataLayerObserver unit tests', () => {
     expect(globalMock.dataLayer.length).to.eq(0);
     expect(globalMock.console.error.length).to.eq(0);
     expect(globalMock.console.warn.length).to.eq(0);
+    expect(observer.handlers.length).to.eq(1);
+
     ExpectObserver.getInstance().cleanup(observer);
   });
 
