@@ -12,7 +12,7 @@ import {
   expectParams, expectNoCalls, expectCall, ExpectObserver,
 } from './utils/mocha';
 import { Operator, OperatorOptions } from '../src/operator';
-import { LogEvent } from '../src/utils/logger';
+import { LogEvent, LogLevel } from '../src/utils/logger';
 import DataHandler from '../src/handler';
 import { MockClass } from './mocks/mock';
 import MonitorFactory from '../src/monitor-factory';
@@ -545,6 +545,7 @@ describe('DataLayerObserver unit tests', () => {
   });
 
   it('missing push and unshift in older browsers should not error', () => {
+    // simulate an older browser by "removing" push and unshift
     // @ts-ignore
     globalMock.dataLayer.push = undefined;
     // @ts-ignore
@@ -553,7 +554,10 @@ describe('DataLayerObserver unit tests', () => {
     expect(globalMock.dataLayer.push).to.be.undefined;
     expect(globalMock.dataLayer.unshift).to.be.undefined;
 
+    const appender = new MockAppender();
+
     const observer = ExpectObserver.getInstance().create({
+      appender,
       rules: [
         {
           source: 'dataLayer',
@@ -565,10 +569,12 @@ describe('DataLayerObserver unit tests', () => {
     }, true);
 
     expect(globalMock.dataLayer).to.not.be.undefined;
-    expect(globalMock.dataLayer.length).to.eq(0);
-    expect(globalMock.console.error.length).to.eq(0);
-    expect(globalMock.console.warn.length).to.eq(0);
     expect(observer.handlers.length).to.eq(1);
+    expect(globalMock.dataLayer.length).to.eq(0);
+
+    const [event] = expectParams(appender, 'log') as LogEvent[];
+    expect(event.level).to.eq(LogLevel.WARN);
+    expect(event.context?.reason).to.contain('push'); // just make sure the warning is related to push missing
 
     ExpectObserver.getInstance().cleanup(observer);
   });
