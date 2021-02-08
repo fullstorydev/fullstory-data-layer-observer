@@ -237,13 +237,22 @@ export class DataLayerObserver {
     let workingTarget = target;
     const targetValue = workingTarget.value;
 
-    /*
-    * We do a bit of magic when monitoring an Array target.
-    * We create separate targets for the `push` and `unshift` methods.
-    */
+    /**
+     * When the target is an Array, we create separate targets for the `push` and `unshift` methods.
+     * Some older browsers may not have these methods, so check before trying to shim.
+     */
     if (monitor && Array.isArray(targetValue)) {
-      this.registerTarget(DataLayerTarget.find(`${target.path}.unshift`), options, destination, false, true, debug);
-      workingTarget = DataLayerTarget.find(`${target.path}.push`);
+      if (targetValue.push && targetValue.unshift) {
+        this.registerTarget(DataLayerTarget.find(`${target.path}.unshift`), options, destination, false, true, debug);
+        workingTarget = DataLayerTarget.find(`${target.path}.push`);
+      } else {
+        Logger.getInstance().warn(LogMessageType.MonitorCreateError, {
+          path: workingTarget.path,
+          property: workingTarget.property,
+          selector: workingTarget.selector,
+          reason: 'Browser does not support push and unshift',
+        });
+      }
     }
 
     const handler = this.addHandler(workingTarget, !!debug);
