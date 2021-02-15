@@ -10,6 +10,12 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.6.0
+
+- `enumerate` option added to `convert` operator
+- Tealium sample updated to use `enumerate` option
+- Added `order_` property selector to Tealium sample
+
 ### 1.5.2
 
 - Check if `push` and `unshift` exist in older browsers
