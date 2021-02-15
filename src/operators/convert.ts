@@ -26,7 +26,7 @@ export class ConvertOperator implements Operator {
     force: { required: false, type: ['boolean'] },
     index: { required: false, type: ['number'] },
     preserveArray: { required: false, type: ['boolean'] },
-    properties: { required: false, type: ['string,object'] }, // NOTE an typeof array is object
+    properties: { required: false, type: ['string,object'] }, // NOTE typeof array is object
     type: { required: false, type: ['string'] },
   };
 
