@@ -559,6 +559,8 @@ describe('Tealium to FullStory rules', () => {
     const [id, payload] = expectParams(globalMock.FS, 'event');
     expect(id).to.eq('product_view');
     expect(payload.product_id).to.eql(tealiumRetail.product_id);
+    expect(payload.order_total).to.eql(54.47);
+    expect(payload.product_discount_amount).to.eql(2.98); // NOTE list reduced to single value
     expect(payload.customer_first_name).to.be.undefined;
     expect(payload.customer_last_name).to.be.undefined;
     expect(payload.customer_email).to.be.undefined;
@@ -582,7 +584,7 @@ describe('Tealium to FullStory rules', () => {
     setTimeout(() => {
       const [id, payload] = expectParams(globalMock.FS, 'event');
       expect(id).to.eq('product_view');
-      expect(payload.product_id).to.eql(['PROD789']);
+      expect(payload.product_id).to.eql('PROD789');
     }, DataHandler.debounceTime * 1.5);
 
     // NOTE this is an invalid property to monitor because it is not picked

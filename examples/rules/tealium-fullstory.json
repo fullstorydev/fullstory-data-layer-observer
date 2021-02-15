@@ -3,7 +3,7 @@
     {
       "id": "fs-tealium-event",
       "description": "Send Tealium data (except for customer personal details) for FS.event. See https://community.tealiumiq.com/t5/Data-Layer/Data-Layer-Definition-Retail/ta-p/17227.",
-      "source": "utag.data[^(brand_,browse_,cart_,category_,customer_,language_,page_,product_,search_,site_,tealium_event)]",
+      "source": "utag.data[^(brand_,browse_,cart_,category_,customer_,language_,order_,page_,product_,search_,site_,tealium_event)]",
       "operators": [
         {
           "name": "query",
@@ -15,13 +15,7 @@
         },
         {
           "name": "convert",
-          "properties": "cart_product_quantity,cart_total_items,product_quantity,search_results",
-          "type": "int"
-        },
-        {
-          "name": "convert",
-          "properties": "cart_product_price,cart_total_value,order_discount_amount,order_merchandise_total,order_shipping_amount,order_subtotal,order_tax_amount,order_total,product_discount_amount,product_original_price,product_price",
-          "type": "real"
+          "enumerate": true
         },
         {
           "name": "insert",

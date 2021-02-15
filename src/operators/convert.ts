@@ -4,10 +4,11 @@ import { Logger, LogMessageType } from '../utils/logger';
 type ConvertibleType = 'bool' | 'date' | 'int' | 'real' | 'string';
 
 export interface ConvertOperatorOptions extends OperatorOptions {
+  enumerate?: boolean;
   force?: boolean;
   preserveArray?: boolean;
-  properties: string | string[];
-  type: ConvertibleType;
+  properties?: string | string[];
+  type?: ConvertibleType;
 }
 
 /**
@@ -21,11 +22,12 @@ export interface ConvertOperatorOptions extends OperatorOptions {
  */
 export class ConvertOperator implements Operator {
   static specification = {
+    enumerate: { required: false, type: ['boolean'] },
     force: { required: false, type: ['boolean'] },
     index: { required: false, type: ['number'] },
     preserveArray: { required: false, type: ['boolean'] },
-    properties: { required: true, type: ['string,object'] }, // NOTE an typeof array is object
-    type: { required: true, type: ['string'] },
+    properties: { required: false, type: ['string,object'] }, // NOTE an typeof array is object
+    type: { required: false, type: ['string'] },
   };
 
   readonly index: number;
@@ -41,17 +43,8 @@ export class ConvertOperator implements Operator {
       case 'bool': return (value === 'true' || value === 'TRUE' || value === 'True');
       case 'date': return new Date(value);
       case 'int':
-        if (!value) {
-          return 0;
-        }
-        return parseInt(value, 10);
-
       case 'real':
-        if (!value) {
-          return 0.0;
-        }
-        return parseFloat(value);
-
+        return !value ? 0 : ConvertOperator.enumerate(value);
       case 'string':
         switch (typeof value) {
           case 'boolean': return Boolean(value).toString();
@@ -63,42 +56,89 @@ export class ConvertOperator implements Operator {
     }
   }
 
+  /**
+   * Converts a string into a number or returns NaN if the value
+   * is not "numeric".
+   * @param value String representation of a numeric value
+   */
+  static enumerate(value: string): number {
+    const parsed = parseFloat(value);
+    // NOTE use isNaN(string) to ensure the string value is numeric
+    // normally Number.isNaN(value) would convert 12-26-2020 to 12
+    // @ts-ignore to isNaN(string)
+    return !isNaN(value) && !Number.isNaN(parsed) ? parsed : NaN; // eslint-disable-line no-restricted-globals
+  }
+
+  /**
+   * Lists any enumberable properties (strings or arrays of strings) in an object.
+   * @param obj Object to find supported properties that can be enumerated.
+   */
+  static enumerableProperties(obj: any): string[] {
+    return Object.getOwnPropertyNames(obj).filter((key) => typeof obj[key] === 'string'
+      || (Array.isArray(obj[key]) && typeof obj[key][0] === 'string'));
+  }
+
   handleData(data: any[]): any[] | null {
     let { properties } = this.options;
-    const { force, preserveArray, type } = this.options;
+    const {
+      enumerate, force, preserveArray, type,
+    } = this.options;
 
     if (typeof properties === 'string') {
       properties = properties.split(',').map((property) => property.trim()); // auto-correct if the CSV has spaces
     }
 
-    // NOTE if * is supplied, convert all properties
-    const list = properties[0] === '*' ? Object.getOwnPropertyNames(data[this.index]) : properties;
-
     const converted: { [key: string]: any } = { ...data[this.index] };
-    list.forEach((property) => {
-      const original = data[this.index][property];
 
-      if ((original !== undefined && original !== null) || force) {
-        // if the intended conversion is on a list, convert all members in the list
-        if (Array.isArray(original)) {
-          // convert and set as a single value if it is a single item list
-          if ((original as any[]).length === 1 && !preserveArray) {
-            converted[property] = ConvertOperator.convert(type, (original as any[])[0]);
-            ConvertOperator.verifyConversion(type, property, converted, original);
-          } else {
+    // if enumerate is set, try to coerce all strings into an equivalent numeric value
+    if (enumerate) {
+      const enumerableProps = ConvertOperator.enumerableProperties(data[this.index]);
+      enumerableProps.forEach((property) => {
+        if (typeof data[this.index][property] === 'string') {
+          converted[property] = ConvertOperator.convert('real', data[this.index][property]);
+          ConvertOperator.verifyConversion('real', property, converted, data[this.index]);
+        } else {
+          converted[property] = []; // this prevents mutating the actual data layer
+          for (let i = 0; i < (data[this.index][property] as string[]).length; i += 1) {
+            converted[property].push(ConvertOperator.convert('real', data[this.index][property][i]));
+          }
+          ConvertOperator.verifyConversion('real', property, converted, data[this.index]);
+        }
+      });
+    }
+
+    if (properties && type) {
+      // NOTE if * is supplied, convert all properties
+      const list = properties[0] === '*' ? Object.getOwnPropertyNames(data[this.index]) : properties;
+
+      list.forEach((property) => {
+        const original = data[this.index][property];
+        if ((original !== undefined && original !== null) || force) {
+          // if the intended conversion is on a list, convert all members in the list
+          if (Array.isArray(original)) {
             converted[property] = []; // this prevents mutating the actual data layer
             for (let i = 0; i < (original as any[]).length; i += 1) {
               const item = (original as any[])[i];
               converted[property].push(ConvertOperator.convert(type, item));
-              ConvertOperator.verifyConversion(type, i, converted, original);
             }
+            ConvertOperator.verifyConversion(type, property, converted, data[this.index]);
+          } else {
+            converted[property] = ConvertOperator.convert(type, original);
+            ConvertOperator.verifyConversion(type, property, converted, data[this.index]);
           }
-        } else {
-          converted[property] = ConvertOperator.convert(type, original);
-          ConvertOperator.verifyConversion(type, property, converted, original);
         }
-      }
-    });
+      });
+    }
+
+    // reduce any converted single item lists to a single value
+    if (!preserveArray) {
+      Object.getOwnPropertyNames(converted).forEach((property: string) => {
+        if (Array.isArray(converted[property]) && converted[property].length === 1) {
+          const [singleValue] = converted[property];
+          converted[property] = singleValue;
+        }
+      });
+    }
 
     const clone = data.slice();
     clone.splice(this.index, 1, converted);
@@ -110,7 +150,17 @@ export class ConvertOperator implements Operator {
     const validator = new OperatorValidator(this.options);
     validator.validate(ConvertOperator.specification);
 
-    const { force, type } = this.options;
+    const {
+      enumerate, force, properties, type,
+    } = this.options;
+
+    if (enumerate === undefined && properties === undefined) {
+      throw validator.throwError('properties', 'must be specified if \'enumerate\' is undefined and vice versa');
+    }
+
+    if (enumerate !== undefined && typeof enumerate !== 'boolean') {
+      throw validator.throwError('enumerate', 'should be a boolean');
+    }
 
     if (force !== undefined && typeof force !== 'boolean') {
       throw validator.throwError('force', 'should be a boolean');
@@ -120,32 +170,48 @@ export class ConvertOperator implements Operator {
       throw validator.throwError('force', 'can not forcibly convert dates');
     }
 
-    if (type !== 'bool' && type !== 'int' && type !== 'real' && type !== 'string' && type !== 'date') {
+    if (properties !== undefined && !type) {
+      throw validator.throwError('type', 'must be declared when using \'properties\'');
+    }
+
+    if (type && (type !== 'bool' && type !== 'int' && type !== 'real' && type !== 'string' && type !== 'date')) {
       throw validator.throwError('type', `unknown type '${type}' used`);
     }
   }
 
-  private static verifyConversion(type: string, property: string | number, converted: any, oldValue: any) {
+  /**
+   * Verifies that the conversion was successful. If not, a warning error will be logged and the value reset to its
+   * original value.
+   * @param type Intended conversion type
+   * @param property Property that was converted
+   * @param newMap Map containing all converted properties
+   * @param oldMap Map containing the original data (used to reset "converted value")
+   */
+  private static verifyConversion(type: string, property: string | number, newMap: any, oldMap: any) {
+    const newValue = newMap[property];
+    const oldValue = oldMap[property];
+
     let verified = true;
 
     // verify it's a number
-    if ((type === 'int' || type === 'real') && Number.isNaN(converted[property])) {
-      verified = false;
+    if ((type === 'int' || type === 'real')) {
+      verified = Array.isArray(newValue) ? newValue.every((value) => !Number.isNaN(value)) : !Number.isNaN(newValue);
     }
 
     // verify it's a date by checking the epoch
-    if (type === 'date' && Number.isNaN((converted[property] as Date).getTime())) {
-      verified = false;
+    if (type === 'date') {
+      verified = Array.isArray(newValue) ? newValue.every((value) => !Number.isNaN((value as Date).getTime()))
+        : !Number.isNaN((newValue as Date).getTime());
     }
 
-    // log error and reset to the original value
+    // log warning and reset to the original value
     if (!verified) {
-      Logger.getInstance().error(LogMessageType.OperatorError, {
+      Logger.getInstance().warn(LogMessageType.OperatorError, {
         operator: 'convert',
         property: property.toString(),
         reason: `Failed to convert to ${type} for value ${oldValue}`,
       });
-      converted[property] = oldValue; // eslint-disable-line no-param-reassign
+      newMap[property] = oldValue; // eslint-disable-line no-param-reassign
     }
   }
 }
