@@ -3,6 +3,7 @@ import 'mocha';
 
 import { OperatorFactory } from '../src/factory';
 import { ConvertOperator } from '../src/operators';
+import { expectInvalid, expectValid } from './utils/mocha';
 
 const item = {
   quantity: '10',
@@ -21,40 +22,33 @@ const item = {
 
 describe('convert operator unit tests', () => {
   it('it should validate options', () => {
-    expect(() => new ConvertOperator({
+    expectValid({
       name: 'convert', force: true, properties: 'quantity', type: 'int',
-    }).validate())
-      .to.not.throw();
-    expect(() => new ConvertOperator({
+    });
+    expectValid({
       name: 'convert', properties: 'salePrice', preserveArray: true, type: 'int',
-    }).validate())
-      .to.not.throw();
-    expect(() => new ConvertOperator({
+    });
+    expectValid({
       name: 'convert', properties: 'quantity', type: 'int', index: 1,
-    }).validate())
-      .to.not.throw();
-    expect(() => new ConvertOperator({ name: 'convert', properties: 'price,tax', type: 'real' }).validate())
-      .to.not.throw();
-    expect(() => new ConvertOperator({ name: 'convert', properties: ['price', 'tax'], type: 'real' }).validate())
-      .to.not.throw();
-    // @ts-ignore
-    expect(() => new ConvertOperator({ name: 'convert', properties: ['price', 'tax'], type: 'array' }).validate())
-      .to.throw();
-    // @ts-ignore
-    expect(() => new ConvertOperator({ name: 'convert', type: 'array' }).validate())
-      .to.throw();
-    // @ts-ignore
-    expect(() => new ConvertOperator({ name: 'convert', properties: 'quantity' }).validate())
-      .to.throw();
-    expect(() => new ConvertOperator({
-      // @ts-ignore
+    });
+    expectValid({ name: 'convert', enumerate: true });
+    expectValid({
+      name: 'convert', enumerate: true, properties: 'available', type: 'bool',
+    });
+    expectValid({ name: 'convert', properties: 'price,tax', type: 'real' });
+    expectValid({ name: 'convert', properties: ['price', 'tax'], type: 'real' });
+
+    expectInvalid({ name: 'convert' }, 'properties or enumerate or both is needed');
+    expectInvalid({ name: 'convert', properties: 'price' }, 'must also specify type');
+    expectInvalid({ name: 'convert', type: 'real' }, 'must specify properties');
+    expectInvalid({ name: 'convert', enumerate: 'true' }, 'enumerate should be a bool');
+    expectInvalid({ name: 'convert', properties: ['price', 'tax'], type: 'array' }, 'array is not valid');
+    expectInvalid({
       name: 'convert', properties: ['price', 'tax'], type: 'real', force: 1,
-    }).validate())
-      .to.throw();
-    expect(() => new ConvertOperator({
+    }, 'force should be a bool');
+    expectInvalid({
       name: 'convert', properties: 'saleDate', type: 'date', force: true,
-    }).validate())
-      .to.throw();
+    }, 'force not supported on date');
   });
 
   it('it should convert to int', () => {
@@ -299,5 +293,56 @@ describe('convert operator unit tests', () => {
     expect(reals.discountTiers).to.eql([24.99, 19.99, 12.99]);
     expect(reals.size).to.eq(5); // non-converted properties remain
     expect(item.discountTiers).to.eql(['24.99', '19.99', '12.99']); // don't mutate the actual data layer
+  });
+
+  it('strings can be enumerated', () => {
+    const range = [...Array(101).keys()];
+    range.forEach((number) => {
+      expect(ConvertOperator.enumerate(`${number}`)).to.eq(number);
+    });
+    expect(ConvertOperator.enumerate('-1')).to.eql(-1);
+  });
+
+  it('invalid strings should not be enumerated', () => {
+    expect(ConvertOperator.enumerate('foo')).to.eql(NaN);
+    expect(ConvertOperator.enumerate('1foo2')).to.eql(NaN);
+    expect(ConvertOperator.enumerate('1 foo 2')).to.eql(NaN);
+    expect(ConvertOperator.enumerate('1 2')).to.eql(NaN);
+  });
+
+  it('strings can be converted automatically to numbers', () => {
+    const operator = OperatorFactory.create('convert', { name: 'convert', enumerate: true });
+    const [enumerated] = operator.handleData([item])!;
+    const {
+      quantity, price, available, saleDate, type, vat, salePrice, discountTiers,
+    } = enumerated;
+
+    expect(quantity).to.eq(10);
+    expect(price).to.eq(29.99);
+    expect(available).to.eq('false');
+    expect(saleDate).to.eq('12-26-2020');
+    expect(vat).to.eq(null);
+    expect(type).to.eq(true);
+    expect(salePrice).to.eq(24.99); // NOTE because preserveArray is not true, it becomes a single value
+    expect(discountTiers).to.eql([24.99, 19.99, 12.99]);
+  });
+
+  it('strings can be converted automatically to numbers while converting specific properties', () => {
+    const operator = OperatorFactory.create('convert', {
+      name: 'convert', enumerate: true, properties: 'available', type: 'bool',
+    });
+    const [enumerated] = operator.handleData([item])!;
+    const {
+      quantity, price, available, saleDate, type, vat, salePrice, discountTiers,
+    } = enumerated;
+
+    expect(quantity).to.eq(10);
+    expect(price).to.eq(29.99);
+    expect(available).to.eq(false);
+    expect(saleDate).to.eq('12-26-2020');
+    expect(vat).to.eq(null);
+    expect(type).to.eq(true);
+    expect(salePrice).to.eq(24.99); // NOTE because preserveArray is not true, it becomes a single value
+    expect(discountTiers).to.eql([24.99, 19.99, 12.99]);
   });
 });

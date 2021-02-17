@@ -6,10 +6,11 @@ Convert is most useful when paired with `FS.event` for cart and checkout events 
 
 ## Options
 
-Options with an asterisk are required.
+Options with an asterisk are required. Note that `enumerate` can be used by itself or with `properties`.
 
 | Option | Type | Default | Description |
 | ------ | ---- | ------- | ----------- |
+| `enumerate`* | `boolean` | `false` | Automatically converts all string values into their numeric equivalent. |
 | `force` | `boolean` | `false` | If the property is undefined or has value `null`, forcibly add the property with value `0`, `0.0`,`false` or empty string. |
 | `index` | `number` | `0` | Position of the object to convert in the operator input list. |
 | `preserveArray` | `boolean` | `false` | If the conversion value is a list, keep the array type even if the array has a single value. |
@@ -27,8 +28,11 @@ Options with an asterisk are required.
 ```javascript
 {
  source: 'digitalData.cart.price',
- operators: [ { name: 'convert', properties: 'basePrice,taxRate,shipping,priceWithTax,cartTotal', type: 'real' } ],
- destination: 'FS.identify'
+ operators: [
+   { name: 'convert', properties: 'basePrice,taxRate,shipping,priceWithTax,cartTotal', type: 'real' },
+   { name: 'insert', value: 'Product Viewed' },
+ ],
+ destination: 'FS.event'
 }
 ```
 
@@ -54,6 +58,7 @@ Options with an asterisk are required.
 
 ```javascript
 [
+ 'Product Viewed',
  {
   basePrice: 15.55,
   voucherCode: '',
@@ -68,15 +73,18 @@ Options with an asterisk are required.
 ]
 ```
 
-## Converting all cart prices
+## Automatically convert all "numeric" strings
 
 ### Rule
 
 ```javascript
 {
- source: 'digitalData.cart.price[(basePrice,cartTotal,priceWithTax)]',
- operators: [ { name: 'convert', properties: '*', type: 'real' } ],
- destination: 'FS.identify'
+ source: 'digitalData.cart.price[(available,basePrice,cartTotal,priceWithTax)]',
+ operators: [
+   { name: 'convert', enumerate: true },
+   { name: 'insert', value: 'Product Viewed' },
+ ],
+ destination: 'FS.event'
 }
 ```
 
@@ -85,6 +93,7 @@ Options with an asterisk are required.
 ```javascript
 [
  {
+  available: 'false',
   basePrice: '15.55',
   priceWithTax: '16.95',
   cartTotal: '21.95',
@@ -96,7 +105,51 @@ Options with an asterisk are required.
 
 ```javascript
 [
+ 'Product Viewed',
  {
+  available: 'false',
+  basePrice: 15.55,
+  priceWithTax: 16.95,
+  cartTotal: 21.95,
+ }
+]
+```
+
+## Convert "numeric" strings with specific property conversions
+
+### Rule
+
+```javascript
+{
+ source: 'digitalData.cart.price[(basePrice,cartTotal,priceWithTax,available)]',
+ operators: [
+   { name: 'convert', enumerate: true, properties: 'available', type: 'bool' },
+   { name: 'insert', value: 'Product Viewed' },
+ ],
+ destination: 'FS.event'
+}
+```
+
+### Input
+
+```javascript
+[
+ {
+  available: 'false',
+  basePrice: '15.55',
+  priceWithTax: '16.95',
+  cartTotal: '21.95',
+ }
+]
+```
+
+### Output
+
+```javascript
+[
+ 'Product Viewed',
+ {
+   available: false,
   basePrice: 15.55,
   priceWithTax: 16.95,
   cartTotal: 21.95,

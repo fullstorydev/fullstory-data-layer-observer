@@ -4,6 +4,7 @@ import { MockClass, Call } from '../mocks/mock';
 import { DataLayerDetail } from '../../src/event';
 import { DataLayerObserver, DataLayerConfig } from '../../src/observer';
 import MonitorFactory from '../../src/monitor-factory';
+import { BuiltinOptions, OperatorFactory } from '../../src/factory';
 
 /**
  * Tests whether a call queue has one Call and returns it.
@@ -165,4 +166,25 @@ export class ExpectObserver {
 
     return ExpectObserver.instance;
   }
+}
+
+/**
+ * Expects an Operator's options to be valid.
+ * @param options The OperatorOptions passed to the Operator
+ * @param message An optional message that describes the use case of options
+ */
+export function expectValid(options: BuiltinOptions, message?: string) {
+  const { name } = options;
+  expect(() => OperatorFactory.create(name, options).validate(), message).to.not.throw();
+}
+
+/**
+ * Expects an Operator's options to be invalid.
+ * @param operatorName The Operator's name
+ * @param options The OperatorOptions passed to the Operator
+ * @param message An optional message that describes the use case of options
+ */
+export function expectInvalid(options: BuiltinOptions, message?: string) {
+  const { name } = options;
+  expect(() => OperatorFactory.create(name, options).validate(), message).to.throw();
 }
