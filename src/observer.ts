@@ -91,6 +91,7 @@ export class DataLayerObserver {
     readOnLoad: false,
     validateRules: true,
   }) {
+    const startTime = Date.now();
     const { appender, logLevel, rules } = config;
     if (appender) {
       if (typeof appender === 'string') {
@@ -108,7 +109,9 @@ export class DataLayerObserver {
 
     if (rules) {
       rules.forEach((rule: DataLayerRule) => this.registerRule(rule));
+      Logger.getInstance().info(`DLO rule count: ${rules.length}`);
     }
+    Logger.getInstance().info(`DLO constructor time (ms): ${startTime - Date.now()}`);
   }
 
   /**

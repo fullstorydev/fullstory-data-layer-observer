@@ -68,7 +68,7 @@ export default class ShimMonitor extends Monitor {
 
     this.object[this.property] = (...args: any[]): any => {
       try {
-        this.emit(args);
+        this.emit(args); // Must never throw an error (see try/catch in `Monitor.emit`)
         return this.state.apply(this.object, args);
       } catch (err) {
         Logger.getInstance().error(LogMessageType.MonitorCallError,
