@@ -89,7 +89,7 @@ export class FullStoryAppender implements LogAppender {
     const fs = (window as any)[(window as any)._fs_namespace]; // eslint-disable-line no-underscore-dangle
 
     const customEventName = 'Data Layer Observer';
-    const customEventSource = 'dlo';
+    const customEventSource = 'dlo-log';
 
     if (fs) {
       /* eslint-disable camelcase */

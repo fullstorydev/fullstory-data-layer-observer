@@ -65,7 +65,7 @@ describe('logger unit tests', () => {
     expect(event.context.path).to.eq(context.path);
     expect(event.context.selector).to.eq(context.selector);
     expect(event.context.source).to.eq(context.source);
-    expect(source).to.eq('dlo');
+    expect(source).to.eq('dlo-log');
 
     logger.info('Data layer rules loaded', context);
     expectNoCalls((window as any).FS, 'event');
