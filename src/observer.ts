@@ -109,9 +109,9 @@ export class DataLayerObserver {
 
     if (rules) {
       rules.forEach((rule: DataLayerRule) => this.registerRule(rule));
-      Logger.getInstance().info(`DLO rule count: ${rules.length}`);
+      Logger.getInstance().record('DLO rule count', { numericValue: rules.length });
     }
-    Logger.getInstance().info(`DLO constructor time (ms): ${startTime - Date.now()}`);
+    Logger.getInstance().record('DLO constructor time', { numericValue: startTime - Date.now() });
   }
 
   /**

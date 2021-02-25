@@ -11,7 +11,8 @@ export enum LogLevel {
   ERROR,
   WARN,
   INFO,
-  DEBUG
+  DEBUG,
+  RECORD, // Record information for statistical analysis
 }
 
 export enum LogMessageType {
@@ -28,6 +29,7 @@ export enum LogMessageType {
   ObserverRulesNone = 'No Rules Defined',
   RuleInvalid = 'Invalid Rule',
   RuleRegistrationError = 'Rule Registration Error',
+  ObserverInitializationError = 'Observer Initialization Error',
 }
 
 export enum LogMessage {
@@ -59,6 +61,9 @@ export class ConsoleAppender implements LogAppender {
     const consoleMessage = `${message}${context ? ` ${JSON.stringify(context)}` : ''}`;
 
     switch (level) {
+      case LogLevel.RECORD:
+        // By default we do nothing with stats
+        return undefined;
       case LogLevel.ERROR: return console.error(consoleMessage);
       case LogLevel.WARN: return console.warn(consoleMessage);
       case LogLevel.INFO: return console.info(consoleMessage);
@@ -100,8 +105,14 @@ export class FullStoryAppender implements LogAppender {
 
         this.timeoutId = window.setTimeout(() => {
           this.timeoutId = null;
-          fs.event(customEventName, customEventPayload, customEventSource);
+          if (event.level === LogLevel.RECORD) {
+            // TODO handle LogLevel.RECORD events with upcoming fs stats call
+          } else {
+            fs.event(customEventName, customEventPayload, customEventSource);
+          }
         }, FullStoryAppender.debounceTime);
+      } else if (event.level === LogLevel.RECORD) {
+        // TODO handle LogLevel.RECORD events with upcoming fs stats call
       } else {
         fs.event(customEventName, customEventPayload, customEventSource);
       }
@@ -141,6 +152,7 @@ export interface LogContext {
   property?: string;
   selector?: string;
   reason?: string;
+  numericValue?: number;
 }
 
 /**
@@ -201,7 +213,7 @@ export class Logger {
    * @param context provides additional metadata related to the log event
    */
   private log(level: LogLevel, message: string, context?: LogContext) {
-    if (level <= this.level) {
+    if (level <= this.level || level === LogLevel.RECORD) {
       this.appender.log({
         level,
         message,
@@ -224,5 +236,10 @@ export class Logger {
 
   debug(message: string, context?: LogContext) {
     this.log(LogLevel.DEBUG, message, context);
+  }
+
+  // Record information for statistical analysis
+  record(message: string, context?: LogContext) {
+    this.log(LogLevel.RECORD, message, context);
   }
 }

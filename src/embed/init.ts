@@ -70,10 +70,10 @@ function _dlo_collectRules(): any[] {
         results.push(rule);
       });
     });
-    Logger.getInstance().info(`DLO rules processing time (ms): ${startTime - Date.now()}`);
+    Logger.getInstance().record('DLO rule processing time', { numericValue: startTime - Date.now() });
     return results;
   } catch (err) {
-    Logger.getInstance().error(`Error collecting DLO rules: ${err}`);
+    Logger.getInstance().error(LogMessageType.RuleRegistrationError, { reason: `Error: ${err}` });
     return [];
   }
 }
@@ -105,9 +105,9 @@ function _dlo_initializeFromWindow() {
       urlValidator: win._dlo_urlValidator || undefined,
       rules,
     });
-    Logger.getInstance().info(`DLO init (ms): ${startTime - Date.now()}`);
+    Logger.getInstance().record('DLO initialization time', { numericValue: startTime - Date.now() });
   } catch (err) {
-    Logger.getInstance().error(`Error initializing DLO: ${err}`);
+    Logger.getInstance().error(LogMessageType.ObserverInitializationError, { reason: `Error: ${err}` });
   }
 }
 
