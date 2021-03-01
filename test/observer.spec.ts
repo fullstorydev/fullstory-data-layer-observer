@@ -572,6 +572,10 @@ describe('DataLayerObserver unit tests', () => {
     expect(observer.handlers.length).to.eq(1);
     expect(globalMock.dataLayer.length).to.eq(0);
 
+    // Ignore the first two as they are observation messages
+    expectParams(appender, 'log');
+    expectParams(appender, 'log');
+
     const [event] = expectParams(appender, 'log') as LogEvent[];
     expect(event.level).to.eq(LogLevel.WARN);
     expect(event.context?.reason).to.contain('push'); // just make sure the warning is related to push missing
@@ -635,6 +639,10 @@ describe('DataLayerObserver unit tests', () => {
     (globalMock.digitalData as any).missing = { found: true };
 
     setTimeout(() => {
+      // Ignore the first two as they are observation messages
+      expectParams(appender, 'log');
+      expectParams(appender, 'log');
+
       expectNoCalls(appender, 'log');
 
       const [found] = expectParams(globalMock.console, 'log');

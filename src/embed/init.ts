@@ -53,49 +53,62 @@ window['_dlo_rulesFromOpsTeam'] = [
 */
 
 function _dlo_collectRules(): any[] {
-  const results: any[] = [];
-  Object.getOwnPropertyNames(window).forEach((propName) => {
-    if (propName.startsWith('_dlo_rules') === false) return;
+  try {
+    const startTime = Date.now();
+    const results: any[] = [];
+    Object.getOwnPropertyNames(window).forEach((propName) => {
+      if (propName.startsWith('_dlo_rules') === false) return;
 
-    const prop = (window as { [key: string]: any })[propName];
-    if (Array.isArray(prop) === false) {
-      Logger.getInstance().warn(LogMessageType.RuleInvalid,
-        { property: prop, reason: 'Rules list must be an array' });
-      return;
-    }
+      const prop = (window as { [key: string]: any })[propName];
+      if (Array.isArray(prop) === false) {
+        Logger.getInstance().warn(LogMessageType.RuleInvalid,
+          { property: prop, reason: 'Rules list must be an array' });
+        return;
+      }
 
-    prop.forEach((rule: any) => {
-      results.push(rule);
+      prop.forEach((rule: any) => {
+        results.push(rule);
+      });
     });
-  });
-  return results;
+    Logger.getInstance().record('DLO rule processing time', { numericValue: startTime - Date.now() });
+    return results;
+  } catch (err) {
+    Logger.getInstance().error(LogMessageType.RuleRegistrationError, { reason: `Error: ${err}` });
+    return [];
+  }
 }
 
 function _dlo_initializeFromWindow() {
-  const win = (window as { [key: string]: any });
+  try {
+    const startTime = Date.now();
+    const win = (window as { [key: string]: any });
 
-  if (win._dlo_observer) {
-    Logger.getInstance().warn(LogMessageType.ObserverMultipleLoad);
-    return;
+    if (win._dlo_observer) {
+      Logger.getInstance().warn(LogMessageType.ObserverMultipleLoad);
+      return;
+    }
+
+    // Read rules
+    const rules = _dlo_collectRules();
+    if (rules.length === 0) {
+      Logger.getInstance().warn(LogMessageType.ObserverRulesNone);
+    }
+
+    win._dlo_observer = new DataLayerObserver({
+      appender: win._dlo_appender || undefined,
+      beforeDestination: win._dlo_beforeDestination || undefined,
+      logLevel: win._dlo_logLevel || undefined,
+      previewMode: win._dlo_previewMode === true,
+      previewDestination: win._dlo_previewDestination || undefined,
+      readOnLoad: win._dlo_readOnLoad === true,
+      validateRules: win._dlo_validateRules === true,
+      urlValidator: win._dlo_urlValidator || undefined,
+      rules,
+    });
+    Logger.getInstance().record('DLO initialization time', { numericValue: startTime - Date.now() });
+  } catch (err) {
+    Logger.getInstance().error(LogMessageType.ObserverInitializationError, { reason: `Error: ${err}` });
   }
-
-  // Read rules
-  const rules = _dlo_collectRules();
-  if (rules.length === 0) {
-    Logger.getInstance().warn(LogMessageType.ObserverRulesNone);
-  }
-
-  win._dlo_observer = new DataLayerObserver({
-    appender: win._dlo_appender || undefined,
-    beforeDestination: win._dlo_beforeDestination || undefined,
-    logLevel: win._dlo_logLevel || undefined,
-    previewMode: win._dlo_previewMode === true,
-    previewDestination: win._dlo_previewDestination || undefined,
-    readOnLoad: win._dlo_readOnLoad === true,
-    validateRules: win._dlo_validateRules === true,
-    urlValidator: win._dlo_urlValidator || undefined,
-    rules,
-  });
 }
 
 _dlo_initializeFromWindow();
