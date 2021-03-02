@@ -160,7 +160,13 @@ export class SuffixOperator implements Operator {
   }
 
   handleData(data: any[]): any[] | null {
-    const index = this.index >= 0 ? this.index : data.length + this.index;
+    let index = this.index >= 0 ? this.index : data.length + this.index;
+
+    // check if the `source` param was included and if so decrement the index
+    if (typeof data[index] === 'string') {
+      index -= 1;
+    }
+
     const suffixedData = data;
     suffixedData[index] = this.mapToSuffix(suffixedData[index]);
 

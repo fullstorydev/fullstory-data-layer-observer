@@ -262,4 +262,14 @@ describe('suffix operator unit test', () => {
     expect(eventName).to.eq('Message Event');
     expect(suffixedObject.message_str).to.eq(message);
   });
+
+  it('it should account for FS.event source param usage', () => {
+    const operator = new SuffixOperator({ name: 'suffix' });
+    expect(operator).to.not.be.undefined;
+
+    const [eventName, suffixedObject, source] = operator.handleData(['event', testData, 'mocha'])!;
+    expect(eventName).to.eq('event');
+    expect(source).to.eq('mocha');
+    expect(suffixedObject.id_str).to.not.be.undefined;
+  });
 });
