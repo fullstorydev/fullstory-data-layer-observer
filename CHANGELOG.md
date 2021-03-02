@@ -10,6 +10,11 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.6.1
+
+- Fix incorrect suffix behavior when using FS.event source parameter
+- FullStoryAppender logger source updated to `dlo-log`
+
 ### 1.6.0
 
 - `enumerate` option added to `convert` operator
