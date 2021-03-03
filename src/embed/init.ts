@@ -83,6 +83,12 @@ function _dlo_initializeFromWindow() {
     const startTime = Date.now();
     const win = (window as { [key: string]: any });
 
+    /*
+    This is called so that custom appenders (e.g. 'fullstory') are initialized early enough
+    to correctly log initialization errors and recorded stats
+    */
+    Logger.getInstance(win._dlo_appender);
+
     if (win._dlo_observer) {
       Logger.getInstance().warn(LogMessageType.ObserverMultipleLoad);
       return;
