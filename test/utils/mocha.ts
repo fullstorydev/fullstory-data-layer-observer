@@ -1,10 +1,78 @@
+import deepcopy from 'deepcopy';
 import { expect } from 'chai';
 
+import FullStory from '../mocks/fullstory-recording';
 import { MockClass, Call } from '../mocks/mock';
 import { DataLayerDetail } from '../../src/event';
-import { DataLayerObserver, DataLayerConfig } from '../../src/observer';
+import { DataLayerObserver, DataLayerConfig, DataLayerRule } from '../../src/observer';
 import MonitorFactory from '../../src/monitor-factory';
 import { BuiltinOptions, OperatorFactory } from '../../src/factory';
+
+/**
+ * Gets or sets a global object. Use this rather than writing `globalThis as any`.
+ * @param key The key corresponding to the global object (e.g. FS in window['FS']).
+ * @param value Optional object that when provided will set the global's value
+ */
+export function global(key: string, value?: any): any {
+  if (value) {
+    (globalThis as any)[key] = value;
+  }
+
+  return (globalThis as any)[key];
+}
+
+/**
+ * A setup function that inits the global object (e.g. window) with desired expandos.
+ * Each expando will be deep copied to prevent cross-contamination between tests.
+ * Additionally, a FullStory mock will also be added to the `FS` expando.
+ * @param tuples List of expando tuples (e.g. ['FS', object])
+ */
+export function setupGlobals(tuples: [string, any][]) {
+  tuples.forEach((tuple) => {
+    expect(tuple[0]).to.be.ok;
+    expect(tuple[1]).to.be.ok;
+    global(tuple[0], deepcopy(tuple[1]));
+  });
+
+  global('FS', new FullStory());
+}
+
+/**
+ * Expects deeply equality between two objects.
+ * @param a First object to compare
+ * @param b Second object to compare
+ */
+export function expectEqual(a: any, b: any) {
+  expect(a).to.eql(b);
+}
+
+/**
+ * Expects two objects to have matching values for given key(s).
+ * @param a First object to compare
+ * @param b Second object to compare
+ * @param key List of key(s)
+ */
+export function expectMatch(a: any, b: any, ...key: string[]) {
+  key.forEach((k) => expect(a[k]).to.eql(b[k]));
+}
+
+/**
+ * Expects a specific type for an operand.
+ * @param type The expected type
+ * @param operand The operand to check
+ */
+export function expectType(type: string, operand: any) {
+  expect(typeof operand).to.eql(type);
+}
+
+/**
+ * Expects a list of specific properties to be undefined.
+ * @param keys List of properties to check if defined
+ * @param object Object that should not contain keys
+ */
+export function expectUndefined(object: any, ...key: string[]) {
+  key.forEach((k) => expect(object[k]).to.be.undefined);
+}
 
 /**
  * Tests whether a call queue has one Call and returns it.
@@ -30,7 +98,8 @@ export function expectCall(mock: MockClass, methodName: string, callQueueLength?
  * @param callQueueLength (optional) expected number of Calls in the queue; default is >= 0
  */
 export function expectNoCalls(mock: MockClass, methodName: string): void {
-  expect(mock.callQueues[methodName].length).to.eq(0);
+  expect(mock.callQueues[methodName].length, `Unexpected data in queue
+  ${JSON.stringify(mock.callQueues[methodName], null, 2)}`).to.eq(0);
 }
 
 /**
@@ -41,8 +110,7 @@ export function expectNoCalls(mock: MockClass, methodName: string): void {
  */
 export function expectParams(mock: MockClass, methodName: string, callQueueLength?: number): any[] {
   const { parameters } = expectCall(mock, methodName, callQueueLength);
-  expect(parameters).to.not.be.undefined;
-  expect(parameters).to.not.be.null;
+  expect(parameters).to.be.ok;
   return parameters;
 }
 
@@ -187,4 +255,33 @@ export function expectValid(options: BuiltinOptions, message?: string) {
 export function expectInvalid(options: BuiltinOptions, message?: string) {
   const { name } = options;
   expect(() => OperatorFactory.create(name, options).validate(), message).to.throw();
+}
+
+/**
+ * Expects and returns a specific rule from a list of rules.
+ * If a ruleset is not provided, the global `_dlo_rules` value will be used.
+ * @param id ID of the rule to retrieve
+ * @param ruleset List or rules to search
+ */
+export function expectRule(id: string, ruleset?: DataLayerRule[]): DataLayerRule {
+  const rules = ruleset || global('_dlo_rules');
+  expect(rules).to.be.ok;
+  expect(rules.length).to.be.greaterThan(0);
+
+  const rule = rules.find((r: DataLayerRule) => r.id === id);
+  expect(rule).to.be.ok;
+
+  return rule!;
+}
+
+/**
+ * A convenience method for `expectParams` that checks the global FullStory object.
+ * @param methodName FullStory API function (`methodName` arg for `expectParams`)
+ * @param namespace Global object if FullStory is not `FS`
+ */
+export function expectFS(methodName: 'event' | 'identify' | 'log' | 'setVars' | 'setUserVars',
+  namespace = 'FS'): any[] {
+  const fs = global(namespace);
+  expect(fs).to.be.ok;
+  return expectParams(fs, methodName);
 }
