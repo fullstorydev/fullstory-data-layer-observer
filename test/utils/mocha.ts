@@ -9,32 +9,41 @@ import MonitorFactory from '../../src/monitor-factory';
 import { BuiltinOptions, OperatorFactory } from '../../src/factory';
 
 /**
- * Gets or sets a global object. Use this rather than writing `globalThis as any`.
+ * Gets a globalThis object and expects a truthy value.
  * @param key The key corresponding to the global object (e.g. FS in window['FS']).
- * @param value Optional object that when provided will set the global's value
  */
-export function global(key: string, value?: any): any {
-  if (value) {
-    (globalThis as any)[key] = value;
-  }
-
-  return (globalThis as any)[key];
+export function expectGlobal(key: string): any {
+  const value = (globalThis as any)[key];
+  expect(value).to.be.ok;
+  return value;
 }
 
 /**
- * A setup function that inits the global object (e.g. window) with desired expandos.
- * Each expando will be deep copied to prevent cross-contamination between tests.
- * Additionally, a FullStory mock will also be added to the `FS` expando.
- * @param tuples List of expando tuples (e.g. ['FS', object])
+ * Expects a truthy value and stores it in globalThis.
+ * @param key The key corresponding to the global object (e.g. FS in window['FS']).
+ * @param value Object that when provided will set the global's value
  */
-export function setupGlobals(tuples: [string, any][]) {
-  tuples.forEach((tuple) => {
-    expect(tuple[0]).to.be.ok;
-    expect(tuple[1]).to.be.ok;
-    global(tuple[0], deepcopy(tuple[1]));
+export function setGlobal(key: string, value: any) {
+  expect(value).to.be.ok;
+  (globalThis as any)[key] = value;
+}
+
+/**
+ * A setup function that populates globalThis (e.g. window) with desired values.
+ * Each value will be deep copied to prevent cross-contamination between tests.
+ * Additionally, a FullStory mock will also be added to the `FS` key.
+ * @param globals List of global key:value pairs (e.g. ['FS', value])
+ */
+export function setupGlobals(globals: [string, any][]) {
+  expect(globals.length, 'A list of key:value pairs should be provided, if not, use `setGlobal`').to.be.greaterThan(0);
+
+  globals.forEach((global) => {
+    expect(global[0], 'Key must be provided to store global value').to.be.ok;
+    expect(global[1], 'Value must be defined or non-null').to.not.be.undefined;
+    setGlobal(global[0], deepcopy(global[1]));
   });
 
-  global('FS', new FullStory());
+  setGlobal('FS', new FullStory());
 }
 
 /**
@@ -264,7 +273,7 @@ export function expectInvalid(options: BuiltinOptions, message?: string) {
  * @param ruleset List or rules to search
  */
 export function expectRule(id: string, ruleset?: DataLayerRule[]): DataLayerRule {
-  const rules = ruleset || global('_dlo_rules');
+  const rules = ruleset || expectGlobal('_dlo_rules');
   expect(rules).to.be.ok;
   expect(rules.length).to.be.greaterThan(0);
 
@@ -281,7 +290,7 @@ export function expectRule(id: string, ruleset?: DataLayerRule[]): DataLayerRule
  */
 export function expectFS(methodName: 'event' | 'identify' | 'log' | 'setVars' | 'setUserVars',
   namespace = 'FS'): any[] {
-  const fs = global(namespace);
+  const fs = expectGlobal(namespace);
   expect(fs).to.be.ok;
   return expectParams(fs, methodName);
 }

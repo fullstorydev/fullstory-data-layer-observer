@@ -4,7 +4,8 @@ import { rules } from '../examples/rules/ceddl-fullstory.json';
 
 import { basicDigitalData } from './mocks/CEDDL';
 import {
-  expectEqual, expectRule, expectFS, expectMatch, expectType, expectUndefined, ExpectObserver, setupGlobals, global,
+  expectEqual, expectRule, expectFS, expectMatch, expectType, expectUndefined, ExpectObserver, setupGlobals,
+  expectGlobal,
 } from './utils/mocha';
 
 describe('CEDDL to FullStory rules', () => {
@@ -18,7 +19,7 @@ describe('CEDDL to FullStory rules', () => {
   });
 
   it('it should send any CEDDL user property to FS.setUserVars', () => {
-    global('digitalData').user.profile[0].job = 'developer'; // inject custom property
+    expectGlobal('digitalData').user.profile[0].job = 'developer'; // inject custom property
 
     ExpectObserver.getInstance().create({
       rules: [expectRule('fs-uservars-ceddl-user-all')], readOnLoad: true,
@@ -45,7 +46,7 @@ describe('CEDDL to FullStory rules', () => {
   });
 
   it('it should send only allowed CEDDL user properties to FS.identify', () => {
-    global('digitalData').user.profile[0].password = 'pa$$w0rd'; // inject sensitive property
+    expectGlobal('digitalData').user.profile[0].password = 'pa$$w0rd'; // inject sensitive property
 
     ExpectObserver.getInstance().create({
       rules: [expectRule('fs-identify-ceddl-user-allowed')], readOnLoad: true,
@@ -59,7 +60,7 @@ describe('CEDDL to FullStory rules', () => {
   });
 
   it('it should send the first CEDDL product to FS.event', () => {
-    global('digitalData').product[0].customProp = 'Foo'; // inject custom property
+    expectGlobal('digitalData').product[0].customProp = 'Foo'; // inject custom property
 
     ExpectObserver.getInstance().create({
       rules: [expectRule('fs-event-ceddl-product')], readOnLoad: true,
@@ -73,7 +74,7 @@ describe('CEDDL to FullStory rules', () => {
   });
 
   it('it should send CEDDL cart to FS.event', () => {
-    global('digitalData').cart.promotion = 'LaborDay2020'; // inject custom property
+    expectGlobal('digitalData').cart.promotion = 'LaborDay2020'; // inject custom property
 
     ExpectObserver.getInstance().create({
       rules: [expectRule('fs-event-ceddl-cart')], readOnLoad: true,
@@ -91,13 +92,13 @@ describe('CEDDL to FullStory rules', () => {
     const { price: { basePrice, priceWithTax, cartTotal } } = basicDigitalData.cart;
 
     // convert to strings for testing
-    global('digitalData').cart.price.basePrice = basePrice.toString();
-    global('digitalData').cart.price.priceWithTax = priceWithTax.toString();
-    global('digitalData').cart.price.cartTotal = cartTotal.toString();
+    expectGlobal('digitalData').cart.price.basePrice = basePrice.toString();
+    expectGlobal('digitalData').cart.price.priceWithTax = priceWithTax.toString();
+    expectGlobal('digitalData').cart.price.cartTotal = cartTotal.toString();
 
-    expectType('string', global('digitalData').cart.price.basePrice);
-    expectType('string', global('digitalData').cart.price.priceWithTax);
-    expectType('string', global('digitalData').cart.price.cartTotal);
+    expectType('string', expectGlobal('digitalData').cart.price.basePrice);
+    expectType('string', expectGlobal('digitalData').cart.price.priceWithTax);
+    expectType('string', expectGlobal('digitalData').cart.price.cartTotal);
 
     ExpectObserver.getInstance().create(
       { rules: [expectRule('fs-event-ceddl-cart')], readOnLoad: true },
@@ -111,7 +112,7 @@ describe('CEDDL to FullStory rules', () => {
   });
 
   it('it should send CEDDL page properties to FS.event', () => {
-    global('digitalData').page.framework = 'react'; // inject custom property
+    expectGlobal('digitalData').page.framework = 'react'; // inject custom property
 
     ExpectObserver.getInstance().create({
       rules: [expectRule('fs-event-ceddl-page')], readOnLoad: true,

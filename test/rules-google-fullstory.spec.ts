@@ -4,7 +4,7 @@ import { rules } from '../examples/rules/google-tags-fullstory.json';
 
 import { basicGoogleTags } from './mocks/google-tags';
 import {
-  expectEqual, expectRule, expectFS, setupGlobals, ExpectObserver, global, expectUndefined,
+  expectEqual, expectRule, expectFS, setupGlobals, ExpectObserver, expectGlobal, expectUndefined,
 } from './utils/mocha';
 
 describe('Google Tags to FullStory rules', () => {
@@ -26,7 +26,7 @@ describe('Google Tags to FullStory rules', () => {
     expectEqual(eventName, 'pageview');
     expectEqual(payload.pageType, 'Home');
 
-    global('dataLayer').push({
+    expectGlobal('dataLayer').push({
       pageType: 'Test',
       pageName: 'test',
     });
@@ -195,7 +195,7 @@ describe('Google Tags to FullStory rules', () => {
     expectEqual(eventName, '101');
     expectEqual(payload.userType, 'member');
 
-    global('dataLayer').push({
+    expectGlobal('dataLayer').push({
       userProfile: {
         userId: '201',
         userType: 'admin',

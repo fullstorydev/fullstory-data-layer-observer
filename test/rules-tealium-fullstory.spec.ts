@@ -5,7 +5,8 @@ import { rules } from '../examples/rules/tealium-fullstory.json';
 
 import { tealiumRetail } from './mocks/tealium';
 import {
-  expectEqual, expectRule, expectFS, setupGlobals, ExpectObserver, expectNoCalls, global, expectUndefined, expectMatch,
+  expectEqual, expectRule, expectFS, setupGlobals, ExpectObserver, expectNoCalls, expectGlobal, expectUndefined,
+  expectMatch,
 } from './utils/mocha';
 
 describe('Tealium to FullStory rules', () => {
@@ -19,7 +20,7 @@ describe('Tealium to FullStory rules', () => {
   });
 
   it('should read tealium_event', () => {
-    global('utag').data.tealium_event = 'product_view';
+    expectGlobal('utag').data.tealium_event = 'product_view';
 
     ExpectObserver.getInstance().create({
       rules: [expectRule('fs-tealium-event')],
@@ -34,7 +35,7 @@ describe('Tealium to FullStory rules', () => {
   });
 
   it('should not monitor properties not included in the source', (done) => {
-    global('utag').data.tealium_event = 'product_view';
+    expectGlobal('utag').data.tealium_event = 'product_view';
 
     ExpectObserver.getInstance().create({
       // ensure this rule never reads on load
@@ -42,7 +43,7 @@ describe('Tealium to FullStory rules', () => {
     });
 
     // NOTE this is a valid property to monitor
-    global('utag').data.product_id = ['PROD789'];
+    expectGlobal('utag').data.product_id = ['PROD789'];
 
     // check the assignment
     setTimeout(() => {
@@ -52,17 +53,17 @@ describe('Tealium to FullStory rules', () => {
     }, DataHandler.debounceTime * 1.5);
 
     // NOTE this is an invalid property to monitor because it is not picked
-    global('utag').data.outsideScope = true;
+    expectGlobal('utag').data.outsideScope = true;
 
     // check the assignment
     setTimeout(() => {
-      expectNoCalls(global('FS'), 'event');
+      expectNoCalls(expectGlobal('FS'), 'event');
       done();
     }, DataHandler.debounceTime * 1.5);
   });
 
   it('should identify user', () => {
-    global('utag').data.tealium_event = 'user_registration';
+    expectGlobal('utag').data.tealium_event = 'user_registration';
 
     ExpectObserver.getInstance().create({
       rules: [expectRule('fs-tealium-user-registration')],
@@ -77,7 +78,7 @@ describe('Tealium to FullStory rules', () => {
   });
 
   it('should setUserVars', () => {
-    global('utag').data.tealium_event = 'user_update';
+    expectGlobal('utag').data.tealium_event = 'user_update';
 
     ExpectObserver.getInstance().create({
       rules: [expectRule('fs-tealium-user-update')],
