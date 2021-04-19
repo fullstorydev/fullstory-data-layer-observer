@@ -1,0 +1,124 @@
+[
+  {
+    "id": "adobe-am-setvars",
+    "source": "s[^(campaign,channel,eVar,hier,pageName,pageType,prop,purchaseID,transactionID)]",
+    "operators": [
+      {
+        "name": "insert",
+        "value": "page"
+      }
+    ],
+    "destination": "FS.setVars"
+  },
+  {
+    "id": "adobe-am-setuservars",
+    "source": "s[(marketingCloudVisitorID)]",
+    "operators": [],
+    "destination": "FS.setUserVars"
+  },
+  {
+    "id": "adobe-am-purchase",
+    "source": "s[(currencyCode,events,products,purchaseID)]",
+    "operators": [
+      {
+        "name": "query",
+        "select": "$[?(events=purchase)]"
+      },
+      {
+        "name": "insert",
+        "select": "event"
+      }
+    ],
+    "destination": "FS.event"
+  },
+  {
+    "id": "adobe-am-prodview",
+    "source": "s[(currencyCode,events,products)]",
+    "operators": [
+      {
+        "name": "query",
+        "select": "$[?(events=prodView)]"
+      },
+      {
+        "name": "insert",
+        "select": "event"
+      }
+    ],
+    "destination": "FS.event"
+  },
+  {
+    "id": "adobe-am-scopen",
+    "source": "s[(currencyCode,events,products)]",
+    "operators": [
+      {
+        "name": "query",
+        "select": "$[?(events=scOpen)]"
+      },
+      {
+        "name": "insert",
+        "select": "event"
+      }
+    ],
+    "destination": "FS.event"
+  },
+  {
+    "id": "adobe-am-scadd",
+    "source": "s[(currencyCode,events,products)]",
+    "operators": [
+      {
+        "name": "query",
+        "select": "$[?(events=scAdd)]"
+      },
+      {
+        "name": "insert",
+        "select": "event"
+      }
+    ],
+    "destination": "FS.event"
+  },
+  {
+    "id": "adobe-am-scremove",
+    "source": "s[(currencyCode,events,products)]",
+    "operators": [
+      {
+        "name": "query",
+        "select": "$[?(events=scRemove)]"
+      },
+      {
+        "name": "insert",
+        "select": "event"
+      }
+    ],
+    "destination": "FS.event"
+  },
+  {
+    "id": "adobe-am-scview",
+    "source": "s[(currencyCode,events,products)]",
+    "operators": [
+      {
+        "name": "query",
+        "select": "$[?(events=scView)]"
+      },
+      {
+        "name": "insert",
+        "select": "event"
+      }
+    ],
+    "destination": "FS.event"
+  },
+  {
+    "id": "adobe-am-sccheckout",
+    "source": "s[(currencyCode,events,products)]",
+    "operators": [
+      {
+        "name": "query",
+        "select": "$[?(events=scCheckout)]"
+      },
+      {
+        "name": "insert",
+        "select": "event"
+      }
+    ],
+    "destination": "FS.event"
+  }
+]
