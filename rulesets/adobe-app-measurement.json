@@ -8,7 +8,8 @@
         "value": "page"
       }
     ],
-    "destination": "FS.setVars"
+    "destination": "FS.setVars",
+    "monitor": false
   },
   {
     "id": "adobe-am-setuservars",
