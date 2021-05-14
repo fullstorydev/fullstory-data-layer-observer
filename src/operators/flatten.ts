@@ -49,10 +49,11 @@ export class FlattenOperator implements Operator {
   }
 
   handleData(data: any[]): any[] | null {
-    const flattenedData = data;
-    flattenedData[this.index] = this.flattenHelper(flattenedData[this.index]);
+    const flattened = this.flattenHelper(data[this.index]);
 
-    return flattenedData;
+    const clone = data.slice();
+    clone.splice(this.index, 1, flattened);
+    return clone;
   }
 
   validate() {

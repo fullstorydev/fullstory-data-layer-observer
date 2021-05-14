@@ -39,6 +39,24 @@ describe('rename operator unit tests', () => {
     ).validate()).to.throw();
   });
 
+  it('it should not change the original object', () => {
+    const operator = OperatorFactory.create(
+      'rename',
+      {
+        name: 'rename-test',
+        properties: {
+          data: 'datum',
+        },
+      },
+    );
+
+    const customList = [{ event: 'test', data: { foo: 'bar' } }];
+    const [flatData] = operator.handleData(customList)!;
+    expect(customList[0].data).to.not.be.undefined;
+    expect(flatData.data).to.be.undefined;
+    expect(flatData.datum).to.be.not.undefined;
+  });
+
   it('should rename properties', () => {
     const operator = OperatorFactory.create(
       'rename',
