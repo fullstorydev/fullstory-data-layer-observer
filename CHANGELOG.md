@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.6.2
+
+- Fix `console.error` messages related to logging appender
+
 ### 1.6.1
 
 - Fix incorrect suffix behavior when using FS.event source parameter
