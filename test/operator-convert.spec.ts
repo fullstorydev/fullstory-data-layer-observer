@@ -51,6 +51,16 @@ describe('convert operator unit tests', () => {
     }, 'force not supported on date');
   });
 
+  it('it should not change the original object', () => {
+    const list = [item];
+    const operator = OperatorFactory.create('convert', { name: 'convert', properties: 'quantity', type: 'int' });
+    const [int] = operator.handleData(list)!;
+
+    expect(int).to.not.be.null;
+    expect(int.quantity).to.eq(10);
+    expect(item.quantity).to.eq('10'); // don't mutate the actual data layer
+  });
+
   it('it should convert to int', () => {
     const operator = OperatorFactory.create('convert', { name: 'convert', properties: 'quantity', type: 'int' });
     const [int] = operator.handleData([item])!;

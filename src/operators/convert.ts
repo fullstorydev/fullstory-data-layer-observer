@@ -1,4 +1,6 @@
-import { Operator, OperatorOptions, OperatorValidator } from '../operator';
+import {
+  Operator, OperatorOptions, OperatorValidator, safeUpdate,
+} from '../operator';
 import { Logger, LogMessageType } from '../utils/logger';
 
 type ConvertibleType = 'bool' | 'date' | 'int' | 'real' | 'string';
@@ -79,6 +81,8 @@ export class ConvertOperator implements Operator {
   }
 
   handleData(data: any[]): any[] | null {
+    // NOTE this operator transforms data - be absolutely sure there are no side effects to the data layer!
+
     let { properties } = this.options;
     const {
       enumerate, force, preserveArray, type,
@@ -88,6 +92,9 @@ export class ConvertOperator implements Operator {
       properties = properties.split(',').map((property) => property.trim()); // auto-correct if the CSV has spaces
     }
 
+    // TODO (van) we don't currently rename properties in child objects, but if we eventually do
+    // a deep copy of the data layer object will need to be done to ensure we don't change the object
+    // in the data layer
     const converted: { [key: string]: any } = { ...data[this.index] };
 
     // if enumerate is set, try to coerce all strings into an equivalent numeric value
@@ -140,10 +147,9 @@ export class ConvertOperator implements Operator {
       });
     }
 
-    const clone = data.slice();
-    clone.splice(this.index, 1, converted);
-
-    return clone;
+    // a copy of the incoming data layer needs to be returned
+    // if you modify/update the `data` parameter directly, you may modify the data layer!
+    return safeUpdate(data, this.index, converted);
   }
 
   validate() {

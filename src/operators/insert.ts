@@ -52,6 +52,8 @@ export class InsertOperator implements Operator {
       throw new Error('Failed to find a value to insert');
     }
 
+    // a copy of the incoming data layer needs to be returned
+    // if you modify/update the `data` parameter directly, you may modify the data layer!
     const clone = data.slice();
     clone.splice(this.position >= 0 ? this.position : clone.length - this.position, 0, insertedValue);
 
