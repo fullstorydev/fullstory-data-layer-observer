@@ -53,7 +53,9 @@ export default class DataHandler {
     const { path } = this.target;
 
     if (value === undefined && args === undefined) {
-      Logger.getInstance().warn(LogMessageType.EventEmpty, { path });
+      // NOTE it seems some data layers may "clear" values by setting a property to undefined
+      // in one case, thousands of these calls lead to performance impacts so debug was chosen versus warn
+      Logger.getInstance().debug(LogMessageType.EventEmpty, { path });
     } else if (type === createEventType(path)) {
       if (value) {
         // debounce events so multiple, related property assignments don't create multiple events
