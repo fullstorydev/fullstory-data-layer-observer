@@ -51,10 +51,10 @@ describe('rename operator unit tests', () => {
     );
 
     const customList = [{ event: 'test', data: { foo: 'bar' } }];
-    const [flatData] = operator.handleData(customList)!;
+    const [renamedData] = operator.handleData(customList)!;
     expect(customList[0].data).to.not.be.undefined;
-    expect(flatData.data).to.be.undefined;
-    expect(flatData.datum).to.be.not.undefined;
+    expect(renamedData.data).to.be.undefined;
+    expect(renamedData.datum).to.be.not.undefined;
   });
 
   it('should rename properties', () => {
