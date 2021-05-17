@@ -1,4 +1,6 @@
-import { Operator, OperatorOptions, OperatorValidator } from '../operator';
+import {
+  Operator, OperatorOptions, OperatorValidator, safeUpdate,
+} from '../operator';
 
 export interface RenameOperatorOptions extends OperatorOptions {
   properties: { [key: string]: string };
@@ -32,14 +34,21 @@ export class RenameOperator implements Operator {
   }
 
   handleData(data: any[]): any[] | null {
+    // NOTE this operator transforms data - be absolutely sure there are no side effects to the data layer!
+
     if (typeof data[this.index] !== 'object') {
       throw new Error('Can only convert property names on objects');
     }
-    const converted: { [key: string]: any } = { ...data[this.index] };
-    this.handleRename(converted);
-    const clone = data.slice();
-    clone.splice(this.index, 1, converted);
-    return clone;
+
+    // TODO (van) we don't currently rename properties in child objects, but if we eventually do
+    // a deep copy of the data layer object will need to be done to ensure we don't change the object
+    // in the data layer
+    const renamed: { [key: string]: any } = { ...data[this.index] };
+    this.handleRename(renamed);
+
+    // a copy of the incoming data layer needs to be returned
+    // if you modify/update the `data` parameter directly, you may modify the data layer!
+    return safeUpdate(data, this.index, renamed);
   }
 
   validate() {

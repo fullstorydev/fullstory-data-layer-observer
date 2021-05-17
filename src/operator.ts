@@ -157,3 +157,20 @@ export interface Operator {
    */
   validate(): void;
 }
+
+/**
+ * Some Operators transform the content or shape of data. To prevent side effects (i.e. changes) to the data layer,
+ * additional care is needed. This function performs safe insertion of an object in a list. This allows you to take
+ * an existing list of data passed to an operator and insert a new object at a given index, which prevents overwriting
+ * or changing the original object in the list. Note that all objects at other indexes will still reference their
+ * original counterparts. (This is not a deep copy.)
+ * @param list Array of data objects passed to an Operator
+ * @param index Numeric index in the `list` array to update
+ * @param object Object to insert at the given index (the original object at the index will be unchanged)
+ * @returns A copy of the list with the new object inserted
+ */
+export function safeUpdate(list: any[], index: number, object: any): any[] {
+  const clone = list.slice();
+  clone.splice(index, 1, object);
+  return clone;
+}

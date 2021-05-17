@@ -1,4 +1,6 @@
-import { OperatorValidator, OperatorOptions, Operator } from '../operator';
+import {
+  OperatorValidator, OperatorOptions, Operator, safeUpdate,
+} from '../operator';
 
 /**
  * A SuffixedObject is an object that has had FS types appended to properties.
@@ -160,6 +162,8 @@ export class SuffixOperator implements Operator {
   }
 
   handleData(data: any[]): any[] | null {
+    // NOTE this operator transforms data - be absolutely sure there are no side effects to the data layer!
+
     let index = this.index >= 0 ? this.index : data.length + this.index;
 
     // check if the `source` param was included and if so decrement the index
@@ -167,10 +171,11 @@ export class SuffixOperator implements Operator {
       index -= 1;
     }
 
-    const suffixedData = data;
-    suffixedData[index] = this.mapToSuffix(suffixedData[index]);
+    const suffixed = this.mapToSuffix(data[index]);
 
-    return suffixedData;
+    // a copy of the incoming data layer needs to be returned
+    // if you modify/update the `data` parameter directly, you may modify the data layer!
+    return safeUpdate(data, index, suffixed);
   }
 
   validate() {
