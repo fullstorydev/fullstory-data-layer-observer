@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.6.3
+
+- Fix `flatten` operator bug related to mutating objects in list-based data layers
+
 ### 1.6.2
 
 - Fix `console.error` messages related to logging appender

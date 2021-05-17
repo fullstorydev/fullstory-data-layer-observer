@@ -55,6 +55,20 @@ describe('suffix operator unit test', () => {
     }).validate()).to.not.throw();
   });
 
+  it('it should not change the original object', () => {
+    const operator = new SuffixOperator({ name: 'suffix' });
+    const customList = [{ event: 'test', data: { foo: 'bar' } }];
+    const [suffixedData] = operator.handleData(customList)!;
+    expect(suffixedData.event_str).to.not.be.undefined;
+    expect(suffixedData.data_obj.foo_str).to.not.be.undefined;
+    expect(customList[0].event).to.not.be.undefined;
+    expect(customList[0].data.foo).to.not.be.undefined;
+    // @ts-ignore
+    expect(customList[0].event_str).to.be.undefined;
+    // @ts-ignore
+    expect(customList[0].data_obj).to.be.undefined;
+  });
+
   it('it should not suffix undefineds', () => {
     const operator = new SuffixOperator({ name: 'suffix' });
     expect(operator).to.not.be.undefined;
