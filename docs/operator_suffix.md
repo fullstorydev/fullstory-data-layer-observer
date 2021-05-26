@@ -2,6 +2,8 @@
 
 The suffix operator can be used to automatically apply the appropriate type suffix to properties in an object.  Since the suffix operator is useful for every `FS` API, it is included as the default `window['_dlo_beforeDestination']` configuration option and is not needed in the `operators` list.
 
+To support FullStory-specific APIs, the properties `displayName`, `pageName`, and `email` are not suffixed in a root object.
+
 ## Options
 
 Options with an asterisk are required.

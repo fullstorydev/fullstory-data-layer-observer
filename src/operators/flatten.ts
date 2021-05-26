@@ -1,4 +1,7 @@
-import { Operator, OperatorOptions, OperatorValidator } from '../operator';
+/* eslint no-param-reassign: ["error", { "props": false }] */
+import {
+  Operator, OperatorOptions, OperatorValidator, safeUpdate,
+} from '../operator';
 
 export interface FlattenOperatorOptions extends OperatorOptions {
 
@@ -22,37 +25,33 @@ export class FlattenOperator implements Operator {
   }
 
   /**
-   * Recursively flattens all properties into an object.
-   * @param root the root object to contain all properties
-   * @param node a child node to flatten
+   * Recursively flattens (copies) all properties into an object at a single level.
+   * @param target Object to copy properties into
+   * @param source Object that is the source containing properties (during recursive calls these are child objects under a root object)
    */
-  flattenHelper(root: any, depth = 0, node?: any) {
-    let targetNode = node;
-    let targetRoot = root;
-
-    if (!targetNode) {
-      // first time execution
-      targetNode = root;
-      targetRoot = {};
-    }
-
-    Object.getOwnPropertyNames(targetNode).forEach((prop) => {
-      if (typeof targetNode[prop] === 'object' && targetNode[prop] != null
-        && !Array.isArray(targetNode[prop]) && depth < this.maxDepth + 1) {
-        this.flattenHelper(targetRoot, depth + 1, targetNode[prop]);
+  flattenHelper(target: any, source: any, depth = 0) {
+    Object.getOwnPropertyNames(source).forEach((prop) => {
+      if (typeof source[prop] === 'object' && source[prop] != null
+        && !Array.isArray(source[prop]) && depth < this.maxDepth + 1) {
+        this.flattenHelper(target, source[prop], depth + 1);
       } else {
-        targetRoot[prop] = targetNode[prop];
+        target[prop] = source[prop];
       }
     });
-
-    return targetRoot;
   }
 
   handleData(data: any[]): any[] | null {
-    const flattenedData = data;
-    flattenedData[this.index] = this.flattenHelper(flattenedData[this.index]);
+    // NOTE this operator transforms data - be absolutely sure there are no side effects to the data layer!
 
-    return flattenedData;
+    // flattening copies key value pairs from the source to the target
+    // the target is a new empty object so that the flattening process does not affect the data layer
+    const target = {};
+    const source = data[this.index];
+    this.flattenHelper(target, source);
+
+    // a copy of the incoming data layer needs to be returned
+    // if you modify/update the `data` parameter directly, you may modify the data layer!
+    return safeUpdate(data, this.index, target);
   }
 
   validate() {

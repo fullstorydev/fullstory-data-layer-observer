@@ -10,6 +10,18 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.6.4
+
+- Move `EmptyEvent` scenario from log level `warn` to `debug`
+
+### 1.6.3
+
+- Fix `flatten` operator bug related to mutating objects in list-based data layers
+
+### 1.6.2
+
+- Fix `console.error` messages related to logging appender
+
 ### 1.6.1
 
 - Fix incorrect suffix behavior when using FS.event source parameter

@@ -1,4 +1,6 @@
-import { OperatorValidator, OperatorOptions, Operator } from '../operator';
+import {
+  OperatorValidator, OperatorOptions, Operator, safeUpdate,
+} from '../operator';
 
 /**
  * A SuffixedObject is an object that has had FS types appended to properties.
@@ -67,11 +69,12 @@ export class SuffixOperator implements Operator {
 
   /**
    * Infers the type suffix needed for FS API objects.
+   * Returns `null` if the value is not supported and thus unable to be suffixed.
    * There are 10 valid type suffixes:
    * _bool, _date, _int, _real, _str, _bools, _dates, _ints, _reals, and _strs.
    * @param value the object to inspect and return suffix
    */
-  static coerceSuffix(value: SuffixableValue): string {
+  static coerceSuffix(value: SuffixableValue): string | null {
     // arrays are pluralized
     if (Array.isArray(value)) {
       if (value.every((v: any) => typeof v === 'string')) {
@@ -95,7 +98,7 @@ export class SuffixOperator implements Operator {
       }
 
       // it's an array but doesn't have values that we can support or has multiple types
-      return '';
+      return null;
     }
 
     if (value instanceof Date) {
@@ -114,7 +117,7 @@ export class SuffixOperator implements Operator {
         return Suffixes.Obj;
       default:
         // unable to coerce the type, which is expected for function types for example
-        return '';
+        return null;
     }
   }
 
@@ -135,11 +138,15 @@ export class SuffixOperator implements Operator {
 
     Object.getOwnPropertyNames(obj).forEach((prop: string) => {
       const value = obj[prop];
-      const suffix = SuffixOperator.coerceSuffix(value);
+
+      // certain properties must adhere to exact naming conventions and should not be suffixed
+      // NOTE this is only for root level objects used with FS.identify, setUserVars, setVars
+      const suffix = currentDepth === 0 && (prop === 'pageName' || prop === 'displayName' || prop === 'email') ? ''
+        : SuffixOperator.coerceSuffix(value);
       const suffixedProp = `${prop}${suffix}`;
 
       // if a suffix exists, it means we support the value
-      if (suffix) {
+      if (suffix !== null) {
         switch (suffix) {
           case Suffixes.Obj:
             if (currentDepth < this.maxDepth) {
@@ -160,6 +167,8 @@ export class SuffixOperator implements Operator {
   }
 
   handleData(data: any[]): any[] | null {
+    // NOTE this operator transforms data - be absolutely sure there are no side effects to the data layer!
+
     let index = this.index >= 0 ? this.index : data.length + this.index;
 
     // check if the `source` param was included and if so decrement the index
@@ -167,10 +176,11 @@ export class SuffixOperator implements Operator {
       index -= 1;
     }
 
-    const suffixedData = data;
-    suffixedData[index] = this.mapToSuffix(suffixedData[index]);
+    const suffixed = this.mapToSuffix(data[index]);
 
-    return suffixedData;
+    // a copy of the incoming data layer needs to be returned
+    // if you modify/update the `data` parameter directly, you may modify the data layer!
+    return safeUpdate(data, index, suffixed);
   }
 
   validate() {

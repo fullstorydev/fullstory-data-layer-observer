@@ -19,6 +19,26 @@ describe('flatten operator unit tests', () => {
     }).validate()).to.not.throw();
   });
 
+  it('it should not change the original object', () => {
+    const userProfile = basicDigitalData.user.profile[0];
+    const originalJson = JSON.stringify(userProfile);
+
+    const operator = new FlattenOperator({ name: 'flatten' });
+    const [flatUser] = operator.handleData([userProfile])!;
+
+    expect(flatUser).to.not.be.null;
+    expect(originalJson).to.eq(JSON.stringify(userProfile));
+
+    const [flatListUser] = operator.handleData(basicDigitalData.user.profile)!;
+    expect(basicDigitalData.user.profile[0].address).to.not.be.undefined;
+    expect(flatListUser.address).to.be.undefined;
+
+    const customList = [{ event: 'test', data: { foo: 'bar' } }];
+    const [flatData] = operator.handleData(customList)!;
+    expect(customList[0].data).to.not.be.undefined;
+    expect(flatData.data).to.be.undefined;
+  });
+
   it('it should flatten an object', () => {
     const userProfile = basicDigitalData.user.profile[0];
     const operator = new FlattenOperator({ name: 'flatten' });
