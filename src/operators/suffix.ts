@@ -69,6 +69,7 @@ export class SuffixOperator implements Operator {
 
   /**
    * Infers the type suffix needed for FS API objects.
+   * Returns `null` if the value is not supported and thus unable to be suffixed.
    * There are 10 valid type suffixes:
    * _bool, _date, _int, _real, _str, _bools, _dates, _ints, _reals, and _strs.
    * @param value the object to inspect and return suffix
