@@ -73,7 +73,7 @@ export class SuffixOperator implements Operator {
    * _bool, _date, _int, _real, _str, _bools, _dates, _ints, _reals, and _strs.
    * @param value the object to inspect and return suffix
    */
-  static coerceSuffix(value: SuffixableValue): string {
+  static coerceSuffix(value: SuffixableValue): string | null {
     // arrays are pluralized
     if (Array.isArray(value)) {
       if (value.every((v: any) => typeof v === 'string')) {
@@ -97,7 +97,7 @@ export class SuffixOperator implements Operator {
       }
 
       // it's an array but doesn't have values that we can support or has multiple types
-      return '';
+      return null;
     }
 
     if (value instanceof Date) {
@@ -116,7 +116,7 @@ export class SuffixOperator implements Operator {
         return Suffixes.Obj;
       default:
         // unable to coerce the type, which is expected for function types for example
-        return '';
+        return null;
     }
   }
 
@@ -137,11 +137,15 @@ export class SuffixOperator implements Operator {
 
     Object.getOwnPropertyNames(obj).forEach((prop: string) => {
       const value = obj[prop];
-      const suffix = SuffixOperator.coerceSuffix(value);
+
+      // certain properties must adhere to exact naming conventions and should not be suffixed
+      // NOTE this is only for root level objects used with FS.identify, setUserVars, setVars
+      const suffix = currentDepth === 0 && (prop === 'pageName' || prop === 'displayName' || prop === 'email') ? ''
+        : SuffixOperator.coerceSuffix(value);
       const suffixedProp = `${prop}${suffix}`;
 
       // if a suffix exists, it means we support the value
-      if (suffix) {
+      if (suffix !== null) {
         switch (suffix) {
           case Suffixes.Obj:
             if (currentDepth < this.maxDepth) {
