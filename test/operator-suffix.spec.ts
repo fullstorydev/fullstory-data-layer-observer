@@ -79,6 +79,37 @@ describe('suffix operator unit test', () => {
     expect(Object.getOwnPropertyNames(suffixedObject).length).to.eq(0);
   });
 
+  it('it should not suffix required FullStory naming conventions', () => {
+    const operator = new SuffixOperator({ name: 'suffix' });
+    expect(operator).to.not.be.undefined;
+
+    const [suffixedObject] = operator.handleData([{
+      pageName: 'homepage',
+      displayName: 'Data Layer Observer',
+      email: 'dlo@fullstory.com',
+      child: {
+        pageName: 'homepage',
+        displayName: 'Data Layer Observer',
+        email: 'dlo@fullstory.com',
+      },
+    }])!;
+
+    expect(suffixedObject).to.not.be.undefined;
+    expect(suffixedObject.pageName).to.not.be.undefined;
+    expect(suffixedObject.pageName_str).to.be.undefined;
+    expect(suffixedObject.displayName).to.not.be.undefined;
+    expect(suffixedObject.displayName_str).to.be.undefined;
+    expect(suffixedObject.email).to.not.be.undefined;
+    expect(suffixedObject.email_str).to.be.undefined;
+
+    expect(suffixedObject.child_obj.pageName).to.be.undefined;
+    expect(suffixedObject.child_obj.pageName_str).to.not.be.undefined;
+    expect(suffixedObject.child_obj.displayName).to.be.undefined;
+    expect(suffixedObject.child_obj.displayName_str).to.not.be.undefined;
+    expect(suffixedObject.child_obj.email).to.be.undefined;
+    expect(suffixedObject.child_obj.email_str).to.not.be.undefined;
+  });
+
   it('it should suffix all properties in object', () => {
     const operator = new SuffixOperator({ name: 'suffix' });
     expect(operator).to.not.be.undefined;
