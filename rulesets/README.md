@@ -8,10 +8,10 @@ Rulesets provide out of the box rules that are compatible with common data layer
 
 - [Ruleset](./google-event-measurement.json)
 - [Vendor Guidelines](https://developers.google.com/analytics/devguides/collection/analyticsjs/events)
-- [Tests](../test/rules-google-fullstory.spec)
+- [Tests](../test/rules-google-fullstory.spec.ts)
 
 ### Enhanced Ecommerce (UA)
 
 - [Ruleset](./google-ua-enhanced-ecommerce.json)
 - [Vendor Guidelines](https://developers.google.com/tag-manager/enhanced-ecommerce)
-- [Tests](../test/rules-google-fullstory.spec)
+- [Tests](../test/rules-google-fullstory.spec.ts)
