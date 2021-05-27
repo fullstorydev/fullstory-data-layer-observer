@@ -88,7 +88,7 @@ describe('Google Analytics Enhanced Ecommerce rules', () => {
   it('should read pageview', () => {
     ExpectObserver.getInstance().create({
       rules: [
-        expectRule('fs-ga-pageview'),
+        expectRule('fs-ua-pageview'),
       ],
     });
 
@@ -107,8 +107,8 @@ describe('Google Analytics Enhanced Ecommerce rules', () => {
   it('should read enhanced ecommerce detail', () => {
     ExpectObserver.getInstance().create({
       rules: [
-        expectRule('fs-ga-e-commerce-detail-product'),
-        expectRule('fs-ga-e-commerce-detail-action'),
+        expectRule('fs-ua-e-commerce-detail-product'),
+        expectRule('fs-ua-e-commerce-detail-action'),
       ],
     });
 
@@ -143,8 +143,8 @@ describe('Google Analytics Enhanced Ecommerce rules', () => {
   it('should read enhanced ecommerce click', () => {
     ExpectObserver.getInstance().create({
       rules: [
-        expectRule('fs-ga-e-commerce-click-product'),
-        expectRule('fs-ga-e-commerce-click-action'),
+        expectRule('fs-ua-e-commerce-click-product'),
+        expectRule('fs-ua-e-commerce-click-action'),
       ],
     });
 
@@ -181,8 +181,8 @@ describe('Google Analytics Enhanced Ecommerce rules', () => {
   it('should read enhanced ecommerce add', () => {
     ExpectObserver.getInstance().create({
       rules: [
-        expectRule('fs-ga-e-commerce-add-product'),
-        expectRule('fs-ga-e-commerce-add-action'),
+        expectRule('fs-ua-e-commerce-add-product'),
+        expectRule('fs-ua-e-commerce-add-action'),
       ],
     });
 
@@ -219,8 +219,8 @@ describe('Google Analytics Enhanced Ecommerce rules', () => {
   it('should read enhanced ecommerce remove', () => {
     ExpectObserver.getInstance().create({
       rules: [
-        expectRule('fs-ga-e-commerce-remove-product'),
-        expectRule('fs-ga-e-commerce-remove-action'),
+        expectRule('fs-ua-e-commerce-remove-product'),
+        expectRule('fs-ua-e-commerce-remove-action'),
       ],
     });
 
@@ -257,8 +257,8 @@ describe('Google Analytics Enhanced Ecommerce rules', () => {
   it('should read enhanced ecommerce promo_click', () => {
     ExpectObserver.getInstance().create({
       rules: [
-        expectRule('fs-ga-e-commerce-promo_click-promotion'),
-        expectRule('fs-ga-e-commerce-promo_click-action'),
+        expectRule('fs-ua-e-commerce-promo_click-promotion'),
+        expectRule('fs-ua-e-commerce-promo_click-action'),
       ],
     });
 
@@ -294,8 +294,8 @@ describe('Google Analytics Enhanced Ecommerce rules', () => {
   it('should read enhanced ecommerce purchase', () => {
     ExpectObserver.getInstance().create({
       rules: [
-        expectRule('fs-ga-e-commerce-purchase-product'),
-        expectRule('fs-ga-e-commerce-purchase-action'),
+        expectRule('fs-ua-e-commerce-purchase-product'),
+        expectRule('fs-ua-e-commerce-purchase-action'),
       ],
     });
 
@@ -354,8 +354,8 @@ describe('Google Analytics Enhanced Ecommerce rules', () => {
   it('should read enhanced ecommerce checkout', () => {
     ExpectObserver.getInstance().create({
       rules: [
-        expectRule('fs-ga-e-commerce-checkout-product'),
-        expectRule('fs-ga-e-commerce-checkout-action'),
+        expectRule('fs-ua-e-commerce-checkout-product'),
+        expectRule('fs-ua-e-commerce-checkout-action'),
       ],
     });
 
@@ -410,8 +410,8 @@ describe('Google Analytics Enhanced Ecommerce rules', () => {
   it('should read enhanced ecommerce refund', () => {
     ExpectObserver.getInstance().create({
       rules: [
-        expectRule('fs-ga-e-commerce-refund-product'),
-        expectRule('fs-ga-e-commerce-refund-action'),
+        expectRule('fs-ua-e-commerce-refund-product'),
+        expectRule('fs-ua-e-commerce-refund-action'),
       ],
     });
 
