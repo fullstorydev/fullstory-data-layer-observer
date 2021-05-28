@@ -3,7 +3,6 @@ import 'mocha';
 
 import '../rulesets/google-ua-enhanced-ecommerce.js';
 import '../rulesets/google-event-measurement.js';
-import '../rulesets/google-ga4-ecommerce.js';
 
 import {
   expectEqual, expectRule, expectFS, setupGlobals, ExpectObserver, expectGlobal, expectNoCalls, expectCall,
