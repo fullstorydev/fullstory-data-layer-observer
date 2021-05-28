@@ -1,17 +1,23 @@
 import { expect } from 'chai';
 import 'mocha';
 
-import * as EnhancedEcommerce from '../rulesets/google-ua-enhanced-ecommerce.json';
-import * as EventMeasurment from '../rulesets/google-event-measurement.json';
+import '../rulesets/google-ua-enhanced-ecommerce.js';
+import '../rulesets/google-event-measurement.js';
+import '../rulesets/google-ga4-ecommerce.js';
 
 import {
   expectEqual, expectRule, expectFS, setupGlobals, ExpectObserver, expectGlobal, expectNoCalls, expectCall,
 } from './utils/mocha';
 
+enum Ruleset {
+  Ecommerce = '_dlo_rules_google_ecommerce',
+  EnhancedEcommerce = '_dlo_rules_google_enhanced_ecommerce',
+  EventMeasurement = '_dlo_rules_google_measurement',
+}
+
 describe('Google Analytics Event Measurement rules', () => {
   beforeEach(() => setupGlobals([
     ['dataLayer', []],
-    ['_dlo_rules', EventMeasurment.rules],
   ]));
 
   afterEach(() => {
@@ -20,7 +26,7 @@ describe('Google Analytics Event Measurement rules', () => {
 
   it('sends an object-based event to FS.event with the same event name', () => {
     ExpectObserver.getInstance().create({
-      rules: [expectRule('fs-ga-event')],
+      rules: [expectRule('fs-ga-event', Ruleset.EventMeasurement)],
     });
 
     // NOTE that this follows the object-based convention seen in most GA events
@@ -31,7 +37,7 @@ describe('Google Analytics Event Measurement rules', () => {
 
   it('sends an list-based event to FS.event with the same event name', () => {
     ExpectObserver.getInstance().create({
-      rules: [expectRule('fs-gtg-event')],
+      rules: [expectRule('fs-gtg-event', Ruleset.EventMeasurement)],
     });
 
     // NOTE that this follows the list-based convention seen in later versions of gtg.js
@@ -44,7 +50,7 @@ describe('Google Analytics Event Measurement rules', () => {
 
   it('ignores gtm, optimize.domChange, and enhanced ecommerce related events', () => {
     ExpectObserver.getInstance().create({
-      rules: [expectRule('fs-ga-event')],
+      rules: [expectRule('fs-ga-event', Ruleset.EventMeasurement)],
     });
 
     // verify the call queue expect code is working
@@ -78,7 +84,6 @@ describe('Google Analytics Event Measurement rules', () => {
 describe('Google Analytics Enhanced Ecommerce rules', () => {
   beforeEach(() => setupGlobals([
     ['dataLayer', []],
-    ['_dlo_rules', EnhancedEcommerce.rules],
   ]));
 
   afterEach(() => {
@@ -88,7 +93,7 @@ describe('Google Analytics Enhanced Ecommerce rules', () => {
   it('should read pageview', () => {
     ExpectObserver.getInstance().create({
       rules: [
-        expectRule('fs-ua-pageview'),
+        expectRule('fs-ua-pageview', Ruleset.EnhancedEcommerce),
       ],
     });
 
@@ -107,8 +112,8 @@ describe('Google Analytics Enhanced Ecommerce rules', () => {
   it('should read enhanced ecommerce detail', () => {
     ExpectObserver.getInstance().create({
       rules: [
-        expectRule('fs-ua-e-commerce-detail-product'),
-        expectRule('fs-ua-e-commerce-detail-action'),
+        expectRule('fs-ua-e-commerce-detail-product', Ruleset.EnhancedEcommerce),
+        expectRule('fs-ua-e-commerce-detail-action', Ruleset.EnhancedEcommerce),
       ],
     });
 
@@ -143,8 +148,8 @@ describe('Google Analytics Enhanced Ecommerce rules', () => {
   it('should read enhanced ecommerce click', () => {
     ExpectObserver.getInstance().create({
       rules: [
-        expectRule('fs-ua-e-commerce-click-product'),
-        expectRule('fs-ua-e-commerce-click-action'),
+        expectRule('fs-ua-e-commerce-click-product', Ruleset.EnhancedEcommerce),
+        expectRule('fs-ua-e-commerce-click-action', Ruleset.EnhancedEcommerce),
       ],
     });
 
@@ -181,8 +186,8 @@ describe('Google Analytics Enhanced Ecommerce rules', () => {
   it('should read enhanced ecommerce add', () => {
     ExpectObserver.getInstance().create({
       rules: [
-        expectRule('fs-ua-e-commerce-add-product'),
-        expectRule('fs-ua-e-commerce-add-action'),
+        expectRule('fs-ua-e-commerce-add-product', Ruleset.EnhancedEcommerce),
+        expectRule('fs-ua-e-commerce-add-action', Ruleset.EnhancedEcommerce),
       ],
     });
 
@@ -219,8 +224,8 @@ describe('Google Analytics Enhanced Ecommerce rules', () => {
   it('should read enhanced ecommerce remove', () => {
     ExpectObserver.getInstance().create({
       rules: [
-        expectRule('fs-ua-e-commerce-remove-product'),
-        expectRule('fs-ua-e-commerce-remove-action'),
+        expectRule('fs-ua-e-commerce-remove-product', Ruleset.EnhancedEcommerce),
+        expectRule('fs-ua-e-commerce-remove-action', Ruleset.EnhancedEcommerce),
       ],
     });
 
@@ -257,8 +262,8 @@ describe('Google Analytics Enhanced Ecommerce rules', () => {
   it('should read enhanced ecommerce promo_click', () => {
     ExpectObserver.getInstance().create({
       rules: [
-        expectRule('fs-ua-e-commerce-promo_click-promotion'),
-        expectRule('fs-ua-e-commerce-promo_click-action'),
+        expectRule('fs-ua-e-commerce-promo_click-promotion', Ruleset.EnhancedEcommerce),
+        expectRule('fs-ua-e-commerce-promo_click-action', Ruleset.EnhancedEcommerce),
       ],
     });
 
@@ -294,8 +299,8 @@ describe('Google Analytics Enhanced Ecommerce rules', () => {
   it('should read enhanced ecommerce purchase', () => {
     ExpectObserver.getInstance().create({
       rules: [
-        expectRule('fs-ua-e-commerce-purchase-product'),
-        expectRule('fs-ua-e-commerce-purchase-action'),
+        expectRule('fs-ua-e-commerce-purchase-product', Ruleset.EnhancedEcommerce),
+        expectRule('fs-ua-e-commerce-purchase-action', Ruleset.EnhancedEcommerce),
       ],
     });
 
@@ -354,8 +359,8 @@ describe('Google Analytics Enhanced Ecommerce rules', () => {
   it('should read enhanced ecommerce checkout', () => {
     ExpectObserver.getInstance().create({
       rules: [
-        expectRule('fs-ua-e-commerce-checkout-product'),
-        expectRule('fs-ua-e-commerce-checkout-action'),
+        expectRule('fs-ua-e-commerce-checkout-product', Ruleset.EnhancedEcommerce),
+        expectRule('fs-ua-e-commerce-checkout-action', Ruleset.EnhancedEcommerce),
       ],
     });
 
@@ -410,8 +415,8 @@ describe('Google Analytics Enhanced Ecommerce rules', () => {
   it('should read enhanced ecommerce refund', () => {
     ExpectObserver.getInstance().create({
       rules: [
-        expectRule('fs-ua-e-commerce-refund-product'),
-        expectRule('fs-ua-e-commerce-refund-action'),
+        expectRule('fs-ua-e-commerce-refund-product', Ruleset.EnhancedEcommerce),
+        expectRule('fs-ua-e-commerce-refund-action', Ruleset.EnhancedEcommerce),
       ],
     });
 
