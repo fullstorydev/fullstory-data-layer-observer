@@ -365,8 +365,7 @@ describe('DataLayerObserver unit tests', () => {
     observer.handlers[0].fireEvent();
 
     [category] = expectParams(globalMock.console, 'log');
-    // @ts-ignore suffixed non-standard property name
-    expect((category as PageCategory).primaryCategory_str).to.eq(
+    expect(category.primaryCategory_str).to.eq(
       globalMock.digitalData.page.category.primaryCategory.toUpperCase(),
     );
 
