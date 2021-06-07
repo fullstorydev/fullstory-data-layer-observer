@@ -319,7 +319,8 @@ describe('DataLayerObserver unit tests', () => {
   it('it should register and call an operator before the destination', () => {
     expectNoCalls(globalMock.console, 'log');
 
-    const observer = ExpectObserver.getInstance().create({ beforeDestination: { name: 'toUpper' }, rules: [] });
+    // backwards compatibility test of a single operator
+    let observer = ExpectObserver.getInstance().create({ beforeDestination: { name: 'toUpper' }, rules: [] });
 
     observer.registerOperator('toUpper', new UppercaseOperator());
     observer.registerRule({
@@ -333,8 +334,39 @@ describe('DataLayerObserver unit tests', () => {
 
     observer.handlers[0].fireEvent();
 
-    const [category] = expectParams(globalMock.console, 'log');
+    let [category] = expectParams(globalMock.console, 'log');
     expect((category as PageCategory).primaryCategory).to.eq(
+      globalMock.digitalData.page.category.primaryCategory.toUpperCase(),
+    );
+
+    ExpectObserver.getInstance().cleanup(observer);
+
+    expectNoCalls(globalMock.console, 'log');
+
+    // test multiple operators
+    observer = ExpectObserver.getInstance().create({
+      beforeDestination: [
+        { name: 'toUpper' },
+        { name: 'suffix' }, // NOTE suffix is a built-in operator
+      ],
+      rules: [],
+    });
+
+    observer.registerOperator('toUpper', new UppercaseOperator());
+    observer.registerRule({
+      source: 'digitalData.page.category',
+      operators: [],
+      destination: 'console.log',
+      monitor: false,
+    });
+
+    expect(observer.handlers.length).to.eq(1);
+
+    observer.handlers[0].fireEvent();
+
+    [category] = expectParams(globalMock.console, 'log');
+    // @ts-ignore suffixed non-standard property name
+    expect((category as PageCategory).primaryCategory_str).to.eq(
       globalMock.digitalData.page.category.primaryCategory.toUpperCase(),
     );
 
