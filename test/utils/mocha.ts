@@ -13,7 +13,7 @@ import { BuiltinOptions, OperatorFactory } from '../../src/factory';
  * @param key The key corresponding to the global object (e.g. FS in window['FS']).
  */
 export function expectGlobal(key: string): any {
-  const value = (globalThis as any)[key];
+  const value = (globalThis as any)[key] || (window as any)[key];
   expect(value).to.be.ok;
   return value;
 }
@@ -270,10 +270,10 @@ export function expectInvalid(options: BuiltinOptions, message?: string) {
  * Expects and returns a specific rule from a list of rules.
  * If a ruleset is not provided, the global `_dlo_rules` value will be used.
  * @param id ID of the rule to retrieve
- * @param ruleset List or rules to search
+ * @param ruleset Expando containing ruleset
  */
-export function expectRule(id: string, ruleset?: DataLayerRule[]): DataLayerRule {
-  const rules = ruleset || expectGlobal('_dlo_rules');
+export function expectRule(id: string, ruleset?: string): DataLayerRule {
+  const rules = ruleset ? expectGlobal(ruleset) : expectGlobal('_dlo_rules');
   expect(rules).to.be.ok;
   expect(rules.length).to.be.greaterThan(0);
 
