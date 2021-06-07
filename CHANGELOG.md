@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.6.5
+
+- Adjusted suffixing behavior for `pageName`, `displayName`, and `email` to support FS APIs
+
 ### 1.6.4
 
 - Move `EmptyEvent` scenario from log level `warn` to `debug`
