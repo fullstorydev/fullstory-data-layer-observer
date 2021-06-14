@@ -210,14 +210,17 @@ export class ConvertOperator implements Operator {
         : !Number.isNaN((newValue as Date).getTime());
     }
 
-    // log warning and reset to the original value
+    // Note `debug` level is used because `enumerate` may always be done `beforeDestination`, which could generate
+    // a lot of false positives
+    // log debug and reset to the original value
     if (!verified) {
-      Logger.getInstance().warn(LogMessageType.OperatorError, {
+      newMap[property] = oldValue; // eslint-disable-line no-param-reassign
+
+      Logger.getInstance().debug(LogMessageType.OperatorError, {
         operator: 'convert',
         property: property.toString(),
         reason: `Failed to convert to ${type} for value ${oldValue}`,
       });
-      newMap[property] = oldValue; // eslint-disable-line no-param-reassign
     }
   }
 }
