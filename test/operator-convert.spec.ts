@@ -355,4 +355,17 @@ describe('convert operator unit tests', () => {
     expect(salePrice).to.eq(24.99); // NOTE because preserveArray is not true, it becomes a single value
     expect(discountTiers).to.eql([24.99, 19.99, 12.99]);
   });
+
+  it('it should convert from the end of a list', () => {
+    const operator = OperatorFactory.create('convert', {
+      name: 'convert', properties: 'quantity', type: 'int', index: -1,
+    });
+    const [eventName, int] = operator.handleData(['track', item])!;
+
+    expect(eventName).to.eql('track');
+    expect(int).to.not.be.null;
+    expect(int.quantity).to.eq(10);
+    expect(int.size).to.eq(5); // non-converted properties remain
+    expect(item.quantity).to.eq('10'); // don't mutate the actual data layer
+  });
 });
