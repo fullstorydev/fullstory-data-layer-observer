@@ -13,7 +13,7 @@ Add Data Layer Observer to your web site or web app by including the following s
 ```html
 <script>
  window['_dlo_appender'] = 'fullstory';
- window['_dlo_beforeDestination'] = { name: 'suffix' };
+ window['_dlo_beforeDestination'] = [{ name: 'convert', enumerate: true },{ name: 'suffix' }];
  window['_dlo_previewMode'] = true;     // set to false in production to send data to the destination
  window['_dlo_readOnLoad'] = true;      // see docs on usage
  window['_dlo_validateRules'] = true;
@@ -72,7 +72,7 @@ DLO is configurable by adding relevant options as `window` properties to the pag
 
 ```html
 <script>
- window['_dlo_beforeDestination'] = { name: 'suffix' };
+ window['_dlo_beforeDestination'] = [{ name: 'convert', enumerate: true },{ name: 'suffix' }];
  window['_dlo_previewMode'] = true;
  window['_dlo_readOnLoad'] = true;
  window['_dlo_validateRules'] = true;
