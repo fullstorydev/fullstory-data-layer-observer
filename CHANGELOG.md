@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.7.0
+
+- Update `beforeDestination` to accept a list allowing multiple operators to execute
+
 ### 1.6.5
 
 - Adjusted suffixing behavior for `pageName`, `displayName`, and `email` to support FS APIs
