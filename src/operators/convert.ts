@@ -83,6 +83,8 @@ export class ConvertOperator implements Operator {
   handleData(data: any[]): any[] | null {
     // NOTE this operator transforms data - be absolutely sure there are no side effects to the data layer!
 
+    const index = this.index >= 0 ? this.index : data.length + this.index;
+
     let { properties } = this.options;
     const {
       enumerate, force, preserveArray, type,
@@ -95,31 +97,31 @@ export class ConvertOperator implements Operator {
     // TODO (van) we don't currently rename properties in child objects, but if we eventually do
     // a deep copy of the data layer object will need to be done to ensure we don't change the object
     // in the data layer
-    const converted: { [key: string]: any } = { ...data[this.index] };
+    const converted: { [key: string]: any } = { ...data[index] };
 
     // if enumerate is set, try to coerce all strings into an equivalent numeric value
     if (enumerate) {
-      const enumerableProps = ConvertOperator.enumerableProperties(data[this.index]);
+      const enumerableProps = ConvertOperator.enumerableProperties(data[index]);
       enumerableProps.forEach((property) => {
-        if (typeof data[this.index][property] === 'string') {
-          converted[property] = ConvertOperator.convert('real', data[this.index][property]);
-          ConvertOperator.verifyConversion('real', property, converted, data[this.index]);
+        if (typeof data[index][property] === 'string') {
+          converted[property] = ConvertOperator.convert('real', data[index][property]);
+          ConvertOperator.verifyConversion('real', property, converted, data[index]);
         } else {
           converted[property] = []; // this prevents mutating the actual data layer
-          for (let i = 0; i < (data[this.index][property] as string[]).length; i += 1) {
-            converted[property].push(ConvertOperator.convert('real', data[this.index][property][i]));
+          for (let i = 0; i < (data[index][property] as string[]).length; i += 1) {
+            converted[property].push(ConvertOperator.convert('real', data[index][property][i]));
           }
-          ConvertOperator.verifyConversion('real', property, converted, data[this.index]);
+          ConvertOperator.verifyConversion('real', property, converted, data[index]);
         }
       });
     }
 
     if (properties && type) {
       // NOTE if * is supplied, convert all properties
-      const list = properties[0] === '*' ? Object.getOwnPropertyNames(data[this.index]) : properties;
+      const list = properties[0] === '*' ? Object.getOwnPropertyNames(data[index]) : properties;
 
       list.forEach((property) => {
-        const original = data[this.index][property];
+        const original = data[index][property];
         if ((original !== undefined && original !== null) || force) {
           // if the intended conversion is on a list, convert all members in the list
           if (Array.isArray(original)) {
@@ -128,10 +130,10 @@ export class ConvertOperator implements Operator {
               const item = (original as any[])[i];
               converted[property].push(ConvertOperator.convert(type, item));
             }
-            ConvertOperator.verifyConversion(type, property, converted, data[this.index]);
+            ConvertOperator.verifyConversion(type, property, converted, data[index]);
           } else {
             converted[property] = ConvertOperator.convert(type, original);
-            ConvertOperator.verifyConversion(type, property, converted, data[this.index]);
+            ConvertOperator.verifyConversion(type, property, converted, data[index]);
           }
         }
       });
@@ -149,7 +151,7 @@ export class ConvertOperator implements Operator {
 
     // a copy of the incoming data layer needs to be returned
     // if you modify/update the `data` parameter directly, you may modify the data layer!
-    return safeUpdate(data, this.index, converted);
+    return safeUpdate(data, index, converted);
   }
 
   validate() {
