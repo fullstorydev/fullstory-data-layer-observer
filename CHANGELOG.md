@@ -12,7 +12,8 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ### 1.7.0
 
-- Update `beforeDestination` to accept a list allowing multiple operators to execute
+- Updated `beforeDestination` to accept a list allowing multiple operators to execute
+- Updated `convert` operator to accept negative `index` (read from end of a data list)
 
 ### 1.6.5
 
