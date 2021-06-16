@@ -341,6 +341,35 @@ describe('DataLayerObserver unit tests', () => {
     ExpectObserver.getInstance().cleanup(observer);
   });
 
+  it('it should register and call multiple operators before the destination', () => {
+    const observer = ExpectObserver.getInstance().create({
+      beforeDestination: [
+        { name: 'toUpper' },
+        { name: 'suffix' }, // NOTE suffix is a built-in operator
+      ],
+      rules: [],
+    });
+
+    observer.registerOperator('toUpper', new UppercaseOperator());
+    observer.registerRule({
+      source: 'digitalData.page.category',
+      operators: [],
+      destination: 'console.log',
+      monitor: false,
+    });
+
+    expect(observer.handlers.length).to.eq(1);
+
+    observer.handlers[0].fireEvent();
+
+    const [category] = expectParams(globalMock.console, 'log');
+    expect(category.primaryCategory_str).to.eq(
+      globalMock.digitalData.page.category.primaryCategory.toUpperCase(),
+    );
+
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
   it('it should register a custom log appender', () => {
     expectNoCalls(globalMock.FS, 'event');
 

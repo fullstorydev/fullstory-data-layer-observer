@@ -26,7 +26,7 @@ import MonitorFactory from './monitor-factory';
  */
 export interface DataLayerConfig {
   appender?: string | LogAppender;
-  beforeDestination?: OperatorOptions;
+  beforeDestination?: OperatorOptions | OperatorOptions[];
   logLevel?: LogLevel;
   previewDestination?: string;
   previewMode?: boolean;
@@ -173,7 +173,8 @@ export class DataLayerObserver {
       // optionally perform a final transformation
       // useful if every rule needs the same operator run before the destination
       if (beforeDestination) {
-        handler.push(this.getOperator(beforeDestination));
+        const beforeOptions = Array.isArray(beforeDestination) ? beforeDestination : [beforeDestination];
+        beforeOptions.forEach((operator) => handler.push(this.getOperator(operator)));
       }
 
       // end with destination

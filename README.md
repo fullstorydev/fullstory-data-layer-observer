@@ -13,7 +13,7 @@ Add Data Layer Observer to your web site or web app by including the following s
 ```html
 <script>
  window['_dlo_appender'] = 'fullstory';
- window['_dlo_beforeDestination'] = { name: 'suffix' };
+ window['_dlo_beforeDestination'] = [{ name: 'convert', enumerate: true, index: -1 },{ name: 'suffix' }];
  window['_dlo_previewMode'] = true;     // set to false in production to send data to the destination
  window['_dlo_readOnLoad'] = true;      // see docs on usage
  window['_dlo_validateRules'] = true;
@@ -55,7 +55,7 @@ Sensitive, private, and confidential information should never be added to a data
 
 DLO is a JavaScript asset that is included on a web page.  FullStory hosts versions of DLO on our CDN.  Versioned releases have the naming convention `<version>.js`, and the most recent version is named `latest.js`:
 
-- https://edge.fullstory.com/datalayer/v1/1.6.5.js
+- https://edge.fullstory.com/datalayer/v1/1.7.0.js
 - https://edge.fullstory.com/datalayer/v1/latest.js
 
 If you would like the most up to date version of DLO on your site always, use `latest.js`.  If you'd rather use stable releases and perform manual upgrades, use `<version>.js`.
@@ -72,7 +72,7 @@ DLO is configurable by adding relevant options as `window` properties to the pag
 
 ```html
 <script>
- window['_dlo_beforeDestination'] = { name: 'suffix' };
+ window['_dlo_beforeDestination'] = [{ name: 'convert', enumerate: true, index: -1 },{ name: 'suffix' }];
  window['_dlo_previewMode'] = true;
  window['_dlo_readOnLoad'] = true;
  window['_dlo_validateRules'] = true;
