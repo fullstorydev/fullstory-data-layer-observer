@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.7.1
+
+- Additional log messages when adding operators
+
 ### 1.7.0
 
 - Updated `beforeDestination` to accept a list allowing multiple operators to execute
