@@ -1,19 +1,15 @@
 {
   "compilerOptions": {
-    /* Basic Options */
     "target": "es2015",
     "module": "commonjs",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    /* Type-Checking Options */
     "strict": true,
     "keyofStringsOnly": true,
-    /* Additional Checks */
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
-    /* Module Resolution Options */
     "types": [],
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
