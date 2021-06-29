@@ -182,6 +182,7 @@ export class DataLayerObserver {
       handler.push(new FunctionOperator({ name: 'function', func }));
     } catch (err) {
       this.removeHandler(handler);
+      Logger.getInstance().error(LogMessageType.OperatorError, { operator: JSON.stringify(options) });
       throw err;
     }
   }
@@ -192,15 +193,20 @@ export class DataLayerObserver {
    * @throws an Error if the `validateRules` setting is true and the `options` are invalid
    */
   private getOperator(options: OperatorOptions) {
-    const { name } = options;
-    const operator = this.customOperators[name] ? this.customOperators[name]
-      : OperatorFactory.create(name, options as BuiltinOptions);
+    try {
+      const { name } = options;
+      const operator = this.customOperators[name] ? this.customOperators[name]
+        : OperatorFactory.create(name, options as BuiltinOptions);
 
-    if (this.config.validateRules) {
-      operator.validate();
+      if (this.config.validateRules) {
+        operator.validate();
+      }
+
+      return operator;
+    } catch (err) {
+      Logger.getInstance().error(LogMessageType.OperatorError, { operator: JSON.stringify(options) });
+      throw err;
     }
-
-    return operator;
   }
 
   /**
