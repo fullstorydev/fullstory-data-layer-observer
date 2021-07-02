@@ -173,6 +173,26 @@ describe('DataLayerObserver unit tests', () => {
     ExpectObserver.getInstance().cleanup(observer);
   });
 
+  it('rule-specific readOnLoad overrides global readOnLoad', () => {
+    expectNoCalls(globalMock.console, 'log');
+
+    const observer = ExpectObserver.getInstance().create({
+      readOnLoad: true,
+      rules: [
+        {
+          source: 'digitalData.page.pageInfo',
+          operators: [],
+          destination: 'console.log',
+          readOnLoad: false,
+        },
+      ],
+    });
+
+    expectNoCalls(globalMock.console, 'log');
+
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
   it('it should allow custom operators to be registered', () => {
     const observer = ExpectObserver.getInstance().default();
     observer.registerOperator('echo', new EchoOperator());
