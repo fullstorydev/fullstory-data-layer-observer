@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.7.2
+
+- Fix to allow rule-specific `readOnLoad` to override global `readOnLoad`
+
 ### 1.7.1
 
 - Additional log messages when adding operators

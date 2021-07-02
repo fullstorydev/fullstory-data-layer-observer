@@ -339,7 +339,7 @@ export class DataLayerObserver {
     } = rule;
 
     // rule properties override global ones
-    const readOnLoad = ruleReadOnLoad || globalReadOnLoad;
+    const readOnLoad = ruleReadOnLoad === undefined ? globalReadOnLoad : ruleReadOnLoad;
 
     if (!source || !destination) {
       Logger.getInstance().error(LogMessageType.RuleInvalid,
