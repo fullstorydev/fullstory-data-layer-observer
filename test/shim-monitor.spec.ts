@@ -66,6 +66,35 @@ describe('ShimMonitor unit tests', () => {
     globalMock.digitalData.cart.cartID = 'cart-5678';
   });
 
+  it('it should not emit an on change value if it matches the existing value', () => {
+    const path = 'digitalData.transaction';
+
+    // this test is a bit different because we have to create a listener where the
+    // Nth invocation is expected not to happen
+
+    // track the number of dispatched events with a simple counter
+    let counter = 0;
+    const listener = () => {
+      counter += 1;
+    };
+
+    // add the counter handler
+    window.addEventListener(createEventType(path), listener);
+
+    const cartMonitor = new ShimMonitor(globalMock.digitalData.transaction, 'transactionID', path);
+    expect(cartMonitor).to.not.be.undefined;
+
+    // trigger the first counter handler
+    globalMock.digitalData.transaction.transactionID = '123';
+    expect(counter).to.eql(1);
+
+    // re-assign the same value, which should not trigger the counter
+    globalMock.digitalData.transaction.transactionID = '123';
+    expect(counter).to.eql(1);
+
+    window.removeEventListener(createEventType(path), listener);
+  });
+
   it('it should emit args from function calls', (done) => {
     const path = 'dataLayer';
     const hit: any = {

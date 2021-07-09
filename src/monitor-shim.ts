@@ -43,8 +43,15 @@ export default class ShimMonitor extends Monitor {
       enumerable: this.enumerable,
       get: () => this.state,
       set: (value: any) => {
+        // checks if the incoming value matches the existing value
+        const hasChanged = this.state !== value;
+
         this.state = value;
-        this.emit(value);
+
+        // object-based data layers will often re-assign the same value, which causes over emitting
+        if (hasChanged) {
+          this.emit(value);
+        }
       },
     });
   }
