@@ -324,7 +324,7 @@ describe('convert operator unit tests', () => {
     const operator = OperatorFactory.create('convert', { name: 'convert', enumerate: true });
     const [enumerated] = operator.handleData([item])!;
     const {
-      quantity, price, available, saleDate, type, vat, salePrice, discountTiers,
+      quantity, price, available, saleDate, type, vat, salePrice, discountTiers, empty,
     } = enumerated;
 
     expect(quantity).to.eq(10);
@@ -335,6 +335,7 @@ describe('convert operator unit tests', () => {
     expect(type).to.eq(true);
     expect(salePrice).to.eq(24.99); // NOTE because preserveArray is not true, it becomes a single value
     expect(discountTiers).to.eql([24.99, 19.99, 12.99]);
+    expect(empty).to.eq('');
   });
 
   it('strings can be converted automatically to numbers while converting specific properties', () => {
