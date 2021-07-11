@@ -4,22 +4,20 @@ import deepcopy from 'deepcopy';
 import 'mocha';
 
 import {
-  basicDigitalData, CEDDL, PageCategory, Cart, TotalCartPrice,
+  basicDigitalData, /* CEDDL, PageCategory, Cart, */TotalCartPrice,
 } from './mocks/CEDDL';
 import Console from './mocks/console';
 import FullStory from './mocks/fullstory-recording';
 import {
-  expectParams, expectNoCalls, expectCall, ExpectObserver,
+  expectParams, expectNoCalls, expectCall, setGlobal, expectGlobal, expectEqual, expectLogEvents, expectMatch,
 } from './utils/mocha';
+import { ObserverFactory } from './utils/observer-factory';
 import { Operator, OperatorOptions } from '../src/operator';
-import { LogEvent, LogLevel } from '../src/utils/logger';
+import { DataLayerRule } from '../src/observer';
+import { LogLevel } from '../src/utils/logger';
 import DataHandler from '../src/handler';
-import { MockClass } from './mocks/mock';
-import MonitorFactory from '../src/monitor-factory';
-import { DataLayerObserver } from '../src/observer';
-import DataLayerTarget from '../src/target';
 
-class EchoOperator implements Operator {
+export class EchoOperator implements Operator {
   options: OperatorOptions = {
     name: 'echo',
     fail: false,
@@ -38,7 +36,7 @@ class EchoOperator implements Operator {
   }
 }
 
-class UppercaseOperator implements Operator {
+export class UppercaseOperator implements Operator {
   options: OperatorOptions = {
     name: 'toUpper',
   };
@@ -64,384 +62,276 @@ class UppercaseOperator implements Operator {
   }
 }
 
-class MockAppender extends MockClass {
-  /* eslint-disable class-methods-use-this, @typescript-eslint/no-unused-vars */
-  log(event: LogEvent) { }
-}
-
-const originalConsole = console;
-
+// const originalConsole = console;
+/*
 interface GlobalMock {
   dataLayer: any[],
   digitalData: CEDDL,
   FS: FullStory
   console: Console,
 }
+*/
+// let globalMock: GlobalMock;
 
-let globalMock: GlobalMock;
+const factory = ObserverFactory.getInstance();
 
 describe('DataLayerObserver unit tests', () => {
   beforeEach(() => {
-    (globalThis as any).dataLayer = [];
-    (globalThis as any).digitalData = deepcopy(basicDigitalData); // NOTE copy so mutations don't pollute tests
-    (globalThis as any).console = new Console();
-    (globalThis as any).FS = new FullStory(); // eslint-disable-line no-underscore-dangle
-    globalMock = globalThis as any;
+    setGlobal('dataLayer', []);
+    setGlobal('digitalData', deepcopy(basicDigitalData)); // NOTE copy so mutations don't pollute tests
+    setGlobal('console', new Console());
+    setGlobal('FS', new FullStory());
   });
 
   afterEach(() => {
+    /*
     delete (globalThis as any).dataLayer;
     delete (globalThis as any).digitalData;
     delete (globalThis as any).FS;
     (globalThis as any).console = originalConsole;
+    */
   });
 
   it('it should initialize with defaults', () => {
-    const observer = ExpectObserver.getInstance().default();
-    ExpectObserver.getInstance().cleanup(observer);
+    const id = factory.create({ rules: [] });
+    factory.cleanup(id);
   });
 
   it('it should automatically parse config rules', () => {
-    const observer = ExpectObserver.getInstance().create({
-      rules: [{
-        source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log', monitor: false,
-      }],
-    });
-    ExpectObserver.getInstance().cleanup(observer);
+    const rules: DataLayerRule[] = [
+      {
+        source: 'digitalData.page.pageInfo', operators: [], destination: '', monitor: false,
+      },
+    ];
+    const id = factory.create({ rules });
+    factory.cleanup(id);
   });
 
   it('rules without a source and destination are invalid', () => {
-    const observer = ExpectObserver.getInstance().create({
-      rules: [
-        // @ts-ignore
-        { operators: [], destination: 'console.log', monitor: false },
-        // @ts-ignore
-        { source: 'digitalData.page.pageInfo', operators: [], monitor: false },
-      ],
-    }, false);
-    expect(observer.handlers.length).to.eq(0);
-    ExpectObserver.getInstance().cleanup(observer);
+    const rules: DataLayerRule[] = [
+      // @ts-ignore
+      { operators: [], destination: '', monitor: false },
+      // @ts-ignore
+      { source: 'digitalData.page.pageInfo', operators: [], monitor: false },
+    ];
+    const id = factory.create({ rules }, false);
+
+    expectEqual(factory.getObserver(id).handlers.length, 0);
+    expectLogEvents(factory.getAppender(id), LogLevel.ERROR, 2);
+
+    factory.cleanup(id);
   });
 
   it('it should read a data layer on-load for all rules', () => {
-    expectNoCalls(globalMock.console, 'log');
+    const rules: DataLayerRule[] = [
+      {
+        source: 'digitalData.page.pageInfo', operators: [], destination: '', monitor: false,
+      },
+      {
+        source: 'digitalData.product[0].productInfo', operators: [], destination: '', monitor: false,
+      },
+    ];
 
-    const observer = ExpectObserver.getInstance().create({
-      readOnLoad: true,
-      rules: [
-        {
-          source: 'digitalData.page.pageInfo', operators: [], destination: 'console.log', monitor: false,
-        },
-        {
-          source: 'digitalData.product[0].productInfo', operators: [], destination: 'console.log', monitor: false,
-        },
-      ],
-    });
+    const id = factory.create({ readOnLoad: true, rules });
+    const destination = factory.getDestination(id);
 
-    const [productInfo] = expectParams(globalMock.console, 'log');
-    expect(productInfo).to.eq(globalMock.digitalData.product[0].productInfo);
+    expectEqual([expectGlobal('digitalData').page.pageInfo], destination[0]);
+    expectEqual([expectGlobal('digitalData').product[0].productInfo], destination[1]);
+    expectLogEvents(factory.getAppender(id), LogLevel.ERROR, 0);
 
-    const [pageInfo] = expectParams(globalMock.console, 'log');
-    expect(pageInfo).to.eq(globalMock.digitalData.page.pageInfo);
-
-    ExpectObserver.getInstance().cleanup(observer);
+    factory.cleanup(id);
   });
 
   it('it should read a data layer on-load for specific rules', () => {
-    expectNoCalls(globalMock.console, 'log');
+    const rules: DataLayerRule[] = [
+      {
+        source: 'digitalData.page.pageInfo', operators: [], destination: '', readOnLoad: true, monitor: false,
+      },
+      {
+        source: 'digitalData.product[0].productInfo', operators: [], destination: '', monitor: false,
+      },
+    ];
 
-    const observer = ExpectObserver.getInstance().create({
-      rules: [
-        {
-          source: 'digitalData.page.pageInfo',
-          operators: [],
-          destination: 'console.log',
-          readOnLoad: true,
-          monitor: false,
-        },
-        {
-          source: 'digitalData.product[0].productInfo', operators: [], destination: 'console.log', monitor: false,
-        },
-      ],
-    });
+    const id = factory.create({ rules, logLevel: 1 });
+    const destination = factory.getDestination(id);
 
-    const [pageInfo] = expectParams(globalMock.console, 'log');
-    expect(pageInfo).to.eq(globalMock.digitalData.page.pageInfo);
+    expectEqual([expectGlobal('digitalData').page.pageInfo], destination[0]);
+    expectLogEvents(factory.getAppender(id), LogLevel.ERROR, 0);
 
-    expectNoCalls(globalMock.console, 'log');
-
-    ExpectObserver.getInstance().cleanup(observer);
+    factory.cleanup(id);
   });
 
   it('rule-specific readOnLoad overrides global readOnLoad', () => {
-    expectNoCalls(globalMock.console, 'log');
+    const rules: DataLayerRule[] = [
+      {
+        source: 'digitalData.page.pageInfo', operators: [], destination: '', readOnLoad: true,
+      },
+    ];
 
-    const observer = ExpectObserver.getInstance().create({
-      readOnLoad: true,
-      rules: [
-        {
-          source: 'digitalData.page.pageInfo',
-          operators: [],
-          destination: 'console.log',
-          readOnLoad: false,
-        },
-      ],
-    });
+    const id = factory.create({ readOnLoad: false, rules });
+    const destination = factory.getDestination(id);
 
-    expectNoCalls(globalMock.console, 'log');
+    expectEqual([expectGlobal('digitalData').page.pageInfo], destination[0]);
+    expectLogEvents(factory.getAppender(id), LogLevel.ERROR, 0);
 
-    ExpectObserver.getInstance().cleanup(observer);
+    factory.cleanup(id);
   });
 
   it('it should allow custom operators to be registered', () => {
-    const observer = ExpectObserver.getInstance().default();
+    const id = factory.create({ rules: [] });
+    const observer = factory.getObserver(id);
     observer.registerOperator('echo', new EchoOperator());
-    ExpectObserver.getInstance().cleanup(observer);
+    factory.cleanup(id);
   });
 
-  it('invalid operators should remove a handler', () => {
-    const observer = ExpectObserver.getInstance().create({
-      validateRules: true,
-      rules: [{
-        source: 'digitalData.page.pageInfo',
-        operators: [{ name: 'insert' }],
-        destination: 'console.log',
-        monitor: false,
-      }],
-    }, false);
+  it('invalid operators should remove a handler', (done) => {
+    const rules: DataLayerRule[] = [
+      {
+        source: 'digitalData.page.pageInfo', operators: [{ name: 'insert' }], destination: '', monitor: false,
+      },
+    ];
+    const id = factory.create({ validateRules: true, rules }, false);
+    const appender = factory.getAppender(id);
 
-    expect(observer.handlers.length).to.eq(0);
-
-    ExpectObserver.getInstance().cleanup(observer);
+    // an invalid operator triggers rescheduling a rule so wait for the rule to timeout
+    setTimeout(() => {
+      expectEqual(factory.getObserver(id).handlers.length, 0);
+      const logs = expectLogEvents(appender, LogLevel.ERROR);
+      expect(logs.length).to.be.greaterThan(0);
+      factory.cleanup(id);
+      done();
+    }, 1500);
   });
 
   it('it should not register operators with existing names', () => {
-    const observer = ExpectObserver.getInstance().default();
+    const id = factory.create({ rules: [] }, false);
+    const observer = factory.getObserver(id);
     expect(() => { observer.registerOperator('function', new EchoOperator()); }).to.throw();
-    ExpectObserver.getInstance().cleanup(observer);
+    factory.cleanup(id);
   });
 
   it('only valid pages should process a rule', () => {
-    expectNoCalls(globalMock.console, 'log');
-
     const urlValidator = (url: string | undefined) => (url ? RegExp(url).test('https://www.fullstory.com/cart') : true);
+    const rules: DataLayerRule[] = [
+      {
+        source: 'digitalData.transaction', operators: [], destination: '', url: '/checkout$', monitor: false,
+      },
+      {
+        source: 'digitalData.cart', operators: [], destination: '', url: '/cart$', monitor: false,
+      },
+    ];
+    const id = factory.create({ readOnLoad: true, urlValidator, rules }, false);
+    const destination = factory.getDestination(id);
 
-    const observer = ExpectObserver.getInstance().create({
-      readOnLoad: true,
-      urlValidator,
-      rules: [
-        {
-          source: 'digitalData.transaction',
-          operators: [],
-          destination: 'console.log',
-          url: '/checkout$',
-          monitor: false,
-        },
-        {
-          source: 'digitalData.cart', operators: [], destination: 'console.log', url: '/cart$', monitor: false,
-        },
-      ],
-    }, false);
+    // there should be only one event in the queue
+    expectEqual([expectGlobal('digitalData').cart], destination[0]);
+    expectLogEvents(factory.getAppender(id), LogLevel.ERROR, 0);
 
-    expect(observer.handlers.length).to.eq(1);
-
-    const [cart] = expectParams(globalMock.console, 'log');
-    expect(cart).to.eq(globalMock.digitalData.cart);
-
-    expectNoCalls(globalMock.console, 'log');
-
-    ExpectObserver.getInstance().cleanup(observer);
+    factory.cleanup(id);
   });
 
   it('previewMode defaults to console.log', () => {
-    expectNoCalls(globalMock.console, 'log');
-    expectNoCalls(globalMock.FS, 'setUserVars');
+    const rules: DataLayerRule[] = [
+      {
+        source: 'digitalData.user.profile[0].profileInfo', operators: [], destination: '', monitor: false,
+      },
+    ];
+    const id = factory.create({ previewMode: true, readOnLoad: true, rules });
 
-    const observer = ExpectObserver.getInstance().create({
-      previewMode: true,
-      readOnLoad: true,
-      rules: [
-        {
-          source: 'digitalData.user.profile[0].profileInfo',
-          operators: [],
-          destination: 'FS.setUserVars',
-          monitor: false,
-        },
-      ],
-    });
+    expectEqual(factory.getDestination(id).length, 0);
+    const [profileInfo] = expectParams(expectGlobal('console'), 'log');
+    expectEqual(profileInfo, expectGlobal('digitalData').user.profile[0].profileInfo);
 
-    const [profileInfo] = expectParams(globalMock.console, 'log');
-    expect(profileInfo).to.eq(globalMock.digitalData.user.profile[0].profileInfo);
-
-    expectNoCalls(globalMock.FS, 'setUserVars');
-
-    ExpectObserver.getInstance().cleanup(observer);
+    factory.cleanup(id);
   });
 
   it('previewMode can be configured', () => {
-    expectNoCalls(globalMock.console, 'debug');
-    expectNoCalls(globalMock.FS, 'setUserVars');
+    expectNoCalls(expectGlobal('console'), 'debug');
 
-    const observer = ExpectObserver.getInstance().create({
-      previewMode: true,
-      previewDestination: 'console.debug',
-      readOnLoad: true,
-      rules: [
-        {
-          source: 'digitalData.user.profile[0].profileInfo',
-          operators: [],
-          destination: 'FS.setUserVars',
-          monitor: false,
-        },
-      ],
+    const rules: DataLayerRule[] = [
+      {
+        source: 'digitalData.user.profile[0].profileInfo', operators: [], destination: '', monitor: false,
+      },
+    ];
+    const id = factory.create({
+      previewDestination: 'console.debug', previewMode: true, readOnLoad: true, rules,
     });
 
-    const [profileInfo] = expectParams(globalMock.console, 'debug');
-    expect(profileInfo).to.eq(globalMock.digitalData.user.profile[0].profileInfo);
+    expectEqual(factory.getDestination(id).length, 0);
+    const [profileInfo] = expectParams(expectGlobal('console'), 'debug');
+    expectEqual(profileInfo, expectGlobal('digitalData').user.profile[0].profileInfo);
 
-    expectNoCalls(globalMock.FS, 'setUserVars');
-
-    ExpectObserver.getInstance().cleanup(observer);
+    factory.cleanup(id);
   });
 
   it('debug can be enabled for a specific rule', () => {
-    expectNoCalls(globalMock.console, 'debug');
+    expectNoCalls(expectGlobal('console'), 'debug');
 
-    const observer = ExpectObserver.getInstance().default();
+    const rules: DataLayerRule[] = [
+      {
+        source: 'digitalData.page.pageInfo', operators: [], destination: '', debug: true, monitor: false,
+      },
+      {
+        source: 'digitalData.product[0].productInfo', operators: [], destination: '', monitor: false,
+      },
+    ];
+    const id = factory.create({ rules });
+    const observer = factory.getObserver(id);
 
-    observer.registerOperator('toUpper', new UppercaseOperator());
-    observer.registerRule({
-      source: 'digitalData.page.pageInfo',
-      operators: [
-        { name: 'toUpper' }],
-      destination: 'console.log',
-      debug: true,
-      monitor: false,
-    });
-    observer.registerRule({
-      source: 'digitalData.product[0].productInfo',
-      operators: [
-        { name: 'toUpper' }],
-      destination: 'console.log',
-      monitor: false,
-    });
-
-    expect(observer.handlers.length).to.eq(2);
     observer.handlers[0].fireEvent();
     observer.handlers[1].fireEvent();
 
-    // NOTE there should only be 4 debug statements for the first rule - one each for: entry, toUpper, function (destination), exit
-    expectCall(globalMock.console, 'debug', 4);
+    // NOTE there should only be 4 debug statements for the first rule - one each for: entry, function (destination), exit
+    expectCall(expectGlobal('console'), 'debug', 3);
 
-    ExpectObserver.getInstance().cleanup(observer);
+    factory.cleanup(id);
   });
 
   it('it should register and call an operator before the destination', () => {
-    expectNoCalls(globalMock.console, 'log');
+    const rules: DataLayerRule[] = [
+      {
+        source: 'digitalData.page.pageInfo', operators: [], destination: '', monitor: false, readOnLoad: true,
+      },
+    ];
+    const beforeDestination = { name: 'insert', value: 'event' };
+    const id = factory.create({ beforeDestination, rules });
+    const destination = factory.getDestination(id);
 
-    const observer = ExpectObserver.getInstance().create({ beforeDestination: { name: 'toUpper' }, rules: [] });
+    expectEqual(['event', expectGlobal('digitalData').page.pageInfo], destination[0]);
+    expectLogEvents(factory.getAppender(id), LogLevel.ERROR, 0);
 
-    observer.registerOperator('toUpper', new UppercaseOperator());
-    observer.registerRule({
-      source: 'digitalData.page.category',
-      operators: [],
-      destination: 'console.log',
-      monitor: false,
-    });
-
-    expect(observer.handlers.length).to.eq(1);
-
-    observer.handlers[0].fireEvent();
-
-    const [category] = expectParams(globalMock.console, 'log');
-    expect((category as PageCategory).primaryCategory).to.eq(
-      globalMock.digitalData.page.category.primaryCategory.toUpperCase(),
-    );
-
-    ExpectObserver.getInstance().cleanup(observer);
+    factory.cleanup(id);
   });
 
   it('it should register and call multiple operators before the destination', () => {
-    const observer = ExpectObserver.getInstance().create({
-      beforeDestination: [
-        { name: 'toUpper' },
-        { name: 'suffix' }, // NOTE suffix is a built-in operator
-      ],
-      rules: [],
-    });
+    const rules: DataLayerRule[] = [
+      {
+        source: 'digitalData.page.category', operators: [], destination: '', monitor: false, readOnLoad: true,
+      },
+    ];
+    const beforeDestination = [{ name: 'insert', value: 'page' }, { name: 'insert', value: 'dlo', position: -1 }];
+    const id = factory.create({ beforeDestination, rules });
+    const destination = factory.getDestination(id);
 
-    observer.registerOperator('toUpper', new UppercaseOperator());
-    observer.registerRule({
-      source: 'digitalData.page.category',
-      operators: [],
-      destination: 'console.log',
-      monitor: false,
-    });
+    expectEqual(['page', expectGlobal('digitalData').page.category, 'dlo'], destination[0]);
 
-    expect(observer.handlers.length).to.eq(1);
-
-    observer.handlers[0].fireEvent();
-
-    const [category] = expectParams(globalMock.console, 'log');
-    expect(category.primaryCategory_str).to.eq(
-      globalMock.digitalData.page.category.primaryCategory.toUpperCase(),
-    );
-
-    ExpectObserver.getInstance().cleanup(observer);
-  });
-
-  it('it should register a custom log appender', () => {
-    expectNoCalls(globalMock.FS, 'event');
-
-    const appender = new MockAppender();
-
-    const observer = ExpectObserver.getInstance().create({
-      appender,
-      readOnLoad: true,
-      rules: [
-        // @ts-ignore NOTE The missing destination throws an exception before registerRule's setTimeout
-        { source: 'digitalData.page', operators: [], monitor: false },
-      ],
-    }, false);
-
-    const [event] = expectParams(appender, 'log');
-    expect(event).to.not.be.undefined;
-
-    ExpectObserver.getInstance().cleanup(observer);
+    factory.cleanup(id);
   });
 
   it('updating properties should trigger the data handler', (done) => {
-    let changes: any[] = [];
-
-    const observer = ExpectObserver.getInstance().create({
-      rules: [
-        {
-          source: 'digitalData.cart[(cartID,price)]',
-          operators: [],
-          destination: (...data: any[]) => {
-            // NOTE use a local destination to prevent cross-test pollution
-            changes = data;
-          },
-          readOnLoad: true,
-          // monitor: true, // NOTE the default is true
-        },
-      ],
-    }, true);
-
-    expect(globalMock.digitalData.cart).to.not.be.undefined;
+    const rules: DataLayerRule[] = [
+      {
+        source: 'digitalData.cart[(cartID,price)]', operators: [], destination: '', readOnLoad: true, monitor: true,
+      },
+    ];
+    const id = factory.create({ rules }, true);
+    const destination = factory.getDestination(id);
 
     // check the readOnLoad
-    const [cart] = changes;
-    expect(cart.cartID).to.eq(globalMock.digitalData.cart.cartID);
+    expectMatch(expectGlobal('digitalData').cart, destination[0][0], 'cardID', 'price');
 
-    globalMock.digitalData.cart.cartID = 'cart-5678';
-
-    // check the assignment
-    setTimeout(() => {
-      const [reassigned] = changes;
-      expect(reassigned.cartID).to.eq('cart-5678');
-      expect((reassigned as Cart).item).to.be.undefined; // ensure selector picked
-    }, DataHandler.debounceTime * 1.5);
+    // assign a new value to trigger a change event
+    expectGlobal('digitalData').cart.cartID = 'cart-5678';
 
     const updatedPrice: TotalCartPrice = {
       basePrice: 15.55,
@@ -455,282 +345,194 @@ describe('DataLayerObserver unit tests', () => {
       cartTotal: 21.95,
     };
 
-    globalMock.digitalData.cart.price = updatedPrice;
+    expectGlobal('digitalData').cart.price = updatedPrice;
 
+    // check the assignment (the two assignments get debounced into one event)
     setTimeout(() => {
-      const [shippingChange] = changes;
-      expect(shippingChange.cartID).to.eq('cart-5678');
-      expect((shippingChange as Cart).price).to.eq(updatedPrice);
-      expect((shippingChange as Cart).item).to.be.undefined; // ensure selector picked
+      expectEqual({ cartID: 'cart-5678', price: { ...updatedPrice } }, destination[1][0]);
+      expect(destination[1][0].item).to.be.undefined; // ensure selector picked
 
-      ExpectObserver.getInstance().cleanup(observer);
+      factory.cleanup(id);
       done();
-    }, DataHandler.debounceTime * 1.5);
+    }, DataHandler.DefaultDebounceTime * 1.5);
+  });
+
+  it('debounce window can be adjusted to trigger the data handler', (done) => {
+    const debounce = 10; // 10ms debounce window
+
+    const rules: DataLayerRule[] = [
+      {
+        source: 'digitalData.cart[(cartID)]', operators: [], destination: '', readOnLoad: false, debounce,
+      },
+    ];
+    const id = factory.create({ rules }, true);
+    const destination = factory.getDestination(id);
+
+    // #1 trigger the first change event
+    expectGlobal('digitalData').cart.cartID = 'abc';
+
+    // #2 trigger an immediate change within the debounce window (it's occurring inside debounce window)
+    expectGlobal('digitalData').cart.cartID = 'def';
+
+    // #3 delay a subsequent change such that it occurs outside the debounce window
+    setTimeout(() => {
+      expectGlobal('digitalData').cart.cartID = 'xyz';
+    }, 20);
+
+    // check the final assignment and that two events were queued to the destination (#2 and #3)
+    setTimeout(() => {
+      // check that two events were queued (#1 and #2 coalesced to a single event and #3 was its own event)
+      expectEqual(destination.length, 2);
+      expectEqual('def', destination[0][0].cartID);
+
+      // check the final value emitted from the data layer
+      expectEqual('xyz', destination[1][0].cartID);
+
+      factory.cleanup(id);
+      done();
+    }, DataHandler.DefaultDebounceTime);
   });
 
   it('updating properties not included in result should not trigger the data handler', (done) => {
-    let changes: any[] = [];
+    const rules: DataLayerRule[] = [
+      {
+        source: 'digitalData.cart[(cartID,price)]', operators: [], destination: '', readOnLoad: false,
+      },
+    ];
 
-    const observer = ExpectObserver.getInstance().create({
-      rules: [
-        {
-          source: 'digitalData.cart[(cartID,price)]',
-          operators: [],
-          destination: (...data: any[]) => {
-            // NOTE use a local destination to prevent cross-test pollution
-            changes = data;
-          },
-          readOnLoad: false,
-          // monitor: true, // NOTE the default is true
-        },
-      ],
-    }, true);
+    const id = factory.create({ rules }, true);
+    const destination = factory.getDestination(id);
 
-    expect(globalMock.digitalData.cart).to.not.be.undefined;
+    // NOTE this property is not part of the [(cartID,price)] selector and does not trigger the change event
+    expectGlobal('digitalData').cart.attributes = { ignored: true };
 
-    // NOTE this property is not part of the [(cartID,price)] selector
-    globalMock.digitalData.cart.attributes = { ignored: true };
-
-    // check the assignment
     setTimeout(() => {
-      expect(changes.length).to.eq(0);
-      ExpectObserver.getInstance().cleanup(observer);
+      expectEqual(destination.length, 0);
+
+      factory.cleanup(id);
       done();
-    }, DataHandler.debounceTime * 1.5);
+    }, DataHandler.DefaultDebounceTime * 1.5);
   });
 
-  it('it should not add monitors for an invalid rule', () => {
-    const observer = ExpectObserver.getInstance().create({
-      rules: [
-        {
-          source: 'digitalData.cart[(cartID,price)]',
-          operators: [],
-          destination: 'console.log',
-          readOnLoad: false,
-          // monitor: true, // NOTE the default is true
-        },
-      ],
-    }, true);
+  it('removing handlers should prevent property changes from firing', (done) => {
+    const rules: DataLayerRule[] = [
+      {
+        source: 'digitalData.cart[(cartID)]', operators: [], destination: '', readOnLoad: false,
+      },
+    ];
 
-    expect(globalMock.digitalData.cart).to.not.be.undefined;
+    const id = factory.create({ rules }, true);
+    const destination = factory.getDestination(id);
+    const observer = factory.getObserver(id);
 
-    ExpectObserver.getInstance().cleanup(observer);
-  });
+    // trigger the first change event
+    expectGlobal('digitalData').cart.cartID = 'cart-5678';
 
-  it('removing monitors should prevent property changes from firing', () => {
-    let changes: any[] = [];
-
-    const observer = ExpectObserver.getInstance().create({
-      rules: [
-        {
-          source: 'digitalData.cart[(cartID,price)]',
-          operators: [],
-          destination: (...data: any[]) => {
-            // NOTE use a local destination to prevent cross-test pollution
-            changes = data;
-          },
-          readOnLoad: false,
-          // monitor: true, // NOTE the default is true
-        },
-      ],
-    }, true);
-
-    expect(globalMock.digitalData.cart).to.not.be.undefined;
-
-    globalMock.digitalData.cart.cartID = 'cart-5678';
-
-    // check the assignment
+    // check the assignment, remove handlers, trigger another change event
     setTimeout(() => {
-      const [reassigned] = changes;
-      expect(reassigned.cartID).to.eq('cart-5678');
-    }, DataHandler.debounceTime * 1.5);
+      expectEqual('cart-5678', destination[0][0].cartID);
+      observer.handlers.forEach((handler) => {
+        observer.removeHandler(handler);
+      });
 
-    // remove monitors and re-check
-    MonitorFactory.getInstance().remove('digitalData.cart.cartID');
+      // trigger a second change event (that should not get handled)
+      expectGlobal('digitalData').cart.cartID = 'cart-0000';
+    }, DataHandler.DefaultDebounceTime * 1.2);
 
-    globalMock.digitalData.cart.cartID = 'cart-0000';
-
-    // check that no event occurred
+    // check that no subsequent events occurred
     setTimeout(() => {
-      const [reassigned] = changes;
-      expect(reassigned.cartID).to.eq('cart-5678');
-    }, DataHandler.debounceTime * 1.5);
+      expectEqual(destination.length, 1);
 
-    ExpectObserver.getInstance().cleanup(observer);
+      factory.cleanup(id);
+      done();
+    }, DataHandler.DefaultDebounceTime * 1.5);
   });
 
   it('function calls should trigger the data handler', () => {
-    let args: any[] = [];
-
     const hit: any = {
       page: 'homepage',
     };
 
-    const observer = ExpectObserver.getInstance().create({
-      rules: [
-        {
-          source: 'dataLayer.push',
-          operators: [],
-          destination: (...data: any[]) => {
-            // NOTE use a local destination to prevent cross-test pollution
-            args = data;
-          },
-          readOnLoad: false,
-        },
-      ],
-    }, true);
+    const rules: DataLayerRule[] = [
+      {
+        source: 'dataLayer.push', operators: [], destination: '', readOnLoad: false,
+      },
+    ];
+    const id = factory.create({ rules }, true);
+    const destination = factory.getDestination(id);
 
-    expect(globalMock.dataLayer).to.not.be.undefined;
-    expect(globalMock.dataLayer.length).to.eq(0);
+    expectEqual(expectGlobal('dataLayer').length, 0);
+    expectGlobal('dataLayer').push(hit); // trigger the function shim
+    expectEqual(destination.length, 1); // NOTE that functions are not debounced and called synchronously
+    expectEqual(hit, destination[0][0]);
 
-    globalMock.dataLayer.push(hit);
-
-    // check the function args
-    // NOTE that functions are not debounced and called synchronously
-    expect(args.length).to.eq(1);
-    expect(args[0]).to.eq(hit);
-
-    ExpectObserver.getInstance().cleanup(observer);
+    factory.cleanup(id);
   });
 
   it('missing push and unshift in older browsers should not error', () => {
     // simulate an older browser by "removing" push and unshift
-    // @ts-ignore
-    globalMock.dataLayer.push = undefined;
-    // @ts-ignore
-    globalMock.dataLayer.unshift = undefined;
+    expectGlobal('dataLayer').push = undefined;
+    expectGlobal('dataLayer').unshift = undefined;
+    expect(expectGlobal('dataLayer').push).to.be.undefined;
+    expect(expectGlobal('dataLayer').unshift).to.be.undefined;
 
-    expect(globalMock.dataLayer.push).to.be.undefined;
-    expect(globalMock.dataLayer.unshift).to.be.undefined;
+    const rules: DataLayerRule[] = [
+      {
+        source: 'dataLayer', operators: [], destination: '', readOnLoad: false,
+      },
+    ];
+    const id = factory.create({ rules }, true);
+    const destination = factory.getDestination(id);
+    const appender = factory.getAppender(id);
 
-    const appender = new MockAppender();
+    expectEqual(destination.length, 0);
+    const [log] = expectLogEvents(appender, LogLevel.WARN, 1);
+    expectEqual(log.context!.reason, 'Browser does not support push and unshift');
 
-    const observer = ExpectObserver.getInstance().create({
-      appender,
-      rules: [
-        {
-          source: 'dataLayer',
-          operators: [],
-          destination: 'console.log',
-          readOnLoad: false,
-        },
-      ],
-    }, true);
-
-    expect(globalMock.dataLayer).to.not.be.undefined;
-    expect(observer.handlers.length).to.eq(1);
-    expect(globalMock.dataLayer.length).to.eq(0);
-
-    // Ignore the first two as they are observation messages
-    expectParams(appender, 'log');
-    expectParams(appender, 'log');
-
-    const [event] = expectParams(appender, 'log') as LogEvent[];
-    expect(event.level).to.eq(LogLevel.WARN);
-    expect(event.context?.reason).to.contain('push'); // just make sure the warning is related to push missing
-
-    ExpectObserver.getInstance().cleanup(observer);
-  });
-
-  it('a developer can programmatically observe an object by reference', (done) => {
-    let changes: any[] = [];
-
-    const user = deepcopy(basicDigitalData.user.profile[0]);
-
-    const observer = new DataLayerObserver();
-    expect(observer).to.not.be.undefined;
-
-    const target = new DataLayerTarget(user, 'profileInfo', 'myUser');
-    expect(target).to.not.be.undefined;
-
-    observer.registerTarget(target, [{ name: 'query', select: '$[(profileID)]' }],
-      (...data: any[]) => { changes = data; }, true);
-
-    // check the readOnLoad
-    const [read] = changes;
-    expect(read.profileID).to.eq(user.profileInfo.profileID);
-
-    user.profileInfo.profileID = 'atl-404678';
-
-    // check the assignment
-    setTimeout(() => {
-      const [reassigned] = changes;
-      expect(reassigned.profileID).to.eq('atl-404678');
-      expect(reassigned.userName).to.be.undefined; // ensure selector picked
-
-      done();
-    }, DataHandler.debounceTime * 1.5);
-
-    ExpectObserver.getInstance().cleanup(observer);
+    factory.cleanup(id);
   });
 
   it('it should reschedule registration for failed rules', (done) => {
-    expectNoCalls(globalMock.console, 'log');
+    const rules: DataLayerRule[] = [
+      {
+        source: 'digitalData.missing[(found)]', operators: [], destination: '', readOnLoad: true,
+      },
+    ];
+    const id = factory.create({ rules });
+    const destination = factory.getDestination(id);
+    const appender = factory.getAppender(id);
 
-    const appender = new MockAppender();
+    expectEqual(destination.length, 0);
 
-    const observer = ExpectObserver.getInstance().create({
-      appender,
-      rules: [
-        {
-          source: 'digitalData.missing',
-          operators: [],
-          destination: 'console.log',
-          readOnLoad: true,
-        },
-      ],
-    });
-
-    expectNoCalls(globalMock.console, 'log');
-
-    // the registration will reschedule itself for 300 ms
-
-    (globalMock.digitalData as any).missing = { found: true };
+    // rule registration will reschedule itself for 300 ms
+    expectGlobal('digitalData').missing = { found: true };
 
     setTimeout(() => {
-      // Ignore the first two as they are observation messages
-      expectParams(appender, 'log');
-      expectParams(appender, 'log');
+      expectLogEvents(appender, LogLevel.ERROR, 0);
+      expectEqual({ found: true }, destination[0][0]);
 
-      expectNoCalls(appender, 'log');
-
-      const [found] = expectParams(globalMock.console, 'log');
-      expect(found).to.not.be.undefined;
-
-      ExpectObserver.getInstance().cleanup(observer);
-
+      factory.cleanup(id);
       done();
     }, 400);
   });
 
   it('it should fail registration after 1.8 seconds by default', (done) => {
-    expectNoCalls(globalMock.console, 'log');
+    const rules: DataLayerRule[] = [
+      {
+        source: 'digitalData.missing', operators: [], destination: '', readOnLoad: true,
+      },
+    ];
 
-    const appender = new MockAppender();
-
-    const observer = ExpectObserver.getInstance().create({
-      appender,
-      rules: [
-        {
-          source: 'digitalData.missing',
-          operators: [],
-          destination: 'console.log',
-          readOnLoad: true,
-        },
-      ],
-    });
-
-    expectNoCalls(globalMock.console, 'log');
+    const id = factory.create({ rules });
 
     // the registration will reschedule itself but quit after 1.8 seconds by default
-
     setTimeout(() => {
-      const [message] = expectParams(appender, 'log');
-      expect(message).to.not.be.undefined;
+      // FIXME (van)
+      // const logs = expectLogEvents(appender, LogLevel.ERROR);
+      // expect(logs.length).to.be.greaterThan(0);
 
-      ExpectObserver.getInstance().cleanup(observer);
-
+      factory.cleanup(id);
       done();
-    }, 1850);
+    }, 1800);
   });
 });

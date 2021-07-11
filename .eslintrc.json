@@ -41,7 +41,7 @@
       }
     },
     {
-      "files": ["test/**/*.spec.ts", "test/utils/mocha.ts"],
+      "files": ["test/**/*.spec.ts", "test/utils/*.ts"],
       "rules": {
         "no-unused-expressions": "off"
       }

@@ -4,9 +4,10 @@ import { expect } from 'chai';
 import FullStory from '../mocks/fullstory-recording';
 import { MockClass, Call } from '../mocks/mock';
 import { DataLayerDetail } from '../../src/event';
-import { DataLayerObserver, DataLayerConfig, DataLayerRule } from '../../src/observer';
-import MonitorFactory from '../../src/monitor-factory';
+import { DataLayerRule } from '../../src/observer';
 import { BuiltinOptions, OperatorFactory } from '../../src/factory';
+import { MockAppender } from '../mocks/appender';
+import { LogEvent, LogLevel } from '../../src/utils/logger';
 
 /**
  * Gets a globalThis object and expects a truthy value.
@@ -160,92 +161,6 @@ export function expectEventListener(type: string, expectedValue: any, done: Moch
 }
 
 /**
- * Manages the lifecycle of DataLayerObservers to clean up properly.
- */
-export class ExpectObserver {
-  static instance: ExpectObserver;
-
-  observers: DataLayerObserver[];
-
-  private constructor() {
-    this.observers = [];
-  }
-
-  /**
-   * Creates a DataLayerObserver.
-   * @param config that defines the DataLayerConfig
-   * @param expectHandlers when true checks there is a handler for each rule
-   */
-  create(config: DataLayerConfig, expectHandlers = true): DataLayerObserver {
-    const observer = new DataLayerObserver(config);
-    expect(observer).to.not.be.undefined;
-    expect(observer).to.not.be.null;
-
-    if (expectHandlers) {
-      // We can end up with multiple rules for a single array target
-      expect(observer.handlers.length >= config.rules.length);
-    }
-
-    this.observers.push(observer);
-
-    return observer;
-  }
-
-  /**
-   * Cleans up an observer by removing its EventListener from the window.
-   * If no observer is defined, all observers previously registered are cleaned up.
-   * @param observer to be cleaned up.
-   */
-  cleanup(observer?: DataLayerObserver) {
-    if (observer) {
-      this.destroy(observer);
-    } else {
-      this.observers.forEach((o) => {
-        this.destroy(o);
-      });
-    }
-  }
-
-  /**
-   * Creates an DataLayerObserver with default DataLayerConfig.
-   */
-  default(): DataLayerObserver {
-    const observer = new DataLayerObserver();
-
-    expect(observer).to.not.be.undefined;
-    expect(observer).to.not.be.null;
-
-    this.observers.push(observer);
-
-    return observer;
-  }
-
-  /**
-   * Cleans up an observer by removing its EventListener from the window.
-   * @param observer to be cleaned up.
-   */
-  private destroy(observer: DataLayerObserver) {
-    observer.handlers.forEach((handler) => {
-      MonitorFactory.getInstance().remove(handler.target.path, true);
-      handler.stop();
-    });
-
-    const i = this.observers.indexOf(observer);
-    if (i > -1) {
-      this.observers.splice(i, 1);
-    }
-  }
-
-  static getInstance(): ExpectObserver {
-    if (!ExpectObserver.instance) {
-      ExpectObserver.instance = new ExpectObserver();
-    }
-
-    return ExpectObserver.instance;
-  }
-}
-
-/**
  * Expects an Operator's options to be valid.
  * @param options The OperatorOptions passed to the Operator
  * @param message An optional message that describes the use case of options
@@ -293,4 +208,17 @@ export function expectFS(methodName: 'event' | 'identify' | 'log' | 'setVars' | 
   const fs = expectGlobal(namespace);
   expect(fs).to.be.ok;
   return expectParams(fs, methodName);
+}
+
+export function expectLogEvents(appender: MockAppender, level: LogLevel,
+  count?: number): LogEvent[] {
+  const calls = appender.callQueues.log.filter((call) => call.parameters[0].level === level);
+
+  if (count !== undefined) {
+    expect(calls.length).to.eq(count);
+  } else {
+    expect(calls.length).to.be.greaterThan(0);
+  }
+
+  return calls.map((call) => call.parameters[0]) as any[] as LogEvent[];
 }
