@@ -55,7 +55,7 @@ export default class DataHandler {
     const { path } = this.target;
 
     if (value === undefined && args === undefined) {
-      // NOTE it seems some data layers may "clear" values by setting a property to undefined or empty strings
+      // NOTE it seems some data layers may "clear" values by setting a property to undefined
       // in one case, thousands of these calls lead to performance impacts so debug was chosen versus warn
       Logger.getInstance().debug(LogMessageType.EventEmpty, { path });
     } else if (type === createEventType(path)) {
