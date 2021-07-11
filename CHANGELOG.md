@@ -10,6 +10,12 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.8.0
+
+- Performance improvement to prevent emitting change events for the same value
+- Configurable `debounce` property for rules; allows waiting longer before handling data layer events
+- Fix to prevent the `enumerate` option in the convert operator from converting empty strings to `0`
+
 ### 1.7.2
 
 - Fix to allow rule-specific `readOnLoad` to override global `readOnLoad`
