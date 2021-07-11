@@ -9,7 +9,7 @@ import {
 import Console from './mocks/console';
 import FullStory from './mocks/fullstory-recording';
 import {
-  expectParams, expectNoCalls, expectCall, ExpectObserver,
+  expectParams, expectNoCalls, expectCall, ExpectObserver, expectGlobal, expectEqual,
 } from './utils/mocha';
 import { Operator, OperatorOptions } from '../src/operator';
 import { LogEvent, LogLevel } from '../src/utils/logger';
@@ -199,7 +199,7 @@ describe('DataLayerObserver unit tests', () => {
     ExpectObserver.getInstance().cleanup(observer);
   });
 
-  it('invalid operators should remove a handler', () => {
+  it('invalid operators should remove a handler', (done) => {
     const observer = ExpectObserver.getInstance().create({
       validateRules: true,
       rules: [{
@@ -210,9 +210,12 @@ describe('DataLayerObserver unit tests', () => {
       }],
     }, false);
 
-    expect(observer.handlers.length).to.eq(0);
-
-    ExpectObserver.getInstance().cleanup(observer);
+    // invalid rules throw an exception so wait until registration retries finish
+    setTimeout(() => {
+      expect(observer.handlers.length).to.eq(0);
+      ExpectObserver.getInstance().cleanup(observer);
+      done();
+    }, 1800);
   });
 
   it('it should not register operators with existing names', () => {
@@ -441,7 +444,7 @@ describe('DataLayerObserver unit tests', () => {
       const [reassigned] = changes;
       expect(reassigned.cartID).to.eq('cart-5678');
       expect((reassigned as Cart).item).to.be.undefined; // ensure selector picked
-    }, DataHandler.debounceTime * 1.5);
+    }, DataHandler.DefaultDebounceTime * 1.5);
 
     const updatedPrice: TotalCartPrice = {
       basePrice: 15.55,
@@ -465,7 +468,49 @@ describe('DataLayerObserver unit tests', () => {
 
       ExpectObserver.getInstance().cleanup(observer);
       done();
-    }, DataHandler.debounceTime * 1.5);
+    }, DataHandler.DefaultDebounceTime * 1.5);
+  });
+
+  it('debounce window can be adjusted to trigger the data handler', (done) => {
+    const debounce = 10; // 10ms debounce window
+    const changes: any[] = [];
+
+    const observer = ExpectObserver.getInstance().create({
+      rules: [{
+        source: 'digitalData.cart[(cartID)]',
+        operators: [],
+        destination: (...data: any[]) => {
+          // NOTE use a local destination to prevent cross-test pollution
+          changes.push(data);
+        },
+        readOnLoad: false,
+        debounce,
+      }],
+    }, true);
+
+    // #1 trigger the first change event
+    expectGlobal('digitalData').cart.cartID = 'abc';
+
+    // #2 trigger an immediate change within the debounce window (it's occurring inside debounce window)
+    expectGlobal('digitalData').cart.cartID = 'def';
+
+    // #3 delay a subsequent change such that it occurs outside the debounce window
+    setTimeout(() => {
+      expectGlobal('digitalData').cart.cartID = 'xyz';
+    }, 20);
+
+    // check the final assignment and that two events were queued to the destination (#2 and #3)
+    setTimeout(() => {
+      // check that two events were queued (#1 and #2 coalesced to a single event and #3 was its own event)
+      expectEqual(changes.length, 2);
+      expectEqual('def', changes[0][0].cartID);
+
+      // check the final value emitted from the data layer
+      expectEqual('xyz', changes[1][0].cartID);
+
+      ExpectObserver.getInstance().cleanup(observer);
+      done();
+    }, DataHandler.DefaultDebounceTime);
   });
 
   it('updating properties not included in result should not trigger the data handler', (done) => {
@@ -496,7 +541,7 @@ describe('DataLayerObserver unit tests', () => {
       expect(changes.length).to.eq(0);
       ExpectObserver.getInstance().cleanup(observer);
       done();
-    }, DataHandler.debounceTime * 1.5);
+    }, DataHandler.DefaultDebounceTime * 1.5);
   });
 
   it('it should not add monitors for an invalid rule', () => {
@@ -543,7 +588,7 @@ describe('DataLayerObserver unit tests', () => {
     setTimeout(() => {
       const [reassigned] = changes;
       expect(reassigned.cartID).to.eq('cart-5678');
-    }, DataHandler.debounceTime * 1.5);
+    }, DataHandler.DefaultDebounceTime * 1.5);
 
     // remove monitors and re-check
     MonitorFactory.getInstance().remove('digitalData.cart.cartID');
@@ -554,7 +599,7 @@ describe('DataLayerObserver unit tests', () => {
     setTimeout(() => {
       const [reassigned] = changes;
       expect(reassigned.cartID).to.eq('cart-5678');
-    }, DataHandler.debounceTime * 1.5);
+    }, DataHandler.DefaultDebounceTime * 1.5);
 
     ExpectObserver.getInstance().cleanup(observer);
   });
@@ -659,7 +704,7 @@ describe('DataLayerObserver unit tests', () => {
       expect(reassigned.userName).to.be.undefined; // ensure selector picked
 
       done();
-    }, DataHandler.debounceTime * 1.5);
+    }, DataHandler.DefaultDebounceTime * 1.5);
 
     ExpectObserver.getInstance().cleanup(observer);
   });

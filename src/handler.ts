@@ -10,7 +10,7 @@ import { FanOutOperator } from './operators/fan-out';
  * registered operators.
  */
 export default class DataHandler {
-  static readonly debounceTime = 250;
+  static readonly DefaultDebounceTime = 250;
 
   private listener: EventListener | null = null;
 
@@ -27,9 +27,11 @@ export default class DataHandler {
    * Creates a DataHandler.
    * @param target in the data layer
    * @param debug true optionally enables debugging data transformation (defaults to console.debug)
+   * @param debounce number of milliseconds to debounce property value assignments (defaults to 250ms)
    * @throws will throw an error if the data layer is not found (i.e. undefined or null)
    */
-  constructor(public readonly target: DataLayerTarget, public debug = false) {
+  constructor(public readonly target: DataLayerTarget, public debug = false,
+    public debounce = DataHandler.DefaultDebounceTime) {
     // begin handling data by listening for events
     this.start();
   }
@@ -53,11 +55,12 @@ export default class DataHandler {
     const { path } = this.target;
 
     if (value === undefined && args === undefined) {
-      // NOTE it seems some data layers may "clear" values by setting a property to undefined
+      // NOTE it seems some data layers may "clear" values by setting a property to undefined or empty strings
       // in one case, thousands of these calls lead to performance impacts so debug was chosen versus warn
       Logger.getInstance().debug(LogMessageType.EventEmpty, { path });
     } else if (type === createEventType(path)) {
-      if (value) {
+      // value could legitimately be an empty string
+      if (value !== undefined) {
         // debounce events so multiple, related property assignments don't create multiple events
         if (typeof this.timeoutId === 'number') {
           window.clearTimeout(this.timeoutId);
@@ -70,8 +73,9 @@ export default class DataHandler {
         // only handle data if the selector actually returns something with data
         if (result) {
           this.timeoutId = window.setTimeout(() => {
+            this.timeoutId = null; // clear the timeout used for debouncing
             this.handleData([result]);
-          }, DataHandler.debounceTime);
+          }, this.debounce);
         }
       } else {
         this.handleData(args || []);
@@ -86,8 +90,6 @@ export default class DataHandler {
    * @param data the data as an array of values emitted from the data layer
    */
   private handleData(data: any[] | null, operatorStartIndex: number = 0): any[] | null {
-    this.timeoutId = null; // clear the timeout used for debouncing
-
     const { path } = this.target;
 
     this.runDebugger(`${path} handleData entry`, data);

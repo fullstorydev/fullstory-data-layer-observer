@@ -50,7 +50,7 @@ describe('Tealium to FullStory rules', () => {
       const [id, payload] = expectFS('event');
       expectEqual(id, 'product_view');
       expectEqual(payload.product_id, 'PROD789');
-    }, DataHandler.debounceTime * 1.5);
+    }, DataHandler.DefaultDebounceTime * 1.5);
 
     // NOTE this is an invalid property to monitor because it is not picked
     expectGlobal('utag').data.outsideScope = true;
@@ -59,7 +59,7 @@ describe('Tealium to FullStory rules', () => {
     setTimeout(() => {
       expectNoCalls(expectGlobal('FS'), 'event');
       done();
-    }, DataHandler.debounceTime * 1.5);
+    }, DataHandler.DefaultDebounceTime * 1.5);
   });
 
   it('should identify user', () => {
