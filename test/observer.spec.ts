@@ -488,6 +488,9 @@ describe('DataLayerObserver unit tests', () => {
       }],
     }, true);
 
+    // there are some technical nuances to when/why to use debouncing
+    // see https://github.com/fullstorydev/fullstory-data-layer-observer/pull/139#discussion_r667939622
+
     // #1 trigger the first change event
     expectGlobal('digitalData').cart.cartID = 'abc';
 
