@@ -44,6 +44,7 @@ export interface DataLayerConfig {
  *  destination: destination function using selector syntax or native function
  * Optional
  *  id: optional identifier for the rule
+ *  debounce: number of milliseconds to debounce property assignments before handling the event
  *  description: optional description of the rule
  *  debug: true if the rule should print debug for each Operator transformation
  *  monitor: true if property changes or function calls should rerun the operators
@@ -52,6 +53,7 @@ export interface DataLayerConfig {
  *  url: regular expression used to enable the rule when the page URL matches
  */
 export interface DataLayerRule {
+  debounce?: number;
   debug?: boolean;
   source: string;
   operators?: OperatorOptions[];
@@ -118,9 +120,11 @@ export class DataLayerObserver {
    * Creates and adds a DataHandler.
    * @param target to the data layer
    * @param debug when true enables debugging of operator transformations
+   * @param debounce number of milliseconds to debounce property assignments before handling the event
    */
-  private addHandler(target: DataLayerTarget, debug = false): DataHandler {
-    const handler = new DataHandler(target, debug);
+  private addHandler(target: DataLayerTarget, debug = false,
+    debounce = DataHandler.DefaultDebounceTime): DataHandler {
+    const handler = new DataHandler(target, debug, debounce);
     this.handlers.push(handler);
 
     return handler;
@@ -234,6 +238,7 @@ export class DataLayerObserver {
    * @param read when true reads data layer target and emit the initial value
    * @param monitor when true property changes or function calls re-run the operators
    * @param debug when true the rule prints debug for each Operator transformation
+   * @param debounce number of milliseconds to debounce property assignments before handling the event
    * @throws error if an error occurs during handler creation
    */
   registerTarget(
@@ -243,6 +248,7 @@ export class DataLayerObserver {
     read = false,
     monitor = true,
     debug = false,
+    debounce = DataHandler.DefaultDebounceTime,
   ): DataHandler {
     let workingTarget = target;
     const targetValue = workingTarget.value;
@@ -253,7 +259,8 @@ export class DataLayerObserver {
      */
     if (monitor && Array.isArray(targetValue)) {
       if (targetValue.push && targetValue.unshift) {
-        this.registerTarget(DataLayerTarget.find(`${target.path}.unshift`), options, destination, false, true, debug);
+        this.registerTarget(DataLayerTarget.find(`${target.path}.unshift`), options, destination, false, true,
+          debug, debounce);
         workingTarget = DataLayerTarget.find(`${target.path}.push`);
       } else {
         Logger.getInstance().warn(LogMessageType.MonitorCreateError, {
@@ -265,7 +272,7 @@ export class DataLayerObserver {
       }
     }
 
-    const handler = this.addHandler(workingTarget, !!debug);
+    const handler = this.addHandler(workingTarget, !!debug, debounce);
     this.addOperators(handler, options, destination);
 
     if (read) {
@@ -329,6 +336,7 @@ export class DataLayerObserver {
 
     const {
       id = '',
+      debounce,
       debug,
       source,
       operators = [],
@@ -354,13 +362,13 @@ export class DataLayerObserver {
 
     try {
       const target = DataLayerTarget.find(source);
-      this.registerTarget(target, operators, destination, readOnLoad, monitor, debug);
+      this.registerTarget(target, operators, destination, readOnLoad, monitor, debug, debounce);
     } catch (_) {
       // schedule subsequent attempts at (attempt * wait) later
       setTimeout(() => {
         try {
           const target = DataLayerTarget.find(source);
-          this.registerTarget(target, operators, destination, readOnLoad, monitor, debug);
+          this.registerTarget(target, operators, destination, readOnLoad, monitor, debug, debounce);
         } catch (err) {
           if (attempt > 3) {
             Logger.getInstance().error(LogMessageType.RuleRegistrationError, { rule: id, source, reason: err.message });
