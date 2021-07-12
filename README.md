@@ -143,7 +143,7 @@ Each rule provides a set of options for configuration.  Options with an asterisk
 | ------ | ------- | ----------- |
 | `source`* | `undefined` | Data layer source object using selector syntax. |
 | `destination`* | `undefined` | Destination function using selector syntax. |
-| `debounce` | `250` | Milliseconds that must pass before multiple,sequential changes to a data layer are handled (increase for highly active data layers) |
+| `debounce` | `250` | Milliseconds that must pass before multiple, sequential changes to a data layer are handled (increase for highly active data layers) |
 | `debug` | `false` | Set to true if the rule should print debug for each operator transformation. |
 | `description` | `undefined` | Text description of the rule. |
 | `id` | `undefined` | Unique identifier for the rule. |
