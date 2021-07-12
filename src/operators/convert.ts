@@ -46,6 +46,9 @@ export class ConvertOperator implements Operator {
       case 'date': return new Date(value);
       case 'int':
       case 'real':
+        // NOTE be careful of trying to convert an empty string, which will become 0
+        // a guard exists in `enumerate` but `convert` assumes you intend the conversion
+        // and the ternary allows converting a boolean for example to 0
         return !value ? 0 : ConvertOperator.enumerate(value);
       case 'string':
         switch (typeof value) {
@@ -104,8 +107,11 @@ export class ConvertOperator implements Operator {
       const enumerableProps = ConvertOperator.enumerableProperties(data[index]);
       enumerableProps.forEach((property) => {
         if (typeof data[index][property] === 'string') {
-          converted[property] = ConvertOperator.convert('real', data[index][property]);
-          ConvertOperator.verifyConversion('real', property, converted, data[index]);
+          // it seems best to leave an empty string as-is rather than have it converted to 0
+          if (data[index][property] !== '') {
+            converted[property] = ConvertOperator.convert('real', data[index][property]);
+            ConvertOperator.verifyConversion('real', property, converted, data[index]);
+          }
         } else {
           converted[property] = []; // this prevents mutating the actual data layer
           for (let i = 0; i < (data[index][property] as string[]).length; i += 1) {

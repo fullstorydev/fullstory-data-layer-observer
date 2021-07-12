@@ -268,7 +268,7 @@ describe('DataHandler unit tests', () => {
     setTimeout(() => {
       expect((seen[0] as PageInfo).pageID).to.eq('changedPage');
       done();
-    }, DataHandler.debounceTime * 1.5);
+    }, DataHandler.DefaultDebounceTime * 1.5);
   });
 
   it('multiple data layer events should be debounced', (done) => {
@@ -290,7 +290,7 @@ describe('DataHandler unit tests', () => {
     setTimeout(() => {
       expect(seen.length).to.eq(1);
       done();
-    }, DataHandler.debounceTime * 1.5);
+    }, DataHandler.DefaultDebounceTime * 1.5);
   });
 
   it('an object with no properties selected from an event should not be handled', (done) => {
@@ -308,6 +308,6 @@ describe('DataHandler unit tests', () => {
     setTimeout(() => {
       expect(seen.length).to.eq(0);
       done();
-    }, DataHandler.debounceTime * 1.5);
+    }, DataHandler.DefaultDebounceTime * 1.5);
   });
 });
