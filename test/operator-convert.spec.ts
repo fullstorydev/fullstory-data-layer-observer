@@ -18,6 +18,7 @@ const item = {
   vat: null,
   salePrice: ['24.99'],
   discountTiers: ['24.99', '19.99', '12.99'],
+  promoCodes: ['', 'bogo', 'july4th'],
 };
 
 describe('convert operator unit tests', () => {
@@ -324,7 +325,7 @@ describe('convert operator unit tests', () => {
     const operator = OperatorFactory.create('convert', { name: 'convert', enumerate: true });
     const [enumerated] = operator.handleData([item])!;
     const {
-      quantity, price, available, saleDate, type, vat, salePrice, discountTiers,
+      quantity, price, available, saleDate, type, vat, salePrice, discountTiers, empty, promoCodes,
     } = enumerated;
 
     expect(quantity).to.eq(10);
@@ -335,6 +336,8 @@ describe('convert operator unit tests', () => {
     expect(type).to.eq(true);
     expect(salePrice).to.eq(24.99); // NOTE because preserveArray is not true, it becomes a single value
     expect(discountTiers).to.eql([24.99, 19.99, 12.99]);
+    expect(empty).to.eq('');
+    expect(promoCodes).to.eql(['', 'bogo', 'july4th']); // NOTE empty string should not become 0
   });
 
   it('strings can be converted automatically to numbers while converting specific properties', () => {
