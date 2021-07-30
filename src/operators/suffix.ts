@@ -31,7 +31,7 @@ export enum Suffixes {
 }
 
 export interface SuffixOperatorOptions extends OperatorOptions {
-
+  maxProps?: number;
 }
 
 /**
@@ -41,18 +41,24 @@ export class SuffixOperator implements Operator {
   static specification = {
     index: { required: false, type: ['number'] },
     maxDepth: { required: false, type: ['number'] },
+    maxProps: { required: false, type: ['number'] },
   };
+
+  static readonly DefaultMaxProps = 100;
 
   readonly index: number;
 
   readonly maxDepth: number;
 
+  readonly maxProps: number;
+
   constructor(public options: SuffixOperatorOptions) {
     // NOTE the index is -1 because payloads to FS.event or FS.setUserVars are the last in the list of args
-    const { index = -1, maxDepth = 10 } = options;
+    const { index = -1, maxDepth = 10, maxProps = 100 } = options;
 
     this.index = index;
     this.maxDepth = maxDepth;
+    this.maxProps = maxProps;
   }
 
   /**
@@ -127,13 +133,22 @@ export class SuffixOperator implements Operator {
    * @param obj the Object to map
    * @param maxDepth the maximum number of levels to recursive suffix child objects
    * @param currentDepth the current depth if recursively suffixing object (this is not intended to be used externally)
+   * @param totalProps the total number of props found within the object
    */
-  mapToSuffix(obj: { [key: string]: any }, currentDepth = 0): SuffixedObject {
+  mapToSuffix(obj: { [key: string]: any }, currentDepth = 0, totalProps = 0): SuffixedObject {
     const suffixedObj: SuffixedObject = {};
 
     // guard against error condition 'Cannot convert undefined or null to object'
     if (obj === undefined || obj === null) {
       return suffixedObj;
+    }
+
+    // count the props to guard against super-sized object being unknowingly added to a data layer
+    // this reduces the likelihood of hitting cardinality but also prevents impacting site performance
+    const numProps = totalProps + Object.getOwnPropertyNames(obj).length;
+
+    if (numProps > this.maxProps) {
+      throw Error(`Number of object properties exceeds the limit (${this.maxProps}); increase maxProps to ${numProps}`);
     }
 
     Object.getOwnPropertyNames(obj).forEach((prop: string) => {
@@ -150,12 +165,12 @@ export class SuffixOperator implements Operator {
         switch (suffix) {
           case Suffixes.Obj:
             if (currentDepth < this.maxDepth) {
-              suffixedObj[suffixedProp] = this.mapToSuffix(value, currentDepth + 1);
+              suffixedObj[suffixedProp] = this.mapToSuffix(value, currentDepth + 1, numProps);
             }
             break;
           case Suffixes.Objs:
             if (currentDepth < this.maxDepth) {
-              suffixedObj[suffixedProp] = value.map((item: any) => this.mapToSuffix(item, currentDepth + 1));
+              suffixedObj[suffixedProp] = value.map((item: any) => this.mapToSuffix(item, currentDepth + 1, numProps));
             }
             break;
           default:

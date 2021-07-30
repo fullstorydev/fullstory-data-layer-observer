@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.9.0
+
+- `suffix` operator limits number of properties in an object to `100` (configurable with `maxProps`)
+
 ### 1.8.0
 
 - Performance improvement to prevent emitting change events for the same value
