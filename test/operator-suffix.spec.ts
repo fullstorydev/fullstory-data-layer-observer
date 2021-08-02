@@ -317,4 +317,39 @@ describe('suffix operator unit test', () => {
     expect(source).to.eq('mocha');
     expect(suffixedObject.id_str).to.not.be.undefined;
   });
+
+  it('it should throw an error when an object has more props than allowed', () => {
+    const obj: any = {};
+
+    for (let i = 0; i < SuffixOperator.DefaultMaxProps + 1; i += 1) {
+      obj[i] = i;
+    }
+
+    const operator = new SuffixOperator({ name: 'suffix' });
+    expect(operator).to.not.be.undefined;
+
+    expect(() => operator.handleData([obj])).to.throw();
+  });
+
+  it('it should allow maxProps to be configured', () => {
+    const obj: any = {
+      1: '1',
+      2: '2',
+      3: {
+        4: '4',
+      },
+    };
+
+    const operator = new SuffixOperator({ name: 'suffix', maxProps: 4 });
+    expect(operator).to.not.be.undefined;
+
+    const [suffixedObject] = operator.handleData([obj])!;
+    expect(Object.getOwnPropertyNames(suffixedObject).length
+      + Object.getOwnPropertyNames(suffixedObject['3_obj']).length).to.eql(4);
+
+    // go over the limit
+    obj['5'] = '5';
+
+    expect(() => operator.handleData([obj])).to.throw();
+  });
 });

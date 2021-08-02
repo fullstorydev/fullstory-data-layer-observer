@@ -2,7 +2,7 @@
 
 The suffix operator can be used to automatically apply the appropriate type suffix to properties in an object.  Since the suffix operator is useful for every `FS` API, it is included as the default `window['_dlo_beforeDestination']` configuration option and is not needed in the `operators` list.
 
-To support FullStory-specific APIs, the properties `displayName`, `pageName`, and `email` are not suffixed in a root object.
+To support FullStory-specific APIs, the properties `displayName`, `pageName`, and `email` are not suffixed in a root object. Additionally, the number of properties in a suffixed object is limited to `100` by default. This prevents unintentional, large objects from being sent to the destination, which can result in performance issues or exceeding cardinality quotas. Increase the limit using the `maxProps` option.
 
 ## Options
 
@@ -12,6 +12,7 @@ Options with an asterisk are required.
 | ------ | ---- | ------- | ----------- |
 | `index` | `number` | `0` | Position of the object to suffix in the operator input list. |
 | `maxDepth` | `number` | `10` | Maximum depth to search for properties to be suffixed. |
+| `mapProps` | `number` | `100` | Maximum number of properties allowed in a suffixed object. |
 
 ## Usage
 
