@@ -12,7 +12,7 @@ Options with an asterisk are required.
 | ------ | ---- | ------- | ----------- |
 | `index` | `number` | `0` | Position of the object to suffix in the operator input list. |
 | `maxDepth` | `number` | `10` | Maximum depth to search for properties to be suffixed. |
-| `mapProps` | `number` | `100` | Maximum number of properties allowed in a suffixed object. This value may not exceed `5000`.|
+| `maxProps` | `number` | `100` | Maximum number of properties allowed in a suffixed object. This value may not exceed `5000`.|
 
 ## Usage
 
