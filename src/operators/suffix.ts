@@ -52,6 +52,8 @@ export class SuffixOperator implements Operator {
 
   readonly maxProps: number;
 
+  static readonly MaxPropsCeiling = 5000; // set a ceiling on maxProps relative to the maximum cardinality in FullStory
+
   constructor(public options: SuffixOperatorOptions) {
     // NOTE the index is -1 because payloads to FS.event or FS.setUserVars are the last in the list of args
     const { index = -1, maxDepth = 10, maxProps = SuffixOperator.DefaultMaxProps } = options;
@@ -59,6 +61,11 @@ export class SuffixOperator implements Operator {
     this.index = index;
     this.maxDepth = maxDepth;
     this.maxProps = maxProps;
+
+    if (this.maxProps >= SuffixOperator.MaxPropsCeiling) {
+      // run the validator, which will trigger and error to be thrown
+      this.validate();
+    }
   }
 
   /**
@@ -201,5 +208,12 @@ export class SuffixOperator implements Operator {
   validate() {
     const validator = new OperatorValidator(this.options);
     validator.validate(SuffixOperator.specification);
+
+    const { maxProps } = this.options;
+
+    if (maxProps !== undefined && maxProps >= SuffixOperator.MaxPropsCeiling) {
+      validator.throwError('maxProps',
+        `exceeds the FullStory limit (${SuffixOperator.MaxPropsCeiling}), use a lower value`);
+    }
   }
 }
