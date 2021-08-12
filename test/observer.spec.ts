@@ -9,7 +9,7 @@ import {
 import Console from './mocks/console';
 import FullStory from './mocks/fullstory-recording';
 import {
-  expectParams, expectNoCalls, expectCall, ExpectObserver, expectGlobal, expectEqual,
+  expectParams, expectNoCalls, expectCall, ExpectObserver, expectGlobal, expectEqual, setGlobal,
 } from './utils/mocha';
 import { Operator, OperatorOptions } from '../src/operator';
 import { LogEvent, LogLevel } from '../src/utils/logger';
@@ -712,7 +712,7 @@ describe('DataLayerObserver unit tests', () => {
     ExpectObserver.getInstance().cleanup(observer);
   });
 
-  it('it should reschedule registration for failed rules', (done) => {
+  it('it should reschedule registration for a completely missing data layer', (done) => {
     expectNoCalls(globalMock.console, 'log');
 
     const appender = new MockAppender();
@@ -744,6 +744,53 @@ describe('DataLayerObserver unit tests', () => {
 
       const [found] = expectParams(globalMock.console, 'log');
       expect(found).to.not.be.undefined;
+
+      ExpectObserver.getInstance().cleanup(observer);
+
+      done();
+    }, 400);
+  });
+
+  it('it should reschedule registration for a stubbed data layer', (done) => {
+    // this tests if the dataLayer has been stubbed but the needed properties are not present
+    expectNoCalls(globalMock.console, 'log');
+
+    const appender = new MockAppender();
+
+    setGlobal('stub', {});
+
+    const observer = ExpectObserver.getInstance().create({
+      appender,
+      rules: [
+        {
+          source: 'stub',
+          operators: [],
+          destination: 'console.log',
+          readOnLoad: true,
+          retryIfEmpty: true, // NOTE this is the flag that is being tested
+        },
+      ],
+    });
+
+    // historically, a stubbed data layer with no properties created an empty object payload
+    expectNoCalls(globalMock.console, 'log');
+
+    setTimeout(() => {
+      const stub = expectGlobal('stub');
+      stub.foo = 'bar';
+    }, 100);
+
+    // the registration will reschedule itself for 300 ms
+    setTimeout(() => {
+      // Ignore the first two as they are observation messages
+      expectParams(appender, 'log');
+      expectParams(appender, 'log');
+
+      expectNoCalls(appender, 'log');
+
+      const [found] = expectParams(globalMock.console, 'log');
+      expect(found).to.not.be.undefined;
+      expectEqual(found.foo, 'bar');
 
       ExpectObserver.getInstance().cleanup(observer);
 

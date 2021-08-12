@@ -50,6 +50,7 @@ export interface DataLayerConfig {
  *  monitor: true if property changes or function calls should rerun the operators
  *  operators: list of OperatorOptions to transform data before a destination
  *  readOnLoad: rule-specific readOnLoad (see DataLayerConfig readOnLoad)
+ *  retryIfEmpty: when used with `readOnLoad` empty objects read from the data layer will be re-read after a delay
  *  url: regular expression used to enable the rule when the page URL matches
  */
 export interface DataLayerRule {
@@ -59,6 +60,7 @@ export interface DataLayerRule {
   operators?: OperatorOptions[];
   destination: string | Function;
   readOnLoad?: boolean;
+  retryIfEmpty?: boolean;
   url?: string;
   id?: string;
   description?: string;
@@ -344,6 +346,7 @@ export class DataLayerObserver {
       readOnLoad: ruleReadOnLoad,
       url,
       monitor = true,
+      retryIfEmpty,
     } = rule;
 
     // rule properties override global ones
@@ -361,13 +364,13 @@ export class DataLayerObserver {
     }
 
     try {
-      const target = DataLayerTarget.find(source);
+      const target = DataLayerTarget.find(source, retryIfEmpty);
       this.registerTarget(target, operators, destination, readOnLoad, monitor, debug, debounce);
     } catch (_) {
       // schedule subsequent attempts at (attempt * wait) later
       setTimeout(() => {
         try {
-          const target = DataLayerTarget.find(source);
+          const target = DataLayerTarget.find(source, retryIfEmpty);
           this.registerTarget(target, operators, destination, readOnLoad, monitor, debug, debounce);
         } catch (err) {
           if (attempt > 3) {
