@@ -43,10 +43,9 @@ export default class DataLayerTarget {
    * @param property that contains the object or function to observe
    * @param path that describes the path (or some unique identifier) to the property
    * @param selector that can optionally describe a query to be used when accessing the data layer
-   * @param errorIfEmpty throw an error if the found value is an object with no properties
    */
   constructor(public subject: Object, public property: string, public path: string,
-    public selector = '', errorIfEmpty?: boolean) {
+    public selector = '') {
     if (typeof subject !== 'object') {
       throw new Error(LogMessage.TargetSubjectObject);
     }
@@ -65,11 +64,6 @@ export default class DataLayerTarget {
 
     switch (type) {
       case 'object':
-        if (errorIfEmpty && Object.getOwnPropertyNames(this.value).length === 0) {
-          throw new Error(LogMessage.DataLayerEmpty);
-        }
-        this.type = type;
-        break;
       case 'function':
         this.type = type;
         break;
@@ -88,9 +82,8 @@ export default class DataLayerTarget {
   /**
    * Finds a target in the data layer and constructs a DataLayerTarget.
    * @param selector used to build the target
-   * @param errorIfEmpty throw an error if the found value is an object with no properties
    */
-  static find(selector: string, errorIfEmpty = false): DataLayerTarget {
+  static find(selector: string): DataLayerTarget {
     const parsedPath = parsePath(selector);
 
     if (!parsedPath) {
@@ -133,6 +126,6 @@ export default class DataLayerTarget {
     // so use the globalThis as the subject
     const subject = !subjectPath ? getGlobal() : select(subjectPath);
 
-    return new DataLayerTarget(subject, property, targetPath, selector, errorIfEmpty);
+    return new DataLayerTarget(subject, property, targetPath, selector);
   }
 }

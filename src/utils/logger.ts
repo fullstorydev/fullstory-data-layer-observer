@@ -34,7 +34,6 @@ export enum LogMessageType {
 
 export enum LogMessage {
   DataLayerMissing = 'Data layer not found',
-  DataLayerEmpty = 'Data layer is empty',
   DuplicateValue = 'Value $0 already used',
   ShimFail = 'Shim not allowed because object is $0',
   SelectorInvalidIndex = 'Selector index $0 is not a number in $1',

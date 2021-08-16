@@ -731,17 +731,10 @@ describe('DataLayerObserver unit tests', () => {
 
     expectNoCalls(globalMock.console, 'log');
 
-    // the registration will reschedule itself for 300 ms
-
+    // the registration will reschedule itself for 250 ms and then again at 500ms
     (globalMock.digitalData as any).missing = { found: true };
 
     setTimeout(() => {
-      // Ignore the first two as they are observation messages
-      expectParams(appender, 'log');
-      expectParams(appender, 'log');
-
-      expectNoCalls(appender, 'log');
-
       const [found] = expectParams(globalMock.console, 'log');
       expect(found).to.not.be.undefined;
 
@@ -767,7 +760,7 @@ describe('DataLayerObserver unit tests', () => {
           operators: [],
           destination: 'console.log',
           readOnLoad: true,
-          retryIfEmpty: true, // NOTE this is the flag that is being tested
+          waitUntil: (dataLayer: any) => Object.getOwnPropertyNames(dataLayer).length > 0,
         },
       ],
     });
@@ -780,14 +773,8 @@ describe('DataLayerObserver unit tests', () => {
       stub.foo = 'bar';
     }, 100);
 
-    // the registration will reschedule itself for 300 ms
+    // the registration will reschedule itself for 250 ms and then again at 500ms
     setTimeout(() => {
-      // Ignore the first two as they are observation messages
-      expectParams(appender, 'log');
-      expectParams(appender, 'log');
-
-      expectNoCalls(appender, 'log');
-
       const [found] = expectParams(globalMock.console, 'log');
       expect(found).to.not.be.undefined;
       expectEqual(found.foo, 'bar');
@@ -798,7 +785,7 @@ describe('DataLayerObserver unit tests', () => {
     }, 400);
   });
 
-  it('it should fail registration after 1.8 seconds by default', (done) => {
+  it('it should fail registration after a configurable number of attempts', (done) => {
     expectNoCalls(globalMock.console, 'log');
 
     const appender = new MockAppender();
@@ -811,13 +798,12 @@ describe('DataLayerObserver unit tests', () => {
           operators: [],
           destination: 'console.log',
           readOnLoad: true,
+          maxRetry: 2, // first try 250ms, second try 500ms, third try 1000ms
         },
       ],
     });
 
     expectNoCalls(globalMock.console, 'log');
-
-    // the registration will reschedule itself but quit after 1.8 seconds by default
 
     setTimeout(() => {
       const [message] = expectParams(appender, 'log');
@@ -826,6 +812,6 @@ describe('DataLayerObserver unit tests', () => {
       ExpectObserver.getInstance().cleanup(observer);
 
       done();
-    }, 1850);
+    }, 900); // the third retry will not occur so it's 250 + 500 for the first and second
   });
 });
