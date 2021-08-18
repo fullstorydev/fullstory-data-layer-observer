@@ -52,7 +52,7 @@ export interface DataLayerConfig {
  *  readOnLoad: rule-specific readOnLoad (see DataLayerConfig readOnLoad)
  *  url: regular expression used to enable the rule when the page URL matches
  *  waitUntil: waits a desired number of milliseconds or predicate function's truthy return type before registering
- *  maxRetry: the maximum number of attempts to search for a missing data layer or test the `waitUntil` predicate
+ *  maxRetry: maximum number of attempts to search for an `undefined` data layer or test the `waitUntil` predicate
  */
 export interface DataLayerRule {
   debounce?: number;

@@ -55,7 +55,7 @@ Sensitive, private, and confidential information should never be added to a data
 
 DLO is a JavaScript asset that is included on a web page.  FullStory hosts versions of DLO on our CDN.  Versioned releases have the naming convention `<version>.js`, and the most recent version is named `latest.js`:
 
-- https://edge.fullstory.com/datalayer/v1/v1.8.0.js
+- https://edge.fullstory.com/datalayer/v1/v1.10.0.js
 - https://edge.fullstory.com/datalayer/v1/latest.js
 
 If you would like the most up to date version of DLO on your site always, use `latest.js`.  If you'd rather use stable releases and perform manual upgrades, use `<version>.js`.
@@ -147,10 +147,12 @@ Each rule provides a set of options for configuration.  Options with an asterisk
 | `debug` | `false` | Set to true if the rule should print debug for each operator transformation. |
 | `description` | `undefined` | Text description of the rule. |
 | `id` | `undefined` | Unique identifier for the rule. |
+| `maxRetry` | `5` | The maximum number of attempts to search for a missing data layer or test the `waitUntil` predicate. |
 | `monitor` | `true` | Set to true to monitor property changes or function calls |
 | `operators` | `[]` | List of operators that transform data before a destination. |
 | `readOnLoad` | `false` | Rule-specific override for `window[‘_dlo_readOnLoad’]`. |
 | `url` | `undefined` | Specifies a regular expression that enables the rule when the page URL matches. |
+| `waitUntil` | `undefined` | Waits a desired number of milliseconds or predicate function's truthy return type before registering the rule. |
 
 > **Tip:** Use `url` to limit when data is read from a data layer and enhance performance.
 
