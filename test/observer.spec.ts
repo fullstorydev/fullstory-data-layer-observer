@@ -814,4 +814,39 @@ describe('DataLayerObserver unit tests', () => {
       done();
     }, 900); // the third retry will not occur so it's 250 + 500 for the first and second
   });
+
+  it('it should delay registration for a configurable amount of time', (done) => {
+    expectNoCalls(globalMock.console, 'log');
+
+    const appender = new MockAppender();
+
+    const observer = ExpectObserver.getInstance().create({
+      appender,
+      rules: [
+        {
+          source: 'digitalData.page.pageInfo',
+          operators: [],
+          destination: 'console.log',
+          readOnLoad: true,
+          waitUntil: 500,
+        },
+      ],
+    });
+
+    // expect that the data layer is not read before the waitUntil value
+    setTimeout(() => {
+      expectNoCalls(globalMock.console, 'log');
+    }, 250);
+
+    setTimeout(() => {
+      const test = appender.callQueues;
+      expect(test).to.not.be.undefined;
+      const [found] = expectParams(globalMock.console, 'log');
+      expect(found).to.not.be.undefined;
+
+      ExpectObserver.getInstance().cleanup(observer);
+
+      done();
+    }, 1000);
+  });
 });

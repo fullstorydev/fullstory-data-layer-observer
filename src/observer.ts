@@ -376,8 +376,12 @@ export class DataLayerObserver {
           case 'number':
             // NOTE this delay is set *after* the data layer is found to be defined on the page
             setTimeout(() => {
-              this.registerRule(rule, attempt);
-            }, waitUntil > 0 ? waitUntil : 0); // error check a negative value and schedule immediately if used
+              // re-register the rule so that it schedules immediately upon next invocation of `registerRule`
+              this.registerRule({
+                ...rule,
+                waitUntil: 0,
+              }, attempt);
+            }, waitUntil > -1 ? waitUntil : 0); // error check a negative value and schedule immediately if used
             break;
           case 'function':
             if (!waitUntil(target.value)) {
