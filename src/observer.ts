@@ -349,7 +349,7 @@ export class DataLayerObserver {
       url,
       monitor = true,
       waitUntil,
-      maxRetry = 5, // with a 250ms wait time means this times out after ~8000ms
+      maxRetry = 5, // with a 250ms wait time means this times out after ~8000ms (see backoff logic in this function)
     } = rule;
 
     // rule properties override global ones
