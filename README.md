@@ -147,7 +147,7 @@ Each rule provides a set of options for configuration.  Options with an asterisk
 | `debug` | `false` | Set to true if the rule should print debug for each operator transformation. |
 | `description` | `undefined` | Text description of the rule. |
 | `id` | `undefined` | Unique identifier for the rule. |
-| `maxRetry` | `5` | The maximum number of attempts to search for a missing data layer or test the `waitUntil` predicate. |
+| `maxRetry` | `5` | The maximum number of attempts to search for an `undefined` data layer or test the `waitUntil` predicate. |
 | `monitor` | `true` | Set to true to monitor property changes or function calls |
 | `operators` | `[]` | List of operators that transform data before a destination. |
 | `readOnLoad` | `false` | Rule-specific override for `window[‘_dlo_readOnLoad’]`. |
