@@ -68,7 +68,7 @@ export default class DataLayerTarget {
         this.type = type;
         break;
       default:
-        throw new Error(LogMessage.DataLayerMissing);
+        Logger.getInstance().warn(LogMessage.UnsupportedType, { path, property, selector });
     }
   }
 

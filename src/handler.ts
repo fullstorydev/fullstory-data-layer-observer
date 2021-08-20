@@ -1,4 +1,4 @@
-import { Logger, LogMessageType } from './utils/logger';
+import { Logger, LogMessage, LogMessageType } from './utils/logger';
 import { Operator } from './operator';
 import { DataLayerDetail, createEventType } from './event';
 import DataLayerTarget from './target';
@@ -32,6 +32,10 @@ export default class DataHandler {
    */
   constructor(public readonly target: DataLayerTarget, public debug = false,
     public debounce = DataHandler.DefaultDebounceTime) {
+    if (!target || !target.value) {
+      throw new Error(LogMessage.DataLayerMissing);
+    }
+
     // begin handling data by listening for events
     this.start();
   }
