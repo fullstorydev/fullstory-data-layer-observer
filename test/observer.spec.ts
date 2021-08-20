@@ -760,7 +760,6 @@ describe('DataLayerObserver unit tests', () => {
           operators: [],
           destination: 'console.log',
           readOnLoad: true,
-          waitUntil: (dataLayer: any) => Object.getOwnPropertyNames(dataLayer).length > 0,
         },
       ],
     });
@@ -778,6 +777,45 @@ describe('DataLayerObserver unit tests', () => {
       const [found] = expectParams(globalMock.console, 'log');
       expect(found).to.not.be.undefined;
       expectEqual(found.foo, 'bar');
+
+      ExpectObserver.getInstance().cleanup(observer);
+
+      done();
+    }, 400);
+  });
+
+  it('it should reschedule registration if desired properties are missing in the data layer', (done) => {
+    // this tests if the dataLayer has been stubbed but the needed properties are not present
+    expectNoCalls(globalMock.console, 'log');
+
+    const appender = new MockAppender();
+
+    setGlobal('s', {});
+
+    const observer = ExpectObserver.getInstance().create({
+      appender,
+      rules: [
+        {
+          source: 's[^(eVar)]',
+          operators: [],
+          destination: 'console.log',
+          readOnLoad: true,
+        },
+      ],
+    });
+
+    expectNoCalls(globalMock.console, 'log');
+
+    setTimeout(() => {
+      const s = expectGlobal('s');
+      s.eVar1 = 'foo';
+    }, 100);
+
+    // the registration will reschedule itself for 250 ms and then again at 500ms
+    setTimeout(() => {
+      const [found] = expectParams(globalMock.console, 'log');
+      expect(found).to.not.be.undefined;
+      expectEqual(found.eVar1, 'foo');
 
       ExpectObserver.getInstance().cleanup(observer);
 

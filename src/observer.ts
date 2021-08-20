@@ -81,6 +81,23 @@ export class DataLayerObserver {
 
   listeners: { [path: string]: EventListener[] } = {};
 
+  static DefaultWaitUntil = (target: DataLayerTarget) => {
+    const { value } = target;
+
+    // perform supported data layers check
+    if (value === undefined && (typeof value !== 'object' || typeof value !== 'function')) {
+      return false;
+    }
+    if (typeof value === 'object') {
+      // for object-based data layers, query the data layer to run either the selector or get the value
+      // in either case, a data layer with no properties means there's no properties to monitor and we should wait
+      const result = target.query();
+      return result !== undefined && Object.getOwnPropertyNames(result).length > 0;
+    }
+    // it's a function, that's enough
+    return true;
+  };
+
   /**
    * Creates a DataLayerObserver. If no DataLayerConfig is provided, the following settings will be
    * used:
@@ -377,9 +394,7 @@ export class DataLayerObserver {
       readOnLoad: ruleReadOnLoad,
       url,
       monitor = true,
-      // a default waitUtil predicate tests whether the data layer is defined and of the expected type
-      waitUntil = (dataLayer: any) => dataLayer !== undefined
-        && (typeof dataLayer === 'object' || typeof dataLayer === 'function'),
+      waitUntil = DataLayerObserver.DefaultWaitUntil,
     } = rule;
 
     // rule properties override global ones
@@ -407,7 +422,7 @@ export class DataLayerObserver {
           }, waitUntil > -1 ? waitUntil : 0); // negative values will schedule immediately
           break;
         case 'function':
-          if (!waitUntil(target.value)) {
+          if (!waitUntil(target)) {
             this.registerRuleWithDelay(rule, attempt);
           } else {
             this.registerTarget(target, operators, destination, readOnLoad, monitor, debug, debounce);
