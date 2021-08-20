@@ -53,6 +53,10 @@ describe('suffix operator unit test', () => {
     expect(() => new SuffixOperator({
       name: 'suffix', maxDepth: 3,
     }).validate()).to.not.throw();
+
+    expect(() => new SuffixOperator({
+      name: 'suffix', maxProps: SuffixOperator.MaxPropsCeiling + 1,
+    }).validate()).to.throw();
   });
 
   it('it should not change the original object', () => {
@@ -351,5 +355,9 @@ describe('suffix operator unit test', () => {
     obj['5'] = '5';
 
     expect(() => operator.handleData([obj])).to.throw();
+  });
+
+  it('it should not allow maxProps to be above the hard coded ceiling', () => {
+    expect(() => new SuffixOperator({ name: 'suffix', maxProps: SuffixOperator.MaxPropsCeiling + 1 })).to.throw();
   });
 });
