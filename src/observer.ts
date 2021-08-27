@@ -346,31 +346,24 @@ export class DataLayerObserver {
   }
 
   /**
-   * Schedules rule registration on a specified delay. The delay will be contingent on the number of attempts and the wait time.
-   * Each subsequent attempt at registration will use exponential backoff to lengthen the delay time between individual attempts.
-   * @param rule DataLayerRule to be registered
-   * @param attempt Numeric attempt counter, which starts at `1`
-   * @param wait Time in milliseconds to use as backoff multiplier
+   *
+   * @param snooze Function to test whether to wait again
+   * @param awake Function to execute once the wait is over
+   * @param attempt The current attempt to test the snooze function
+   * @param wait Wait time in milliseconds before testing whether to wait some more
    */
-  private registerRuleWithDelay(rule: DataLayerRule, attempt = 1, wait = 250) {
-    const { id, source } = rule;
-
-    // with a 250ms wait time means this times out after ~8000ms (see backoff logic in this function)
-    const { maxRetry = 5 } = rule;
-
-    // exponentially back-off with a slight offset to prevent tight grouping of re-registration
-    // NOTE, use `attempt - 1` because the first attempt should be equal to `Math.pow(2, 0)`
+  private sleep(snooze: () => boolean, awake: () => void, maxRetry = 5, attempt = 1, wait = 250) {
     const delay = (2 ** (attempt - 1) * wait) + Math.random();
-
-    if (attempt > maxRetry) {
-      // give up trying to find the data layer
-      Logger.getInstance().warn(LogMessageType.RuleRegistrationError, {
-        rule: id, source, reason: 'max retries attempted',
-      });
+    if (snooze()) {
+      if (attempt > maxRetry) {
+        throw new Error('Max Retries Attempted');
+      } else {
+        setTimeout(() => {
+          this.sleep(snooze, awake, maxRetry, attempt + 1);
+        }, delay);
+      }
     } else {
-      setTimeout(() => {
-        this.registerRule(rule, attempt + 1);
-      }, delay);
+      awake();
     }
   }
 
@@ -381,7 +374,7 @@ export class DataLayerObserver {
    * @param rule to parse and process
    * @throws error if the rule has missing data or an error occurs during processing
    */
-  registerRule(rule: DataLayerRule, attempt = 1) {
+  registerRule(rule: DataLayerRule) {
     const { readOnLoad: globalReadOnLoad } = this.config;
 
     const {
@@ -413,19 +406,29 @@ export class DataLayerObserver {
 
     try {
       const target = DataLayerTarget.find(source);
+      const register = () => this.registerTarget(target, operators, destination, readOnLoad, monitor, debug, debounce);
+      const { maxRetry = 5 } = rule;
 
       switch (typeof waitUntil) {
         case 'number':
           // NOTE this delay is scheduled *after* the data layer is found to be defined on the page (not after page load)
           setTimeout(() => {
-            this.registerTarget(target, operators, destination, readOnLoad, monitor, debug, debounce);
+            register();
           }, waitUntil > -1 ? waitUntil : 0); // negative values will schedule immediately
           break;
         case 'function':
           if (!waitUntil(target)) {
-            this.registerRuleWithDelay(rule, attempt);
+            try {
+              this.sleep(() => !waitUntil(target), register, maxRetry);
+            } catch (err) {
+              // give up trying to find the data layer
+              Logger.getInstance().warn(LogMessageType.RuleRegistrationError, {
+                rule: id, source, reason: err,
+              });
+            }
+            // this.registerRuleWithDelay(rule, attempt);
           } else {
-            this.registerTarget(target, operators, destination, readOnLoad, monitor, debug, debounce);
+            register();
           }
           break;
         default:
