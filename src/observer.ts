@@ -414,8 +414,10 @@ export class DataLayerObserver {
     }
 
     try {
-      const target = DataLayerTarget.find(source);
-      const register = () => this.registerTarget(target, operators, destination, readOnLoad, monitor, debug, debounce);
+      const register = () => {
+        const target = DataLayerTarget.find(source);
+        this.registerTarget(target, operators, destination, readOnLoad, monitor, debug, debounce);
+      };
       const timeout = () => Logger.getInstance().warn(LogMessageType.RuleRegistrationError, {
         rule: id, source, reason: 'Max Retries Attempted',
       });
@@ -429,12 +431,7 @@ export class DataLayerObserver {
           }, waitUntil > -1 ? waitUntil : 0); // negative values will schedule immediately
           break;
         case 'function':
-          if (!waitUntil(target)) {
-            this.sleep(() => !waitUntil(target), register, timeout, maxRetry);
-            // this.registerRuleWithDelay(rule, attempt);
-          } else {
-            register();
-          }
+          this.sleep(() => !waitUntil(DataLayerTarget.find(source)), register, timeout, maxRetry);
           break;
         default:
           Logger.getInstance().warn(Logger.format(LogMessage.UnsupportedType, typeof waitUntil));
