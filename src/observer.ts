@@ -351,7 +351,7 @@ export class DataLayerObserver {
    * @param awake Function to execute once the wait is over
    * @param timeout Function that gets called in the event of a timeout
    * @param attempt The current attempt to test the snooze function
-   * @param wait Wait time in milliseconds before testing whether to wait some more
+   * @param wait Time in milliseconds before invoking the awake function or snoozing again
    */
   private sleep(
     snooze: () => boolean,
@@ -366,6 +366,8 @@ export class DataLayerObserver {
       return;
     }
 
+    // exponentially back-off with a slight offset to prevent tight grouping of re-registration
+    // NOTE, use `attempt - 1` because the first attempt should be equal to `Math.pow(2, 0)`
     const delay = (2 ** (attempt - 1) * wait) + Math.random();
     if (snooze()) {
       setTimeout(() => {
