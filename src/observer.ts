@@ -366,16 +366,17 @@ export class DataLayerObserver {
       return;
     }
 
+    if (shouldWake()) {
+      awake();
+      return;
+    }
+
     // exponentially back-off with a slight offset to prevent tight grouping of re-registration
     // NOTE, use `attempt - 1` because the first attempt should be equal to `Math.pow(2, 0)`
     const delay = (2 ** (attempt - 1) * wait) + Math.random();
-    if (shouldWake()) {
-      awake();
-    } else {
-      setTimeout(() => {
-        this.sleep(shouldWake, awake, timeout, maxRetry, attempt + 1, wait);
-      }, delay);
-    }
+    setTimeout(() => {
+      this.sleep(shouldWake, awake, timeout, maxRetry, attempt + 1, wait);
+    }, delay);
   }
 
   /**
