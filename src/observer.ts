@@ -349,17 +349,25 @@ export class DataLayerObserver {
    *
    * @param snooze Function to test whether to wait again
    * @param awake Function to execute once the wait is over
+   * @param didTimeout Function that gets called in the event of a timeout
    * @param attempt The current attempt to test the snooze function
    * @param wait Wait time in milliseconds before testing whether to wait some more
    */
-  private sleep(snooze: () => boolean, awake: () => void, maxRetry = 5, attempt = 1, wait = 250) {
+  private sleep(
+    snooze: () => boolean,
+    awake: () => void,
+    didTimeout: () => void,
+    maxRetry = 5,
+    attempt = 1,
+    wait = 250,
+  ) {
     const delay = (2 ** (attempt - 1) * wait) + Math.random();
     if (snooze()) {
       if (attempt > maxRetry) {
-        throw new Error('Max Retries Attempted');
+        didTimeout();
       } else {
         setTimeout(() => {
-          this.sleep(snooze, awake, maxRetry, attempt + 1);
+          this.sleep(snooze, awake, didTimeout, maxRetry, attempt + 1);
         }, delay);
       }
     } else {
@@ -407,6 +415,9 @@ export class DataLayerObserver {
     try {
       const target = DataLayerTarget.find(source);
       const register = () => this.registerTarget(target, operators, destination, readOnLoad, monitor, debug, debounce);
+      const timeout = () => Logger.getInstance().warn(LogMessageType.RuleRegistrationError, {
+        rule: id, source, reason: 'Max Retries Attempted',
+      });
       const { maxRetry = 5 } = rule;
 
       switch (typeof waitUntil) {
@@ -418,14 +429,7 @@ export class DataLayerObserver {
           break;
         case 'function':
           if (!waitUntil(target)) {
-            try {
-              this.sleep(() => !waitUntil(target), register, maxRetry);
-            } catch (err) {
-              // give up trying to find the data layer
-              Logger.getInstance().warn(LogMessageType.RuleRegistrationError, {
-                rule: id, source, reason: err,
-              });
-            }
+            this.sleep(() => !waitUntil(target), register, timeout, maxRetry);
             // this.registerRuleWithDelay(rule, attempt);
           } else {
             register();
