@@ -349,27 +349,28 @@ export class DataLayerObserver {
    *
    * @param snooze Function to test whether to wait again
    * @param awake Function to execute once the wait is over
-   * @param didTimeout Function that gets called in the event of a timeout
+   * @param timeout Function that gets called in the event of a timeout
    * @param attempt The current attempt to test the snooze function
    * @param wait Wait time in milliseconds before testing whether to wait some more
    */
   private sleep(
     snooze: () => boolean,
     awake: () => void,
-    didTimeout: () => void,
+    timeout: () => void,
     maxRetry = 5,
     attempt = 1,
     wait = 250,
   ) {
+    if (attempt > maxRetry) {
+      timeout();
+      return;
+    }
+
     const delay = (2 ** (attempt - 1) * wait) + Math.random();
     if (snooze()) {
-      if (attempt > maxRetry) {
-        didTimeout();
-      } else {
-        setTimeout(() => {
-          this.sleep(snooze, awake, didTimeout, maxRetry, attempt + 1);
-        }, delay);
-      }
+      setTimeout(() => {
+        this.sleep(snooze, awake, timeout, maxRetry, attempt + 1);
+      }, delay);
     } else {
       awake();
     }
