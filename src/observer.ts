@@ -347,14 +347,14 @@ export class DataLayerObserver {
 
   /**
    *
-   * @param snooze Function to test whether to wait again
+   * @param shouldWake Function to test whether to wait again
    * @param awake Function to execute once the wait is over
    * @param timeout Function that gets called in the event of a timeout
    * @param attempt The current attempt to test the snooze function
    * @param wait Time in milliseconds before invoking the awake function or snoozing again
    */
   private sleep(
-    snooze: () => boolean,
+    shouldWake: () => boolean,
     awake: () => void,
     timeout: () => void,
     maxRetry = 5,
@@ -369,12 +369,12 @@ export class DataLayerObserver {
     // exponentially back-off with a slight offset to prevent tight grouping of re-registration
     // NOTE, use `attempt - 1` because the first attempt should be equal to `Math.pow(2, 0)`
     const delay = (2 ** (attempt - 1) * wait) + Math.random();
-    if (snooze()) {
-      setTimeout(() => {
-        this.sleep(snooze, awake, timeout, maxRetry, attempt + 1, wait);
-      }, delay);
-    } else {
+    if (shouldWake()) {
       awake();
+    } else {
+      setTimeout(() => {
+        this.sleep(shouldWake, awake, timeout, maxRetry, attempt + 1, wait);
+      }, delay);
     }
   }
 
@@ -433,7 +433,7 @@ export class DataLayerObserver {
           }, waitUntil > -1 ? waitUntil : 0); // negative values will schedule immediately
           break;
         case 'function':
-          this.sleep(() => !waitUntil(DataLayerTarget.find(source)), register, timeout, maxRetry);
+          this.sleep(() => waitUntil(DataLayerTarget.find(source)), register, timeout, maxRetry);
           break;
         default:
           Logger.getInstance().warn(Logger.format(LogMessage.UnsupportedType, typeof waitUntil));
