@@ -371,7 +371,7 @@ export class DataLayerObserver {
     const delay = (2 ** (attempt - 1) * wait) + Math.random();
     if (snooze()) {
       setTimeout(() => {
-        this.sleep(snooze, awake, timeout, maxRetry, attempt + 1);
+        this.sleep(snooze, awake, timeout, maxRetry, attempt + 1, wait);
       }, delay);
     } else {
       awake();
