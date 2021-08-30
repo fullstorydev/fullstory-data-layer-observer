@@ -346,32 +346,38 @@ export class DataLayerObserver {
   }
 
   /**
-   * Schedules rule registration on a specified delay. The delay will be contingent on the number of attempts and the wait time.
-   * Each subsequent attempt at registration will use exponential backoff to lengthen the delay time between individual attempts.
-   * @param rule DataLayerRule to be registered
-   * @param attempt Numeric attempt counter, which starts at `1`
-   * @param wait Time in milliseconds to use as backoff multiplier
+   * Will test whether the `awake` function is ready to be called, and if not,
+   * will sleep according to an exponential delay up to `maxRetry` attempts.
+   * @param shouldWake Function to test whether to wait again
+   * @param awake Function to execute once the wait is over
+   * @param timeout Function that gets called in the event of a timeout
+   * @param attempt The current attempt to test the `shouldWake` function
+   * @param wait Time in milliseconds before invoking the awake function or snoozing again
    */
-  private registerRuleWithDelay(rule: DataLayerRule, attempt = 1, wait = 250) {
-    const { id, source } = rule;
+  private sleep(
+    shouldWake: () => boolean,
+    awake: () => void,
+    timeout: () => void,
+    maxRetry = 5,
+    attempt = 1,
+    wait = 250,
+  ) {
+    if (attempt > maxRetry) {
+      timeout();
+      return;
+    }
 
-    // with a 250ms wait time means this times out after ~8000ms (see backoff logic in this function)
-    const { maxRetry = 5 } = rule;
+    if (shouldWake()) {
+      awake();
+      return;
+    }
 
     // exponentially back-off with a slight offset to prevent tight grouping of re-registration
     // NOTE, use `attempt - 1` because the first attempt should be equal to `Math.pow(2, 0)`
     const delay = (2 ** (attempt - 1) * wait) + Math.random();
-
-    if (attempt > maxRetry) {
-      // give up trying to find the data layer
-      Logger.getInstance().warn(LogMessageType.RuleRegistrationError, {
-        rule: id, source, reason: 'max retries attempted',
-      });
-    } else {
-      setTimeout(() => {
-        this.registerRule(rule, attempt + 1);
-      }, delay);
-    }
+    setTimeout(() => {
+      this.sleep(shouldWake, awake, timeout, maxRetry, attempt + 1, wait);
+    }, delay);
   }
 
   /**
@@ -381,7 +387,7 @@ export class DataLayerObserver {
    * @param rule to parse and process
    * @throws error if the rule has missing data or an error occurs during processing
    */
-  registerRule(rule: DataLayerRule, attempt = 1) {
+  registerRule(rule: DataLayerRule) {
     const { readOnLoad: globalReadOnLoad } = this.config;
 
     const {
@@ -412,21 +418,24 @@ export class DataLayerObserver {
     }
 
     try {
-      const target = DataLayerTarget.find(source);
+      const register = () => {
+        const target = DataLayerTarget.find(source);
+        this.registerTarget(target, operators, destination, readOnLoad, monitor, debug, debounce);
+      };
+      const timeout = () => Logger.getInstance().warn(LogMessageType.RuleRegistrationError, {
+        rule: id, source, reason: 'Max Retries Attempted',
+      });
+      const { maxRetry = 5 } = rule;
 
       switch (typeof waitUntil) {
         case 'number':
           // NOTE this delay is scheduled *after* the data layer is found to be defined on the page (not after page load)
           setTimeout(() => {
-            this.registerTarget(target, operators, destination, readOnLoad, monitor, debug, debounce);
+            register();
           }, waitUntil > -1 ? waitUntil : 0); // negative values will schedule immediately
           break;
         case 'function':
-          if (!waitUntil(target)) {
-            this.registerRuleWithDelay(rule, attempt);
-          } else {
-            this.registerTarget(target, operators, destination, readOnLoad, monitor, debug, debounce);
-          }
+          this.sleep(() => waitUntil(DataLayerTarget.find(source)), register, timeout, maxRetry);
           break;
         default:
           Logger.getInstance().warn(Logger.format(LogMessage.UnsupportedType, typeof waitUntil));
