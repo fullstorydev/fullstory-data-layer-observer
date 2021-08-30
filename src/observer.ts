@@ -346,11 +346,12 @@ export class DataLayerObserver {
   }
 
   /**
-   *
+   * Will test whether the `awake` function is ready to be called, and if not,
+   * will sleep according to an exponential delay up to `maxRetry` attempts.
    * @param shouldWake Function to test whether to wait again
    * @param awake Function to execute once the wait is over
    * @param timeout Function that gets called in the event of a timeout
-   * @param attempt The current attempt to test the snooze function
+   * @param attempt The current attempt to test the `shouldWake` function
    * @param wait Time in milliseconds before invoking the awake function or snoozing again
    */
   private sleep(
