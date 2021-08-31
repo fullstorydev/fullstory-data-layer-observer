@@ -51,6 +51,8 @@ export interface DataLayerConfig {
  *  operators: list of OperatorOptions to transform data before a destination
  *  readOnLoad: rule-specific readOnLoad (see DataLayerConfig readOnLoad)
  *  url: regular expression used to enable the rule when the page URL matches
+ *  waitUntil: waits a desired number of milliseconds or predicate function's truthy return type before registering
+ *  maxRetry: maximum number of attempts to search for an `undefined` data layer or test the `waitUntil` predicate
  */
 export interface DataLayerRule {
   debounce?: number;
@@ -63,6 +65,8 @@ export interface DataLayerRule {
   id?: string;
   description?: string;
   monitor?: boolean;
+  waitUntil?: number | Function;
+  maxRetry?: number;
 }
 
 /**
@@ -76,6 +80,23 @@ export class DataLayerObserver {
   handlers: DataHandler[] = [];
 
   listeners: { [path: string]: EventListener[] } = {};
+
+  static DefaultWaitUntil = (target: DataLayerTarget) => {
+    const { value } = target;
+
+    // perform supported data layers check
+    if (value === undefined && (typeof value !== 'object' || typeof value !== 'function')) {
+      return false;
+    }
+    if (typeof value === 'object') {
+      // for object-based data layers, query the data layer to run either the selector or get the value
+      // in either case, a data layer with no properties means there's no properties to monitor and we should wait
+      const result = target.query();
+      return result !== undefined && Object.getOwnPropertyNames(result).length > 0;
+    }
+    // it's a function, that's enough
+    return true;
+  };
 
   /**
    * Creates a DataLayerObserver. If no DataLayerConfig is provided, the following settings will be
@@ -325,13 +346,48 @@ export class DataLayerObserver {
   }
 
   /**
+   * Will test whether the `awake` function is ready to be called, and if not,
+   * will sleep according to an exponential delay up to `maxRetry` attempts.
+   * @param shouldWake Function to test whether to wait again
+   * @param awake Function to execute once the wait is over
+   * @param timeout Function that gets called in the event of a timeout
+   * @param attempt The current attempt to test the `shouldWake` function
+   * @param wait Time in milliseconds before invoking the awake function or snoozing again
+   */
+  private sleep(
+    shouldWake: () => boolean,
+    awake: () => void,
+    timeout: () => void,
+    maxRetry = 5,
+    attempt = 1,
+    wait = 250,
+  ) {
+    if (attempt > maxRetry) {
+      timeout();
+      return;
+    }
+
+    if (shouldWake()) {
+      awake();
+      return;
+    }
+
+    // exponentially back-off with a slight offset to prevent tight grouping of re-registration
+    // NOTE, use `attempt - 1` because the first attempt should be equal to `Math.pow(2, 0)`
+    const delay = (2 ** (attempt - 1) * wait) + Math.random();
+    setTimeout(() => {
+      this.sleep(shouldWake, awake, timeout, maxRetry, attempt + 1, wait);
+    }, delay);
+  }
+
+  /**
    * Registers a data layer rule. Assuming the rule's `url` is valid, this results in the rule
    * being parsed, adding a DataHandler with any Operators, registering a source and
    * destination, and monitoring for changes or function calls.
    * @param rule to parse and process
    * @throws error if the rule has missing data or an error occurs during processing
    */
-  registerRule(rule: DataLayerRule, attempt = 0, wait = 300) {
+  registerRule(rule: DataLayerRule) {
     const { readOnLoad: globalReadOnLoad } = this.config;
 
     const {
@@ -344,6 +400,7 @@ export class DataLayerObserver {
       readOnLoad: ruleReadOnLoad,
       url,
       monitor = true,
+      waitUntil = DataLayerObserver.DefaultWaitUntil,
     } = rule;
 
     // rule properties override global ones
@@ -361,22 +418,30 @@ export class DataLayerObserver {
     }
 
     try {
-      const target = DataLayerTarget.find(source);
-      this.registerTarget(target, operators, destination, readOnLoad, monitor, debug, debounce);
-    } catch (_) {
-      // schedule subsequent attempts at (attempt * wait) later
-      setTimeout(() => {
-        try {
-          const target = DataLayerTarget.find(source);
-          this.registerTarget(target, operators, destination, readOnLoad, monitor, debug, debounce);
-        } catch (err) {
-          if (attempt > 3) {
-            Logger.getInstance().error(LogMessageType.RuleRegistrationError, { rule: id, source, reason: err.message });
-          } else {
-            this.registerRule(rule, attempt + 1);
-          }
-        }
-      }, attempt * wait);
+      const register = () => {
+        const target = DataLayerTarget.find(source);
+        this.registerTarget(target, operators, destination, readOnLoad, monitor, debug, debounce);
+      };
+      const timeout = () => Logger.getInstance().warn(LogMessageType.RuleRegistrationError, {
+        rule: id, source, reason: 'Max Retries Attempted',
+      });
+      const { maxRetry = 5 } = rule;
+
+      switch (typeof waitUntil) {
+        case 'number':
+          // NOTE this delay is scheduled *after* the data layer is found to be defined on the page (not after page load)
+          setTimeout(() => {
+            register();
+          }, waitUntil > -1 ? waitUntil : 0); // negative values will schedule immediately
+          break;
+        case 'function':
+          this.sleep(() => waitUntil(DataLayerTarget.find(source)), register, timeout, maxRetry);
+          break;
+        default:
+          Logger.getInstance().warn(Logger.format(LogMessage.UnsupportedType, typeof waitUntil));
+      }
+    } catch (err) {
+      Logger.getInstance().warn(LogMessageType.RuleRegistrationError, { rule: id, source, reason: err.message });
     }
   }
 

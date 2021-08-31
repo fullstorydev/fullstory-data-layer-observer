@@ -9,7 +9,7 @@ import {
 import Console from './mocks/console';
 import FullStory from './mocks/fullstory-recording';
 import {
-  expectParams, expectNoCalls, expectCall, ExpectObserver, expectGlobal, expectEqual,
+  expectParams, expectNoCalls, expectCall, ExpectObserver, expectGlobal, expectEqual, setGlobal,
 } from './utils/mocha';
 import { Operator, OperatorOptions } from '../src/operator';
 import { LogEvent, LogLevel } from '../src/utils/logger';
@@ -712,7 +712,7 @@ describe('DataLayerObserver unit tests', () => {
     ExpectObserver.getInstance().cleanup(observer);
   });
 
-  it('it should reschedule registration for failed rules', (done) => {
+  it('it should reschedule registration for a completely missing data layer', (done) => {
     expectNoCalls(globalMock.console, 'log');
 
     const appender = new MockAppender();
@@ -731,17 +731,10 @@ describe('DataLayerObserver unit tests', () => {
 
     expectNoCalls(globalMock.console, 'log');
 
-    // the registration will reschedule itself for 300 ms
-
+    // the registration will reschedule itself for 250 ms and then again at 500ms
     (globalMock.digitalData as any).missing = { found: true };
 
     setTimeout(() => {
-      // Ignore the first two as they are observation messages
-      expectParams(appender, 'log');
-      expectParams(appender, 'log');
-
-      expectNoCalls(appender, 'log');
-
       const [found] = expectParams(globalMock.console, 'log');
       expect(found).to.not.be.undefined;
 
@@ -751,7 +744,86 @@ describe('DataLayerObserver unit tests', () => {
     }, 400);
   });
 
-  it('it should fail registration after 1.8 seconds by default', (done) => {
+  it('it should reschedule registration for a stubbed data layer', (done) => {
+    // this tests if the dataLayer has been stubbed but the needed properties are not present
+    expectNoCalls(globalMock.console, 'log');
+
+    const appender = new MockAppender();
+
+    setGlobal('stub', {});
+
+    const observer = ExpectObserver.getInstance().create({
+      appender,
+      rules: [
+        {
+          source: 'stub',
+          operators: [],
+          destination: 'console.log',
+          readOnLoad: true,
+        },
+      ],
+    });
+
+    // historically, a stubbed data layer with no properties created an empty object payload
+    expectNoCalls(globalMock.console, 'log');
+
+    setTimeout(() => {
+      const stub = expectGlobal('stub');
+      stub.foo = 'bar';
+    }, 100);
+
+    // the registration will reschedule itself for 250 ms and then again at 500ms
+    setTimeout(() => {
+      const [found] = expectParams(globalMock.console, 'log');
+      expect(found).to.not.be.undefined;
+      expectEqual(found.foo, 'bar');
+
+      ExpectObserver.getInstance().cleanup(observer);
+
+      done();
+    }, 400);
+  });
+
+  it('it should reschedule registration if desired properties are missing in the data layer', (done) => {
+    // this tests if the dataLayer has been stubbed but the needed properties are not present
+    expectNoCalls(globalMock.console, 'log');
+
+    const appender = new MockAppender();
+
+    setGlobal('s', {});
+
+    const observer = ExpectObserver.getInstance().create({
+      appender,
+      rules: [
+        {
+          source: 's[^(eVar)]',
+          operators: [],
+          destination: 'console.log',
+          readOnLoad: true,
+        },
+      ],
+    });
+
+    expectNoCalls(globalMock.console, 'log');
+
+    setTimeout(() => {
+      const s = expectGlobal('s');
+      s.eVar1 = 'foo';
+    }, 100);
+
+    // the registration will reschedule itself for 250 ms and then again at 500ms
+    setTimeout(() => {
+      const [found] = expectParams(globalMock.console, 'log');
+      expect(found).to.not.be.undefined;
+      expectEqual(found.eVar1, 'foo');
+
+      ExpectObserver.getInstance().cleanup(observer);
+
+      done();
+    }, 400);
+  });
+
+  it('it should fail registration after a configurable number of attempts', (done) => {
     expectNoCalls(globalMock.console, 'log');
 
     const appender = new MockAppender();
@@ -764,13 +836,12 @@ describe('DataLayerObserver unit tests', () => {
           operators: [],
           destination: 'console.log',
           readOnLoad: true,
+          maxRetry: 2, // first try 250ms, second try 500ms, third try 1000ms
         },
       ],
     });
 
     expectNoCalls(globalMock.console, 'log');
-
-    // the registration will reschedule itself but quit after 1.8 seconds by default
 
     setTimeout(() => {
       const [message] = expectParams(appender, 'log');
@@ -779,6 +850,41 @@ describe('DataLayerObserver unit tests', () => {
       ExpectObserver.getInstance().cleanup(observer);
 
       done();
-    }, 1850);
+    }, 900); // the third retry will not occur so it's 250 + 500 for the first and second
+  });
+
+  it('it should delay registration for a configurable amount of time', (done) => {
+    expectNoCalls(globalMock.console, 'log');
+
+    const appender = new MockAppender();
+
+    const observer = ExpectObserver.getInstance().create({
+      appender,
+      rules: [
+        {
+          source: 'digitalData.page.pageInfo',
+          operators: [],
+          destination: 'console.log',
+          readOnLoad: true,
+          waitUntil: 500,
+        },
+      ],
+    });
+
+    // expect that the data layer is not read before the waitUntil value
+    setTimeout(() => {
+      expectNoCalls(globalMock.console, 'log');
+    }, 250);
+
+    setTimeout(() => {
+      const test = appender.callQueues;
+      expect(test).to.not.be.undefined;
+      const [found] = expectParams(globalMock.console, 'log');
+      expect(found).to.not.be.undefined;
+
+      ExpectObserver.getInstance().cleanup(observer);
+
+      done();
+    }, 1000);
   });
 });
