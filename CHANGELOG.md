@@ -10,6 +10,17 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.10.1
+
+- `suffix` operator `maxProps` should not count properties with undefined values
+- `suffix` operator explicitly stops processing if provided an undefined or null object to be suffixed
+
+### 1.10.0
+
+- Added rule options `waitUntil` and `maxRetry` related to scheduling rule registration
+- Updated default behavior of rule registration: waiting for both a defined data layer object and at least one property defined
+- Adjusted rule registration logic to schedule using exponential backoff times
+
 ### 1.9.0
 
 - `suffix` operator limits number of properties in an object to `100` (configurable with `maxProps`)
