@@ -88,6 +88,11 @@ export class SuffixOperator implements Operator {
    * @param value the object to inspect and return suffix
    */
   static coerceSuffix(value: SuffixableValue): string | null {
+    // quick guard against undefined
+    if (value === undefined) {
+      return null;
+    }
+
     // arrays are pluralized
     if (Array.isArray(value)) {
       if (value.every((v: any) => typeof v === 'string')) {
@@ -152,7 +157,9 @@ export class SuffixOperator implements Operator {
 
     // count the props to guard against super-sized object being unknowingly added to a data layer
     // this reduces the likelihood of hitting cardinality but also prevents impacting site performance
-    const numProps = totalProps + Object.getOwnPropertyNames(obj).length;
+    // NOTE we should count defined values since undefined values will be dropped from the suffixed object
+    const numProps = totalProps + Object.getOwnPropertyNames(obj)
+      .reduce((total, prop) => (obj[prop] !== undefined ? total + 1 : total), 0);
 
     if (numProps > this.maxProps) {
       throw Error(`Number of object properties exceeds the limit (${this.maxProps}); increase maxProps to ${numProps}`);
@@ -196,6 +203,11 @@ export class SuffixOperator implements Operator {
     // check if the `source` param was included and if so decrement the index
     if (typeof data[index] === 'string') {
       index -= 1;
+    }
+
+    // if the data isn't an object payload return null to halt processing and to prevent sending empty data to the destination
+    if (typeof data[index] !== 'object') {
+      return null;
     }
 
     const suffixed = this.mapToSuffix(data[index]);

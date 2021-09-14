@@ -77,10 +77,14 @@ describe('suffix operator unit test', () => {
     const operator = new SuffixOperator({ name: 'suffix' });
     expect(operator).to.not.be.undefined;
 
-    const [suffixedObject] = operator.handleData([undefined])!;
+    // undefined objects themselves have no data so return null to halt the operator chain
+    let suffixedObject = operator.handleData([undefined])!;
+    expect(suffixedObject).to.be.null;
 
+    // undefined values will be pruned from the resulting object
+    [suffixedObject] = operator.handleData([{ a: undefined, b: 'b' }])!;
     expect(suffixedObject).to.not.be.undefined;
-    expect(Object.getOwnPropertyNames(suffixedObject).length).to.eq(0);
+    expect(Object.getOwnPropertyNames(suffixedObject).length).to.eq(1);
   });
 
   it('it should not suffix required FullStory naming conventions', () => {
@@ -359,5 +363,16 @@ describe('suffix operator unit test', () => {
 
   it('it should not allow maxProps to be above the hard coded ceiling', () => {
     expect(() => new SuffixOperator({ name: 'suffix', maxProps: SuffixOperator.MaxPropsCeiling + 1 })).to.throw();
+  });
+
+  it('it should not count undefined values in the property total', () => {
+    const operator = new SuffixOperator({ name: 'suffix', maxProps: 1 });
+    expect(operator).to.not.be.undefined;
+
+    const [suffixedObject] = operator.handleData([{ a: undefined, b: undefined, c: 'c' }])!;
+    expect(Object.getOwnPropertyNames(suffixedObject).length).to.eql(1);
+
+    // go over the limit
+    expect(() => operator.handleData([{ c: 'c', d: 'd' }])).to.throw();
   });
 });
