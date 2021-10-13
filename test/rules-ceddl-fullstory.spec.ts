@@ -1,62 +1,24 @@
 import 'mocha';
 
-import { rules } from '../examples/rules/ceddl-fullstory.json';
+import '../rulesets/ceddl.js';
 
 import { basicDigitalData } from './mocks/CEDDL';
 import {
-  expectEqual, expectRule, expectFS, expectMatch, expectType, expectUndefined, ExpectObserver, setupGlobals,
+  expectEqual, expectRule, expectFS, expectMatch, expectUndefined, ExpectObserver, setupGlobals,
   expectGlobal,
 } from './utils/mocha';
+
+const ceddlRulesKey = '_dlo_rules_ceddl';
+const ceddlRules = (window as Record<string, any>)[ceddlRulesKey];
 
 describe('CEDDL to FullStory rules', () => {
   beforeEach(() => setupGlobals([
     ['digitalData', basicDigitalData],
-    ['_dlo_rules', rules],
+    ['_dlo_rules', ceddlRules],
   ]));
 
   afterEach(() => {
     ExpectObserver.getInstance().cleanup();
-  });
-
-  it('it should send any CEDDL user property to FS.setUserVars', () => {
-    expectGlobal('digitalData').user.profile[0].job = 'developer'; // inject custom property
-
-    ExpectObserver.getInstance().create({
-      rules: [expectRule('fs-uservars-ceddl-user-all')], readOnLoad: true,
-    });
-
-    const [payload] = expectFS('setUserVars');
-    expectMatch(basicDigitalData.user.profile[0].profileInfo, payload, 'profileID', 'userName');
-    expectMatch(basicDigitalData.user.profile[0].address, payload,
-      'line1', 'line2', 'city', 'stateProvince', 'postalCode', 'country', 'line2', 'line2', 'line2', 'line2');
-    expectUndefined(payload, 'segment', 'social', 'attributes');
-    expectEqual(payload.job, 'developer'); // verify custom property
-  });
-
-  it('it should send any CEDDL user property to FS.identify', () => {
-    ExpectObserver.getInstance().create({
-      rules: [expectRule('fs-identify-ceddl-user-all')], readOnLoad: true,
-    });
-
-    const [uid, payload] = expectFS('identify');
-    expectEqual(uid, basicDigitalData.user.profile[0].profileInfo.profileID);
-    expectEqual(payload.userName, basicDigitalData.user.profile[0].profileInfo.userName);
-    expectEqual(payload.line1, basicDigitalData.user.profile[0].address.line1);
-    expectUndefined(payload, 'segment');
-  });
-
-  it('it should send only allowed CEDDL user properties to FS.identify', () => {
-    expectGlobal('digitalData').user.profile[0].password = 'pa$$w0rd'; // inject sensitive property
-
-    ExpectObserver.getInstance().create({
-      rules: [expectRule('fs-identify-ceddl-user-allowed')], readOnLoad: true,
-    });
-
-    const [uid, payload] = expectFS('identify');
-    expectEqual(uid, basicDigitalData.user.profile[0].profileInfo.profileID);
-    expectEqual(payload.userName, basicDigitalData.user.profile[0].profileInfo.userName);
-    expectEqual(payload.line1, basicDigitalData.user.profile[0].address.line1);
-    expectUndefined(payload, 'password');
   });
 
   it('it should send the first CEDDL product to FS.event', () => {
@@ -88,29 +50,6 @@ describe('CEDDL to FullStory rules', () => {
     expectEqual(payload.promotion, 'LaborDay2020');
   });
 
-  it('it should convert strings to reals and send CEDDL cart properties to FS.event', () => {
-    const { price: { basePrice, priceWithTax, cartTotal } } = basicDigitalData.cart;
-
-    // convert to strings for testing
-    expectGlobal('digitalData').cart.price.basePrice = basePrice.toString();
-    expectGlobal('digitalData').cart.price.priceWithTax = priceWithTax.toString();
-    expectGlobal('digitalData').cart.price.cartTotal = cartTotal.toString();
-
-    expectType('string', expectGlobal('digitalData').cart.price.basePrice);
-    expectType('string', expectGlobal('digitalData').cart.price.priceWithTax);
-    expectType('string', expectGlobal('digitalData').cart.price.cartTotal);
-
-    ExpectObserver.getInstance().create(
-      { rules: [expectRule('fs-event-ceddl-cart')], readOnLoad: true },
-    );
-
-    const [eventName, payload] = expectFS('event');
-    expectEqual(eventName, 'cart');
-
-    // NOTE these are flattened but you could also simply send digitalData.cart.price
-    expectMatch(payload, basicDigitalData.cart.price, 'basePrice', 'priceWithTax', 'cartTotal');
-  });
-
   it('it should send CEDDL page properties to FS.event', () => {
     expectGlobal('digitalData').page.framework = 'react'; // inject custom property
 
@@ -127,9 +66,9 @@ describe('CEDDL to FullStory rules', () => {
 
     expectEqual(payload.primaryCategory, basicDigitalData.page.category.primaryCategory);
     expectEqual(payload.framework, 'react'); // verify custom property
+    expectEqual(payload.version, basicDigitalData.page.pageInfo.version);
 
     // check converted values
-    expectEqual(payload.version, 1.14);
     expectEqual(payload.issueDate.toString(), new Date(basicDigitalData.page.pageInfo.issueDate).toString());
     expectEqual(payload.effectiveDate.toString(), new Date(basicDigitalData.page.pageInfo.effectiveDate).toString());
     expectEqual(payload.expiryDate.toString(), new Date(basicDigitalData.page.pageInfo.expiryDate).toString());
