@@ -15,3 +15,9 @@ Rulesets provide out of the box rules that are compatible with common data layer
 - [Ruleset](./google-ua-enhanced-ecommerce.js)
 - [Vendor Guidelines](https://developers.google.com/tag-manager/enhanced-ecommerce)
 - [Tests](../test/rules-google-fullstory.spec.ts)
+
+## Customer Experience Digital Data Layer 1.0 (CEDDL)
+
+- [Ruleset](./ceddl.js)
+- [Vendor Guidelines](https://www.w3.org/2013/12/ceddl-201312.pdf)
+- [Tests](../test/rules-ceddl-fullstory.spec.ts)
