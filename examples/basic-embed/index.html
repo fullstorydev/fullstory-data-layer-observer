@@ -10,7 +10,8 @@
           pageName: 'basic embed',
           pageInfo: {
             pageID: '1234'
-          }
+          },
+          csv: '11,12,13,14,15'
         },
         list: [1, 2, 3, 4, 5]
       }
@@ -72,7 +73,40 @@
             { name: 'insert', value: 'First parameter' }
           ],
           destination: 'ruleDestination'
-        }
+        },
+        // Purpose built operator options (delimiter, separator); still mostly defers to JsOperator
+        {
+          source: 'exampleData.page',
+          operators: [
+            { name: 'query', select: '$[(csv)]' },
+            { name: 'separate', delimiter: ',', outputProperty: 'separated'},
+            { name: 'query', select: '$[(separated)]' },
+            { name: 'combine', separator: '.', outputProperty: 'rejoined' },
+          ],
+          destination: 'ruleDestination'
+        },
+        // Still high level, but more general passthru options (args); completely defers to JsOperator
+        {
+          source: 'exampleData.page',
+          operators: [
+            { name: 'query', select: '$[(csv)]' },
+            { name: 'split', outputProperty: 'separated', args: [',']},
+            { name: 'query', select: '$[(separated)]' },
+            { name: 'join', outputProperty: 'rejoined', args: ['.']},
+          ],
+          destination: 'ruleDestination'
+        },
+        // Low level total passthru for any JS function (function name and args array)
+        {
+          source: 'exampleData.page',
+          operators: [
+            { name: 'query', select: '$[(csv)]' },
+            { name: 'js', function: 'split', outputProperty: 'separated', args: [',']},
+            { name: 'query', select: '$[(separated)]' },
+            { name: 'js', function: 'join', outputProperty: 'rejoined', args: ['.']},
+          ],
+          destination: 'ruleDestination'
+        },
       ];
       window['_dlo_rulesFromAdTeam'] = [
         { source: 'adInformation', operators: [], destination: 'ruleDestination' }
