@@ -5,7 +5,7 @@ import '../rulesets/ceddl.js';
 import { basicDigitalData } from './mocks/CEDDL';
 import {
   expectEqual, expectRule, expectFS, expectMatch, expectUndefined, ExpectObserver, setupGlobals,
-  expectGlobal,
+  expectGlobal, expectNoCalls,
 } from './utils/mocha';
 
 const ceddlRulesKey = '_dlo_rules_ceddl';
@@ -48,6 +48,45 @@ describe('CEDDL to FullStory rules', () => {
     expectEqual(payload.basePrice, basicDigitalData.cart.price.basePrice);
     // @ts-ignore custom property
     expectEqual(payload.promotion, 'LaborDay2020');
+  });
+
+  it('it should send dynamic CEDDL cart item additions to FS.event', () => {
+    const firstProduct = basicDigitalData.product[0];
+
+    const secondProduct = {
+      ...firstProduct,
+      productInfo: {
+        ...firstProduct.productInfo,
+        sku: 'test',
+      },
+    };
+
+    ExpectObserver.getInstance().create({
+      rules: [expectRule('fs-event-ceddl-cart-item')],
+    });
+
+    expectGlobal('digitalData').cart.item.push(firstProduct);
+
+    let [eventName, payload] = expectFS('event');
+    expectEqual(eventName, 'cart_item');
+    expectEqual(payload.productInfo.sku, firstProduct.productInfo.sku);
+
+    expectGlobal('digitalData').cart.item.push(secondProduct);
+
+    [eventName, payload] = expectFS('event');
+    expectEqual(eventName, 'cart_item');
+    expectEqual(payload.productInfo.sku, secondProduct.productInfo.sku);
+  });
+
+  it('it should not send CEDDL cart item products to FS.event on load', () => {
+    expectGlobal('digitalData').cart.item.push(basicDigitalData.product[0]);
+
+    ExpectObserver.getInstance().create({
+      rules: [expectRule('fs-event-ceddl-cart-item')],
+    });
+
+    const fs = expectGlobal('FS');
+    expectNoCalls(fs, 'event');
   });
 
   it('it should send CEDDL page properties to FS.event', () => {
