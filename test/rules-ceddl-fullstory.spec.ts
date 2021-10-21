@@ -70,12 +70,14 @@ describe('CEDDL to FullStory rules', () => {
     let [eventName, payload] = expectFS('event');
     expectEqual(eventName, 'cart_item');
     expectEqual(payload.productInfo.sku, firstProduct.productInfo.sku);
+    expectUndefined(payload, 'linkedProduct');
 
     expectGlobal('digitalData').cart.item.push(secondProduct);
 
     [eventName, payload] = expectFS('event');
     expectEqual(eventName, 'cart_item');
     expectEqual(payload.productInfo.sku, secondProduct.productInfo.sku);
+    expectUndefined(payload, 'linkedProduct');
   });
 
   it('it should not send CEDDL cart item products to FS.event on load', () => {
