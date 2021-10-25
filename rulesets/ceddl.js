@@ -9,6 +9,15 @@ window['_dlo_rules_ceddl'] = [
     "destination": "FS.event"
   },
   {
+    "id": "fs-event-ceddl-cart-item", "source": "digitalData.cart.item",
+    "readOnLoad": false,
+    "operators": [
+      { "name": "query", "select": "$[!(linkedProduct)]" },
+      { "name": "insert", "value": "cart_item" },
+    ],
+    "destination": "FS.event",
+  },
+  {
     "id": "fs-event-ceddl-page", "source": "digitalData.page",
     "operators": [
       { "name": "flatten" },
