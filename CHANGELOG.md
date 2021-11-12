@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.10.2
+
+- Fixed `Object doesn't support property or method 'startsWith'` error in IE11
+
 ### 1.10.1
 
 - `suffix` operator `maxProps` should not count properties with undefined values
