@@ -1,7 +1,7 @@
 /* eslint-disable max-classes-per-file */
 /* eslint prefer-destructuring: ["error", {AssignmentExpression: {array: false}}] */
 
-import { getGlobal } from './utils/object';
+import { getGlobal, startsWith } from './utils/object';
 import { Logger, LogMessage } from './utils/logger';
 
 // Memoized Paths or false if the path cannot be parsed
@@ -335,7 +335,7 @@ class PathElement {
     for (let i = 0; i < propNames.length; i += 1) {
       const key = propNames[i];
       for (let j = 0; j < this.brackets.op.propNames.length; j += 1) {
-        if (key.startsWith(this.brackets.op.propNames[j])) {
+        if (startsWith(key, this.brackets.op.propNames[j])) {
           results[key] = prop[key];
           atLeastOne = true;
           break;
@@ -398,8 +398,8 @@ class PathElement {
           if (opProp.operator === '==' && prop[opProp.name] != opProp.value) return undefined;
           // eslint-disable-next-line eqeqeq
           if (opProp.operator == '!=' && prop[opProp.name] == opProp.value) return undefined;
-          if (opProp.operator === '=^' && !prop[opProp.name].startsWith(opProp.value)) return undefined;
-          if (opProp.operator === '!^' && prop[opProp.name].startsWith(opProp.value)) return undefined;
+          if (opProp.operator === '=^' && !startsWith(prop[opProp.name], opProp.value)) return undefined;
+          if (opProp.operator === '!^' && startsWith(prop[opProp.name], opProp.value)) return undefined;
           break;
         case 'number':
           // eslint-disable-next-line eqeqeq

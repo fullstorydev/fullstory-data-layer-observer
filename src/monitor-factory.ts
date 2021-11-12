@@ -1,5 +1,6 @@
 import Monitor from './monitor';
 import ShimMonitor from './monitor-shim';
+import { startsWith } from './utils/object';
 
 /**
  * Because only a single Monitor can exist on an object's property and various DataHandlers
@@ -48,7 +49,7 @@ export default class MonitorFactory {
    * @param fuzzy when true removes all Monitors that start with the path
    */
   remove(path: string, fuzzy = false) {
-    const paths = fuzzy ? Object.getOwnPropertyNames(this.monitors).filter((key) => key.startsWith(path)) : [path];
+    const paths = fuzzy ? Object.getOwnPropertyNames(this.monitors).filter((key) => startsWith(key, path)) : [path];
 
     paths.forEach((monitorPath) => {
       const monitor = this.monitors[monitorPath];

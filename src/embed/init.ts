@@ -1,5 +1,6 @@
 /* eslint-disable no-underscore-dangle, camelcase */
 import { Logger, LogMessageType } from '../utils/logger';
+import { startsWith } from '../utils/object';
 import { DataLayerObserver } from '../observer';
 
 /*
@@ -57,7 +58,7 @@ function _dlo_collectRules(): any[] {
     const startTime = Date.now();
     const results: any[] = [];
     Object.getOwnPropertyNames(window).forEach((propName) => {
-      if (propName.startsWith('_dlo_rules') === false) return;
+      if (startsWith(propName, '_dlo_rules') === false) return;
 
       const prop = (window as { [key: string]: any })[propName];
       if (Array.isArray(prop) === false) {
