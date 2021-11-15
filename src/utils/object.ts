@@ -33,3 +33,23 @@ export function fromPath(path: string): [object, string] {
 
   return [target, property];
 }
+
+/**
+ * Returns true if the searchString sequence is the same as the corresponding target sequence
+ * starting at the given target position (defaulting to 0); otherwise returns false.
+ * @param target The string to search within.
+ * @param searchString The string to search for.
+ * @param position The position to start searching witin the target.
+ */
+export function startsWith(target: string, searchString: string, position?: number): boolean {
+  // We provide our own startsWith implementation matching the ES2015 String.prototype.startsWith
+  // function behavior since IE11 doesn't support String.prototype.startsWith
+  let effectivePosition = 0;
+
+  // 'foo'.startsWith('foo', -100) will return true
+  if (position && position > 0) {
+    effectivePosition = position;
+  }
+
+  return target.indexOf(searchString, effectivePosition) === effectivePosition;
+}
