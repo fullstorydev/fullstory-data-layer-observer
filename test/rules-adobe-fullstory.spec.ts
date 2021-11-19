@@ -3,7 +3,8 @@ import 'mocha';
 import { rules } from '../examples/rules/adobe-fullstory.json';
 import { basicAppMeasurement } from './mocks/adobe';
 import {
-  expectEqual, expectMatch, expectRule, expectFS, setupGlobals, ExpectObserver, expectUndefined,
+  expectEqual, expectMatch, expectRule, expectFS, setupGlobals, ExpectObserver, expectUndefined, expectGlobal,
+  expectNoCalls,
 } from './utils/mocha';
 
 describe('Adobe to FullStory rules', () => {
@@ -25,6 +26,21 @@ describe('Adobe to FullStory rules', () => {
     expectEqual(eventName, 'Adobe eVars');
     expectMatch(basicAppMeasurement, payload, 'eVar1', 'eVar10', 'eVar20', 'eVar50', 'eVar60');
     expectUndefined(payload, 'prop1', 'pageName');
+  });
+
+  it('should not send empty eVar objects to FS.event', () => {
+    const s = expectGlobal('s');
+
+    // Set all eVars to undefined to simulate an empty object
+    Object.keys(s)
+      .filter((key) => key.startsWith('eVar'))
+      .forEach((key) => { s[key] = undefined; });
+
+    ExpectObserver.getInstance().create(
+      { rules: [expectRule('fs-event-adobe-evars')], readOnLoad: true },
+    );
+
+    expectNoCalls(expectGlobal('FS'), 'event');
   });
 
   it('it should FS.identify using specific Adobe eVars', () => {
