@@ -242,6 +242,8 @@ describe('DataHandler unit tests', () => {
 
       expect(seen.length).to.eq(1);
       expect(seen[0].definedChild).to.eq(val);
+      expect(Object.keys(seen[0])).to.include('undefinedChild');
+      expect(seen[0].undefinedChild).to.be.undefined;
     });
   });
 
