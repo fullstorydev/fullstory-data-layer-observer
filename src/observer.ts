@@ -168,7 +168,8 @@ export class DataLayerObserver {
     } else {
       // when a selector gets used, we know the full path through the data layer and can monitor
       if (selector) {
-        MonitorFactory.getInstance().create(source, subject, property, subjectPath); // monitor the subject for re-assignments
+        // monitor the subject for re-assignments
+        MonitorFactory.getInstance().create(source, subject, property, subjectPath);
       }
 
       // NOTE only the properties that would be returned from a query

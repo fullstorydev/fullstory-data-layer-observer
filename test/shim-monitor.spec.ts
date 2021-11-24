@@ -132,7 +132,8 @@ describe('ShimMonitor unit tests', () => {
       throw new Error(message);
     };
 
-    expectEventListener(createEventType(source, source), ['Hello World'], done); // NOTE the value emitted is a list of args
+    // NOTE the value emitted is a list of args
+    expectEventListener(createEventType(source, source), ['Hello World'], done);
 
     const listMonitor = new ShimMonitor(source, globalMock.dataLayer, 'error', source);
     expect(listMonitor).to.not.be.undefined;

@@ -48,7 +48,13 @@ export function createEventType(source: string, path: string) {
  * @param value that was emitted by the target
  * @param path to the target
  */
-export function createEvent(source: string, target: any, property: string, value: any, path: string): CustomEvent<DataLayerDetail> {
+export function createEvent(
+  source: string,
+  target: any,
+  property: string,
+  value: any,
+  path: string,
+): CustomEvent<DataLayerDetail> {
   return new CustomEvent<DataLayerDetail>(createEventType(source, path), {
     detail: typeof target[property] === 'function' ? new FunctionDetail(path, property, value)
       : new PropertyDetail(path, property, value),
