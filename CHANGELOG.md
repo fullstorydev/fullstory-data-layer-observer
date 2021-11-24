@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.11.0
+
+- Empty objects are no longer passed to rule operators. This prevents empty objects from being sent to configured rule destinations. Empty objects are defined as empty arrays or objects where all first-level child keys have `undefined` values
+
 ### 1.10.2
 
 - Fixed `Object doesn't support property or method 'startsWith'` error in IE11
