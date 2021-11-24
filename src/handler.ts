@@ -25,12 +25,13 @@ export default class DataHandler {
 
   /**
    * Creates a DataHandler.
+   * @param source source from the rule monitoring the data layer
    * @param target in the data layer
    * @param debug true optionally enables debugging data transformation (defaults to console.debug)
    * @param debounce number of milliseconds to debounce property value assignments (defaults to 250ms)
    * @throws will throw an error if the data layer is not found (i.e. undefined or null)
    */
-  constructor(public readonly target: DataLayerTarget, public debug = false,
+  constructor(private readonly source: string, public readonly target: DataLayerTarget, public debug = false,
     public debounce = DataHandler.DefaultDebounceTime) {
     if (!target || !target.value) {
       throw new Error(LogMessage.DataLayerMissing);
@@ -62,7 +63,7 @@ export default class DataHandler {
       // NOTE it seems some data layers may "clear" values by setting a property to undefined
       // in one case, thousands of these calls lead to performance impacts so debug was chosen versus warn
       Logger.getInstance().debug(LogMessageType.EventEmpty, { path });
-    } else if (type === createEventType(path)) {
+    } else if (type === createEventType(this.source, path)) {
       // value could legitimately be an empty string
       if (value !== undefined) {
         // debounce events so multiple, related property assignments don't create multiple events
@@ -255,7 +256,7 @@ export default class DataHandler {
   start() {
     if (!this.listener) {
       this.listener = (e: Event) => this.handleEvent(e as CustomEvent);
-      window.addEventListener(createEventType(this.target.path), this.listener);
+      window.addEventListener(createEventType(this.source, this.target.path), this.listener);
     }
   }
 
@@ -263,7 +264,7 @@ export default class DataHandler {
    * Stops listening for data layer changes or function calls.
    */
   stop() {
-    window.removeEventListener(createEventType(this.target.path), this.listener as EventListener);
+    window.removeEventListener(createEventType(this.source, this.target.path), this.listener as EventListener);
     this.listener = null;
   }
 }

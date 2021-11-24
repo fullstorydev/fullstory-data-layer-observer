@@ -7,13 +7,16 @@ import { Logger, LogMessage, LogMessageType } from './utils/logger';
 export default abstract class Monitor {
   protected state: any;
 
+  protected sources: Set<string> = new Set();
+
   /**
    * Creates a Monitor.
+   * @param source source from the rule monitoring the data layer
    * @param object containing the property or function to watch
    * @param property to watch (can hold a value or function)
    * @param path to the data layer object
    */
-  constructor(protected object: any, protected property: string, protected path: string) {
+  constructor(source: string, protected object: any, protected property: string, protected path: string) {
     if (!object) {
       throw new Error(LogMessage.DataLayerMissing);
     } else {
@@ -33,7 +36,17 @@ export default abstract class Monitor {
       } else {
         this.addPropertyMonitor();
       }
+
+      this.sources.add(source);
     }
+  }
+
+  /**
+   * Registers a rule source to be notified when monitored data layer objects change
+   * @param source source from the rule monitoring the data layer
+   */
+  addSource(source: string) {
+    this.sources.add(source);
   }
 
   /**
@@ -50,7 +63,9 @@ export default abstract class Monitor {
    */
   protected emit(value: any) {
     try {
-      window.dispatchEvent(createEvent(this.object, this.property, value, this.path));
+      this.sources.forEach((source) => {
+        window.dispatchEvent(createEvent(source, this.object, this.property, value, this.path));
+      });
     } catch (err) {
       Logger.getInstance().error(LogMessageType.MonitorEmitError,
         { path: this.path, property: this.property, reason: err.message });

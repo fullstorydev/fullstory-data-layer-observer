@@ -25,19 +25,22 @@ export default class MonitorFactory {
 
   /**
    * Creates a Monitor. If a Monitor has already been created, it will be returned.
+   * @param source source from the rule monitoring the data layer
    * @param object that applies to the Monitor
    * @param property in the object to Monitor
    * @param path describing the object
    */
-  create(object: Object, property: string, path: string): Monitor {
+  create(source: string, object: Object, property: string, path: string): Monitor {
     const key = typeof (object as any)[property] === 'function' ? path : `${path}.${property}`;
 
     if (!this.monitors[key]) {
       const propDescriptor = Object.getOwnPropertyDescriptor(object, property) || null;
       // functions have no property descriptors but properties need to be configurable (e.g. Array.length is not)
       if (propDescriptor === null || propDescriptor.configurable) {
-        this.monitors[key] = new ShimMonitor(object, property, path);
+        this.monitors[key] = new ShimMonitor(source, object, property, path);
       }
+    } else {
+      this.monitors[key].addSource(source);
     }
 
     return this.monitors[key];

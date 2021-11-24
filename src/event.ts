@@ -33,21 +33,23 @@ export class PropertyDetail implements DataLayerDetail {
 /**
  * Defines CustomEvent types. Types will be prefixed with a DLO namespace.
  * See https://developer.mozilla.org/en-US/docs/Web/API/Event/type
+ * @param source source from the rule monitoring the data layer
  * @param path that identifies the data layer object that created the event
  */
-export function createEventType(path: string) {
-  return `datalayerobserver/${path}`;
+export function createEventType(source: string, path: string) {
+  return `datalayerobserver/${source}/${path}`;
 }
 
 /**
  * Builds a CustomEvent used to broadcast changes.
+ * @param source source from the rule monitoring the data layer
  * @param target that triggered the event (see https://developer.mozilla.org/en-US/docs/Web/API/Event/target)
  * @param property that triggered the event
  * @param value that was emitted by the target
  * @param path to the target
  */
-export function createEvent(target: any, property: string, value: any, path: string): CustomEvent<DataLayerDetail> {
-  return new CustomEvent<DataLayerDetail>(createEventType(path), {
+export function createEvent(source: string, target: any, property: string, value: any, path: string): CustomEvent<DataLayerDetail> {
+  return new CustomEvent<DataLayerDetail>(createEventType(source, path), {
     detail: typeof target[property] === 'function' ? new FunctionDetail(path, property, value)
       : new PropertyDetail(path, property, value),
   });
