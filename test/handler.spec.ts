@@ -63,14 +63,18 @@ class GetterOperator implements Operator {
   }
 }
 
-class NullOperator implements Operator {
+class StaticReturnOperator implements Operator {
   options: OperatorOptions = {
-    name: 'null',
+    name: 'static-return',
   };
+
+  constructor(private returnValue: any[] | null) {
+    // sets this.returnValue
+  }
 
   // eslint-disable-next-line class-methods-use-this
   handleData(): any[] | null {
-    return null;
+    return this.returnValue;
   }
 
   validate() {
@@ -122,7 +126,7 @@ describe('DataHandler unit tests', () => {
   it('data layer event data should pass to the first operator', () => {
     const handler = new DataHandler(DataLayerTarget.find('digitalData.page.pageInfo')!);
 
-    const seen: any = [];
+    const seen: any[] = [];
 
     const echo = new EchoOperator(seen);
     handler.push(echo);
@@ -134,7 +138,7 @@ describe('DataHandler unit tests', () => {
   it('transformed data should pass from operator to operator', () => {
     const handler = new DataHandler(DataLayerTarget.find('digitalData.page')!);
 
-    const seen: any = [];
+    const seen: any[] = [];
 
     const echo = new EchoOperator(seen);
     const getter = new GetterOperator('pageInfo', seen);
@@ -152,7 +156,7 @@ describe('DataHandler unit tests', () => {
     const handler = new DataHandler(DataLayerTarget.find('digitalData.page')!);
     handler.debug = true;
 
-    const seen: any = [];
+    const seen: any[] = [];
 
     const echo = new EchoOperator(seen);
     const getter = new GetterOperator('pageInfo', seen);
@@ -194,24 +198,78 @@ describe('DataHandler unit tests', () => {
     expect(debugMessages.length).to.eq(3);
   });
 
-  it('returning null in an operator should halt data handling', () => {
-    const handler = new DataHandler(DataLayerTarget.find('digitalData.page')!);
+  [null, []].forEach((val) => {
+    it(`returning ${JSON.stringify(val)} in an operator should halt data handling`, () => {
+      const handler = new DataHandler(DataLayerTarget.find('digitalData.page')!);
 
-    const seen: any = [];
+      const seen: any[] = [];
 
-    const nullify = new NullOperator();
+      const staticReturn = new StaticReturnOperator(val);
+      const echo = new EchoOperator(seen);
+
+      handler.push(staticReturn, echo);
+      handler.fireEvent();
+
+      expect(seen.length).to.eq(0);
+    });
+  });
+
+  it('empty object should halt data handling', () => {
+    (globalThis as any).digitalData.emptyObject = { undefinedChild: undefined };
+    const handler = new DataHandler(DataLayerTarget.find('digitalData.emptyObject')!);
+
+    const seen: any[] = [];
+
     const echo = new EchoOperator(seen);
 
-    handler.push(nullify, echo);
+    handler.push(echo);
     handler.fireEvent();
 
     expect(seen.length).to.eq(0);
   });
 
+  [0, '', false, null, []].forEach((val) => {
+    it(`non-empty object with child property value ${JSON.stringify(val)} should not halt data handling`, () => {
+      (globalThis as any).digitalData.nonEmptyObject = { undefinedChild: undefined, definedChild: val };
+      const handler = new DataHandler(DataLayerTarget.find('digitalData.nonEmptyObject')!);
+
+      const seen: any[] = [];
+
+      const echo = new EchoOperator(seen);
+
+      handler.push(echo);
+      handler.fireEvent();
+
+      expect(seen.length).to.eq(1);
+      expect(seen[0].definedChild).to.eq(val);
+      expect(Object.keys(seen[0])).to.include('undefinedChild');
+      expect(seen[0].undefinedChild).to.be.undefined;
+    });
+  });
+
+  [0, '', false].forEach((val) => {
+    it(`${typeof val} value should not halt data handling`, () => {
+      (globalThis as any).digitalData.nonEmptyObject = { val };
+      const handler = new DataHandler(DataLayerTarget.find('digitalData.nonEmptyObject'));
+
+      const seen: any[] = [];
+
+      // Returns the val property value directly instead of within an object e.g. { val: 0 }
+      const getter = new GetterOperator('val', []);
+      const echo = new EchoOperator(seen);
+
+      handler.push(getter, echo);
+      handler.fireEvent();
+
+      expect(seen.length).to.eq(1);
+      expect(seen[0]).to.eq(val);
+    });
+  });
+
   it('operator exceptions should fail gracefully', () => {
     const handler = new DataHandler(DataLayerTarget.find('digitalData.page')!);
 
-    const seen: any = [];
+    const seen: any[] = [];
 
     const throws = new ThrowOperator();
     const echo = new EchoOperator(seen);
@@ -227,7 +285,7 @@ describe('DataHandler unit tests', () => {
     (globalThis as any).digitalData.fn = () => console.log('Hello World'); // eslint-disable-line no-console
     const handler = new DataHandler(DataLayerTarget.find('digitalData.fn')!);
 
-    const seen: any = [];
+    const seen: any[] = [];
 
     const echo = new EchoOperator(seen);
     handler.push(echo);
@@ -238,7 +296,7 @@ describe('DataHandler unit tests', () => {
   it('events with unknown types should not be handled', () => {
     const handler = new DataHandler(DataLayerTarget.find('digitalData.page.pageInfo')!);
 
-    const seen: any = [];
+    const seen: any[] = [];
 
     const echo = new EchoOperator(seen);
     handler.push(echo);
@@ -253,7 +311,7 @@ describe('DataHandler unit tests', () => {
   it('data layer events should be delayed to allow debouncing', (done) => {
     const handler = new DataHandler(DataLayerTarget.find('digitalData.page.pageInfo')!);
 
-    const seen: any = [];
+    const seen: any[] = [];
 
     const echo = new EchoOperator(seen);
     handler.push(echo);
@@ -274,7 +332,7 @@ describe('DataHandler unit tests', () => {
   it('multiple data layer events should be debounced', (done) => {
     const handler = new DataHandler(DataLayerTarget.find('digitalData.page.pageInfo')!);
 
-    const seen: any = [];
+    const seen: any[] = [];
 
     const echo = new EchoOperator(seen);
     handler.push(echo);
@@ -296,7 +354,7 @@ describe('DataHandler unit tests', () => {
   it('an object with no properties selected from an event should not be handled', (done) => {
     const handler = new DataHandler(DataLayerTarget.find('digitalData.page.pageInfo[(missingProperty)]')!);
 
-    const seen: any = [];
+    const seen: any[] = [];
 
     const echo = new EchoOperator(seen);
     handler.push(echo);

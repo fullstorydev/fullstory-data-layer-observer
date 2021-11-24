@@ -104,9 +104,10 @@ export default class DataHandler {
       const { options: { name } } = this.operators[i];
 
       try {
-        // if the data is null, it is a signal to stop processing
+        // if the data is null or empty, it is a signal to stop processing
         // this can happen if an upstream handler needed to prevent a downstream operator
-        if (handledData === null) {
+        // and we don't want to submit empty events to the configured destination
+        if (handledData === null || DataHandler.isEmptyData(handledData)) {
           this.runDebugger(`[${i}] ${name} halted`, handledData, '  ');
           return null;
         }
@@ -145,6 +146,28 @@ export default class DataHandler {
     this.runDebugger(`${path} handleData exit`, handledData);
 
     return handledData;
+  }
+
+  /**
+   * Returns false if there are any items in the data array which have first level child properties
+   * with defined values. Otherwise returns true. Returns true for empty data arrays.
+   * @param data the data array to be handled by operators
+   */
+  private static isEmptyData(data: any[]): boolean {
+    for (let i = 0; i < data.length; i += 1) {
+      const datum = data[i];
+
+      if (typeof datum !== 'object') {
+        return false;
+      }
+
+      // We don't use Object.values because it isn't supported by IE11
+      if (Object.keys(datum).some((key) => datum[key] !== undefined)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   /**
