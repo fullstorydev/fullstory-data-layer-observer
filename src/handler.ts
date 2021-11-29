@@ -25,7 +25,7 @@ export default class DataHandler {
 
   /**
    * Creates a DataHandler.
-   * @param source source from the rule monitoring the data layer
+   * @param source from the rule monitoring the data layer
    * @param target in the data layer
    * @param debug true optionally enables debugging data transformation (defaults to console.debug)
    * @param debounce number of milliseconds to debounce property value assignments (defaults to 250ms)

@@ -139,7 +139,7 @@ export class DataLayerObserver {
 
   /**
    * Creates and adds a DataHandler.
-   * @param source source from the rule monitoring the data layer
+   * @param source from the rule monitoring the data layer
    * @param target to the data layer
    * @param debug when true enables debugging of operator transformations
    * @param debounce number of milliseconds to debounce property assignments before handling the event
@@ -155,7 +155,7 @@ export class DataLayerObserver {
   /**
    * Adds monitor to a target in the data layer. If a monitor already exists, calling this
    * function will result in a no-op.
-   * @param source source from the rule monitoring the data layer
+   * @param source from the rule monitoring the data layer
    * @param target to add monitors into
    */
   private addMonitor(source: string, target: DataLayerTarget) {
@@ -256,7 +256,7 @@ export class DataLayerObserver {
    * Registers a data layer target by creating the handler and monitor. This results in the target
    * being inspected, adding a DataHandler with any Operators, registering a source and
    * destination, and monitoring for changes or function calls.
-   * @param source source from the rule monitoring the data layer
+   * @param source from the rule monitoring the data layer
    * @param target from the data layer
    * @param options list of OperatorOptions to transform data before a destination
    * @param destination function using selector syntax or native function

@@ -11,7 +11,7 @@ export default abstract class Monitor {
 
   /**
    * Creates a Monitor.
-   * @param source source from the rule monitoring the data layer
+   * @param source from the rule monitoring the data layer
    * @param object containing the property or function to watch
    * @param property to watch (can hold a value or function)
    * @param path to the data layer object
@@ -43,7 +43,7 @@ export default abstract class Monitor {
 
   /**
    * Registers a rule source to be notified when monitored data layer objects change
-   * @param source source from the rule monitoring the data layer
+   * @param source from the rule monitoring the data layer
    */
   addSource(source: string) {
     this.sources.add(source);

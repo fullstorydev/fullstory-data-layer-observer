@@ -25,7 +25,7 @@ export default class MonitorFactory {
 
   /**
    * Creates a Monitor. If a Monitor has already been created, it will be returned.
-   * @param source source from the rule monitoring the data layer
+   * @param source from the rule monitoring the data layer
    * @param object that applies to the Monitor
    * @param property in the object to Monitor
    * @param path describing the object
