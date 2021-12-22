@@ -9,10 +9,11 @@
     "build:module": "tsc --outDir ./dist",
     "watch": "rollup --config -w",
     "examples": "npm run build && http-server",
-    "test": "nyc mocha -r ts-node/register -r source-map-support/register -r jsdom-global/register test/*.spec.ts test/**/*.spec.ts",
+    "test": "nyc mocha -r ts-node/register -r source-map-support/register -r jsdom-global/register test/*.spec.ts test/**/*.spec.ts --exclude test/browser-integration.spec.ts ",
     "test:fullstory": "nyc mocha -r ts-node/register -r source-map-support/register -r jsdom-global/register test/fullstory.spec.ts",
     "test:wel-auto-formulate": "npm run examples & cd ./test/web-embed-lab && ./auto-formulate.sh",
     "test:wel-runner": "npm run build && cd ./test/web-embed-lab && ./run-tests.sh",
+    "test:browser": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test test/browser-integration.spec.ts",
     "lint": "eslint --ext .ts src/** test/mocks/** test/utils/** test/*.ts",
     "lint:fix": "eslint --ext .ts --fix src/**  test/mocks/** test/utils/** test/*.ts",
     "prepublishOnly": "lint && test && tsc"
@@ -43,6 +44,7 @@
   },
   "homepage": "https://github.com/fullstorydev/fullstory-data-layer-observer#readme",
   "devDependencies": {
+    "@playwright/test": "^1.17.1",
     "@rollup/plugin-typescript": "^5.0.1",
     "@types/chai": "^4.2.11",
     "@types/jsdom": "^16.2.3",
