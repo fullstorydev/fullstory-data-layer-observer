@@ -169,8 +169,11 @@ export class SuffixOperator implements Operator {
       const value = obj[prop];
 
       // certain properties must adhere to exact naming conventions and should not be suffixed
+      // see:
+      // - https://help.fullstory.com/hc/en-us/articles/360020623274-FS-event-API-Sending-custom-event-data-into-FullStory
       // NOTE this is only for root level objects used with FS.identify, setUserVars, setVars
-      const suffix = currentDepth === 0 && (prop === 'pageName' || prop === 'displayName' || prop === 'email') ? ''
+      const suffix = currentDepth === 0 && (prop === 'pageName' || prop === 'displayName' || prop === 'email'
+        || (prop === 'products' && Array.isArray(value) && typeof value[0] === 'object')) ? ''
         : SuffixOperator.coerceSuffix(value);
       const suffixedProp = `${prop}${suffix}`;
 

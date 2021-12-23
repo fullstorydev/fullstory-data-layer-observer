@@ -91,7 +91,7 @@ describe('suffix operator unit test', () => {
     const operator = new SuffixOperator({ name: 'suffix' });
     expect(operator).to.not.be.undefined;
 
-    const [suffixedObject] = operator.handleData([{
+    let [suffixedObject] = operator.handleData([{
       pageName: 'homepage',
       displayName: 'Data Layer Observer',
       email: 'dlo@fullstory.com',
@@ -99,7 +99,20 @@ describe('suffix operator unit test', () => {
         pageName: 'homepage',
         displayName: 'Data Layer Observer',
         email: 'dlo@fullstory.com',
+        products: [1, 2],
       },
+      products: [
+        {
+          id: 1,
+          qty: 1,
+          price: 1.99,
+        },
+        {
+          id: 2,
+          qty: 2,
+          price: 2.99,
+        },
+      ],
     }])!;
 
     expect(suffixedObject).to.not.be.undefined;
@@ -109,6 +122,8 @@ describe('suffix operator unit test', () => {
     expect(suffixedObject.displayName_str).to.be.undefined;
     expect(suffixedObject.email).to.not.be.undefined;
     expect(suffixedObject.email_str).to.be.undefined;
+    expect(suffixedObject.products).to.not.be.undefined;
+    expect(suffixedObject.products_objs).to.be.undefined;
 
     expect(suffixedObject.child_obj.pageName).to.be.undefined;
     expect(suffixedObject.child_obj.pageName_str).to.not.be.undefined;
@@ -116,6 +131,16 @@ describe('suffix operator unit test', () => {
     expect(suffixedObject.child_obj.displayName_str).to.not.be.undefined;
     expect(suffixedObject.child_obj.email).to.be.undefined;
     expect(suffixedObject.child_obj.email_str).to.not.be.undefined;
+    expect(suffixedObject.child_obj.products).to.be.undefined;
+    expect(suffixedObject.child_obj.products_reals).to.not.be.undefined;
+
+    // the "products" property only applies to a list of objects
+    [suffixedObject] = operator.handleData([{
+      products: [1, 2],
+    }])!;
+
+    expect(suffixedObject.products).to.be.undefined;
+    expect(suffixedObject.products_reals).to.not.be.undefined;
   });
 
   it('it should suffix all properties in object', () => {
