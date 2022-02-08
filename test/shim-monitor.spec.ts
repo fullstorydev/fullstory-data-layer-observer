@@ -163,34 +163,35 @@ describe('ShimMonitor unit tests', () => {
     window.removeEventListener(createEventType(source, source), listener);
   });
 
-  it('it should remove a monitor and reassign the original value', () => {
-    const source = 'o';
-    const o = { message: 'Hello World' };
+  ['o', 'o[(message)]'].forEach((source) => {
+    it(`it should remove a monitor and reassign the original value: source ${source}`, () => {
+      const o = { message: 'Hello World' };
 
-    let descriptor = Object.getOwnPropertyDescriptor(o, 'message');
-    expect(descriptor).to.not.be.undefined;
+      let descriptor = Object.getOwnPropertyDescriptor(o, 'message');
+      expect(descriptor).to.not.be.undefined;
 
-    const { configurable, enumerable, writable } = descriptor!;
+      const { configurable, enumerable, writable } = descriptor!;
 
-    const monitor = new ShimMonitor(source, o, 'message', source);
-    expect(monitor).to.not.be.undefined;
+      const monitor = new ShimMonitor(source, o, 'message', 'o');
+      expect(monitor).to.not.be.undefined;
 
-    descriptor = Object.getOwnPropertyDescriptor(o, 'message');
-    expect(descriptor).to.not.be.undefined;
+      descriptor = Object.getOwnPropertyDescriptor(o, 'message');
+      expect(descriptor).to.not.be.undefined;
 
-    expect(descriptor!.get).to.not.be.undefined;
-    expect(descriptor!.set).to.not.be.undefined;
+      expect(descriptor!.get).to.not.be.undefined;
+      expect(descriptor!.set).to.not.be.undefined;
 
-    monitor.remove();
+      monitor.remove();
 
-    descriptor = Object.getOwnPropertyDescriptor(o, 'message');
+      descriptor = Object.getOwnPropertyDescriptor(o, 'message');
 
-    expect(descriptor).to.not.be.undefined;
-    expect(descriptor!.get).to.be.undefined;
-    expect(descriptor!.set).to.be.undefined;
-    expect(descriptor!.configurable).to.eq(configurable);
-    expect(descriptor!.enumerable).to.eq(enumerable);
-    expect(descriptor!.writable).to.eq(writable);
+      expect(descriptor).to.not.be.undefined;
+      expect(descriptor!.get).to.be.undefined;
+      expect(descriptor!.set).to.be.undefined;
+      expect(descriptor!.configurable).to.eq(configurable);
+      expect(descriptor!.enumerable).to.eq(enumerable);
+      expect(descriptor!.writable).to.eq(writable);
+    });
   });
 
   it('it should throw an error for sealed and frozen objects', () => {
@@ -201,6 +202,6 @@ describe('ShimMonitor unit tests', () => {
     Object.seal(s);
 
     expect(() => new ShimMonitor('f', f, 'message', 'f')).to.throw();
-    expect(() => new ShimMonitor('s', s, 'message', 's')).to.throw();
+    expect(() => new ShimMonitor('s[(message)]', s, 'message', 's')).to.throw();
   });
 });
