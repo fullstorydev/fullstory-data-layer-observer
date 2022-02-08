@@ -11,7 +11,8 @@ describe('Custom rules', () => {
   });
 
   it('should only trigger rules for property changes that match rule selector', async function test() {
-    (this as any)!.timeout(3000);
+    // Extend test timeout to accommodate waits for event dispatching
+    (this as any).timeout(3000);
 
     const s = {
       eVar11: 'test',
