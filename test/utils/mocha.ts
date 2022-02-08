@@ -307,7 +307,7 @@ export function expectFS(methodName: FSMethodName, namespace = 'FS'): any[] {
  * @param namespace Global object if FullStory is not `FS`
  * @param timeout Time in milliseconds after which the Promise is rejected
  */
-export function waitForFS(methodName: FSMethodName, namespace = 'FS', timeout: number = 1000): Promise<any[]> {
+export function waitForFS(methodName: FSMethodName, namespace = 'FS', timeout: number = 500): Promise<any[]> {
   const startTime = new Date().getTime();
 
   return new Promise<any[]>((resolve, reject) => {

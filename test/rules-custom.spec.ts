@@ -2,7 +2,7 @@ import 'mocha';
 
 import { DataLayerRule } from '../src/observer';
 import {
-  expectEqual, waitForFS, setupGlobals, ExpectObserver, expectGlobal,
+  expectEqual, waitForFS, setupGlobals, ExpectObserver, expectGlobal, expectNoCalls,
 } from './utils/mocha';
 
 describe('Custom rules', () => {
@@ -10,7 +10,9 @@ describe('Custom rules', () => {
     ExpectObserver.getInstance().cleanup();
   });
 
-  it('should only trigger rules for property changes that match rule selector', async () => {
+  it('should only trigger rules for property changes that match rule selector', async function test() {
+    (this as any)!.timeout(3000);
+
     const s = {
       eVar11: 'test',
       eVar22: 'test',
@@ -57,5 +59,13 @@ describe('Custom rules', () => {
     [eventName, payload] = await waitForFS('event');
     expectEqual('eVar2', eventName);
     expectEqual(22, payload.eVar22);
+
+    // Verify no other calls were made to rule destinations
+    await new Promise<void>((resolve) => {
+      setTimeout(() => {
+        expectNoCalls(expectGlobal('FS'), 'event');
+        resolve();
+      }, 1000);
+    });
   });
 });
