@@ -8,6 +8,7 @@ import {
 import { FunctionOperator } from './operators';
 import DataLayerTarget from './target';
 import MonitorFactory from './monitor-factory';
+import { Metrics } from './utils/metrics';
 
 /**
  * DataLayerConfig provides global settings for a DataLayerObserver.
@@ -132,9 +133,21 @@ export class DataLayerObserver {
 
     if (rules) {
       rules.forEach((rule: DataLayerRule) => this.registerRule(rule));
-      Logger.getInstance().record('DLO rule count', { numericValue: rules.length });
+      Metrics.getInstance().report({
+        type: 'INTEGRATION_ACTIVITY',
+        status: 'SUCCESS',
+        metadata: {
+          detail: `DLO rule count ${rules.length}`,
+        },
+      });
     }
-    Logger.getInstance().record('DLO constructor time', { numericValue: startTime - Date.now() });
+    Metrics.getInstance().report({
+      type: 'INTEGRATION_ACTIVITY',
+      status: 'SUCCESS',
+      metadata: {
+        detail: `DLO constructor time ${startTime - Date.now()}`,
+      },
+    });
   }
 
   /**

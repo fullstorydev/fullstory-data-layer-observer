@@ -24,6 +24,10 @@
         }
       }
 
+      window.FS = (...args) => {
+        console.log("lol", ...args)
+      }
+
       /* This function will receive information as the DLO rules find it */
       function ruleDestination(...info) {
         console.log('ruleDestination received:', ...info);
@@ -37,6 +41,9 @@
     <p>The Javascript console will show you output that demonstrates the rules in action.</p>
 
     <script>
+      window['_fs_namespace'] = 'FS'
+      window['_dlo_reporter'] = 'fullstory'
+
       // OperatorOptions that is always used just before before the destination
       // Default is null
       window['_dlo_beforeDestination'] = null;

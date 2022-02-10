@@ -2,6 +2,7 @@
 import { Logger, LogMessageType } from '../utils/logger';
 import { startsWith } from '../utils/object';
 import { DataLayerObserver } from '../observer';
+import { Metrics } from '../utils/metrics';
 
 /*
 This is where we initialize the DataLayerObserver from this info:
@@ -9,6 +10,10 @@ This is where we initialize the DataLayerObserver from this info:
 // A custom log appender; a console appender is used if one is not specified
 // Default is null
 window['_dlo_appender'] = null;
+
+// A custom metric reporter; a console metric reporter is used if one is not specified
+// Default is null
+window['_dlo_reporter'] = null;
 
 // Log message level, NONE = -1, ERROR = 0, WARN = 1, INFO = 2, DEBUG = 3
 // Default is null
@@ -71,10 +76,25 @@ function _dlo_collectRules(): any[] {
         results.push(rule);
       });
     });
-    Logger.getInstance().record('DLO rule processing time', { numericValue: startTime - Date.now() });
+    Metrics.getInstance().report({
+      type: 'INTEGRATION_INITIALIZED',
+      status: 'SUCCESS',
+      metadata: {
+        detail: 'DLO rule processing time',
+        numericValue: startTime - Date.now(),
+      },
+    });
     return results;
   } catch (err) {
     Logger.getInstance().error(LogMessageType.RuleRegistrationError, { reason: `Error: ${err}` });
+    Metrics.getInstance().report({
+      type: 'INTEGRATION_INITIALIZED',
+      status: 'FAILURE',
+      metadata: {
+        detail: LogMessageType.RuleRegistrationError,
+        error: `${err}`,
+      },
+    });
     return [];
   }
 }
@@ -89,6 +109,7 @@ function _dlo_initializeFromWindow() {
     to correctly log initialization errors and recorded stats
     */
     Logger.getInstance(win._dlo_appender);
+    Metrics.getInstance(win._dlo_reporter);
 
     if (win._dlo_observer) {
       Logger.getInstance().warn(LogMessageType.ObserverMultipleLoad);
@@ -103,6 +124,7 @@ function _dlo_initializeFromWindow() {
 
     win._dlo_observer = new DataLayerObserver({
       appender: win._dlo_appender || undefined,
+      // TODO: reporter: win._dlo_reporter || undefined,
       beforeDestination: win._dlo_beforeDestination || undefined,
       logLevel: win._dlo_logLevel || undefined,
       previewMode: win._dlo_previewMode === true,
@@ -112,9 +134,24 @@ function _dlo_initializeFromWindow() {
       urlValidator: win._dlo_urlValidator || undefined,
       rules,
     });
-    Logger.getInstance().record('DLO initialization time', { numericValue: startTime - Date.now() });
+    Metrics.getInstance().report({
+      type: 'INTEGRATION_INITIALIZED',
+      status: 'SUCCESS',
+      metadata: {
+        detail: 'DLO rule processing time',
+        numericValue: startTime - Date.now(),
+      },
+    });
   } catch (err) {
     Logger.getInstance().error(LogMessageType.ObserverInitializationError, { reason: `Error: ${err}` });
+    Metrics.getInstance().report({
+      type: 'INTEGRATION_INITIALIZED',
+      status: 'FAILURE',
+      metadata: {
+        detail: LogMessageType.ObserverInitializationError,
+        error: `${err}`,
+      },
+    });
   }
 }
 
