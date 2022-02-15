@@ -2,6 +2,7 @@
 import { Logger, LogMessageType } from '../utils/logger';
 import { startsWith } from '../utils/object';
 import { DataLayerObserver } from '../observer';
+import { Telemetry } from '../utils/telemetry';
 
 /*
 This is where we initialize the DataLayerObserver from this info:
@@ -55,7 +56,7 @@ window['_dlo_rulesFromOpsTeam'] = [
 
 function _dlo_collectRules(): any[] {
   try {
-    const startTime = Date.now();
+    const ruleProcessingSpan = Telemetry.getInstance().startSpan('dlo-rule-processing');
     const results: any[] = [];
     Object.getOwnPropertyNames(window).forEach((propName) => {
       if (startsWith(propName, '_dlo_rules') === false) return;
@@ -71,7 +72,7 @@ function _dlo_collectRules(): any[] {
         results.push(rule);
       });
     });
-    Logger.getInstance().record('DLO rule processing time', { numericValue: startTime - Date.now() });
+    ruleProcessingSpan.end();
     return results;
   } catch (err) {
     Logger.getInstance().error(LogMessageType.RuleRegistrationError, { reason: `Error: ${err}` });
@@ -81,8 +82,9 @@ function _dlo_collectRules(): any[] {
 
 function _dlo_initializeFromWindow() {
   try {
-    const startTime = Date.now();
     const win = (window as { [key: string]: any });
+    const telemetry = Telemetry.getInstance(win._dlo_telemetry_provider, win._dlo_telemetry_exporter);
+    const dloInitializationSpan = telemetry.startSpan('dlo-init');
 
     /*
     This is called so that custom appenders (e.g. 'fullstory') are initialized early enough
@@ -112,7 +114,7 @@ function _dlo_initializeFromWindow() {
       urlValidator: win._dlo_urlValidator || undefined,
       rules,
     });
-    Logger.getInstance().record('DLO initialization time', { numericValue: startTime - Date.now() });
+    dloInitializationSpan.end();
   } catch (err) {
     Logger.getInstance().error(LogMessageType.ObserverInitializationError, { reason: `Error: ${err}` });
   }
