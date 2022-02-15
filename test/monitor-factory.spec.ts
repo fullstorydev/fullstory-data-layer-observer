@@ -33,10 +33,11 @@ describe('MonitorFactory unit tests', () => {
   it('it should return an existing Monitor if recreated', () => {
     expect(globalMock.digitalData.cart).to.not.be.undefined;
 
-    const cartMonitor = MonitorFactory.getInstance().create(globalMock.digitalData.cart, 'cartID', 'digitalData.cart');
+    const source = 'digitalData.cart';
+    const cartMonitor = MonitorFactory.getInstance().create(source, globalMock.digitalData.cart, 'cartID', source);
     expect(cartMonitor).to.not.be.undefined;
 
-    const cartMonitor2 = MonitorFactory.getInstance().create(globalMock.digitalData.cart, 'cartID', 'digitalData.cart');
+    const cartMonitor2 = MonitorFactory.getInstance().create(source, globalMock.digitalData.cart, 'cartID', source);
     expect(cartMonitor2).to.not.be.undefined;
     expect(cartMonitor2).to.eq(cartMonitor);
   });
@@ -44,12 +45,13 @@ describe('MonitorFactory unit tests', () => {
   it('it should remove a Monitor', () => {
     expect(globalMock.digitalData.cart).to.not.be.undefined;
 
-    const cartMonitor = MonitorFactory.getInstance().create(globalMock.digitalData.cart, 'cartID', 'digitalData.cart');
+    const source = 'digitalData.cart';
+    const cartMonitor = MonitorFactory.getInstance().create(source, globalMock.digitalData.cart, 'cartID', source);
     expect(cartMonitor).to.not.be.undefined;
 
     MonitorFactory.getInstance().remove('digitalData.cart.cartID');
 
-    const cartMonitor2 = MonitorFactory.getInstance().create(globalMock.digitalData.cart, 'cartID', 'digitalData.cart');
+    const cartMonitor2 = MonitorFactory.getInstance().create(source, globalMock.digitalData.cart, 'cartID', source);
     expect(cartMonitor2).to.not.be.undefined;
     expect(cartMonitor2).to.not.eq(cartMonitor);
   });

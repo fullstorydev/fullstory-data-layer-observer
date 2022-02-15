@@ -139,13 +139,14 @@ export class DataLayerObserver {
 
   /**
    * Creates and adds a DataHandler.
+   * @param source from the rule monitoring the data layer
    * @param target to the data layer
    * @param debug when true enables debugging of operator transformations
    * @param debounce number of milliseconds to debounce property assignments before handling the event
    */
-  private addHandler(target: DataLayerTarget, debug = false,
+  private addHandler(source: string, target: DataLayerTarget, debug = false,
     debounce = DataHandler.DefaultDebounceTime): DataHandler {
-    const handler = new DataHandler(target, debug, debounce);
+    const handler = new DataHandler(source, target, debug, debounce);
     this.handlers.push(handler);
 
     return handler;
@@ -154,19 +155,21 @@ export class DataLayerObserver {
   /**
    * Adds monitor to a target in the data layer. If a monitor already exists, calling this
    * function will result in a no-op.
+   * @param source from the rule monitoring the data layer
    * @param target to add monitors into
    */
-  private addMonitor(target: DataLayerTarget) {
+  private addMonitor(source: string, target: DataLayerTarget) {
     const {
       subject, property, subjectPath, path: targetPath, selector, type,
     } = target;
 
     if (type === 'function') {
-      MonitorFactory.getInstance().create(subject, property, targetPath);
+      MonitorFactory.getInstance().create(source, subject, property, targetPath);
     } else {
       // when a selector gets used, we know the full path through the data layer and can monitor
       if (selector) {
-        MonitorFactory.getInstance().create(subject, property, subjectPath); // monitor the subject for re-assignments
+        // monitor the subject for re-assignments
+        MonitorFactory.getInstance().create(source, subject, property, subjectPath);
       }
 
       // NOTE only the properties that would be returned from a query
@@ -174,7 +177,7 @@ export class DataLayerObserver {
       const subjectRef = target.value;
       const subjectProps = Object.getOwnPropertyNames(target.query());
       subjectProps.forEach((childProperty: string) => {
-        MonitorFactory.getInstance().create(subjectRef, childProperty, targetPath);
+        MonitorFactory.getInstance().create(source, subjectRef, childProperty, targetPath);
       });
     }
   }
@@ -253,6 +256,7 @@ export class DataLayerObserver {
    * Registers a data layer target by creating the handler and monitor. This results in the target
    * being inspected, adding a DataHandler with any Operators, registering a source and
    * destination, and monitoring for changes or function calls.
+   * @param source from the rule monitoring the data layer
    * @param target from the data layer
    * @param options list of OperatorOptions to transform data before a destination
    * @param destination function using selector syntax or native function
@@ -263,6 +267,7 @@ export class DataLayerObserver {
    * @throws error if an error occurs during handler creation
    */
   registerTarget(
+    source: string,
     target: DataLayerTarget,
     options: OperatorOptions[],
     destination: string | Function,
@@ -280,7 +285,7 @@ export class DataLayerObserver {
      */
     if (monitor && Array.isArray(targetValue)) {
       if (targetValue.push && targetValue.unshift) {
-        this.registerTarget(DataLayerTarget.find(`${target.path}.unshift`), options, destination, false, true,
+        this.registerTarget(source, DataLayerTarget.find(`${target.path}.unshift`), options, destination, false, true,
           debug, debounce);
         workingTarget = DataLayerTarget.find(`${target.path}.push`);
       } else {
@@ -293,7 +298,7 @@ export class DataLayerObserver {
       }
     }
 
-    const handler = this.addHandler(workingTarget, !!debug, debounce);
+    const handler = this.addHandler(source, workingTarget, !!debug, debounce);
     this.addOperators(handler, options, destination);
 
     if (read) {
@@ -330,7 +335,7 @@ export class DataLayerObserver {
     // NOTE functions are always monitored
     if (monitor || workingTarget.type === 'function') {
       try {
-        this.addMonitor(workingTarget);
+        this.addMonitor(source, workingTarget);
       } catch (err) {
         Logger.getInstance().warn(LogMessageType.MonitorCreateError,
           {
@@ -420,7 +425,7 @@ export class DataLayerObserver {
     try {
       const register = () => {
         const target = DataLayerTarget.find(source);
-        this.registerTarget(target, operators, destination, readOnLoad, monitor, debug, debounce);
+        this.registerTarget(source, target, operators, destination, readOnLoad, monitor, debug, debounce);
       };
       const timeout = () => Logger.getInstance().warn(LogMessageType.RuleRegistrationError, {
         rule: id, source, reason: 'Max Retries Attempted',

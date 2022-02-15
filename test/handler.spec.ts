@@ -109,22 +109,26 @@ describe('DataHandler unit tests', () => {
   });
 
   it('data handlers should find a data layer for a given target and property', () => {
-    const handler = new DataHandler(DataLayerTarget.find('digitalData.cart')!);
+    const source = 'digitalData.cart';
+    const handler = new DataHandler(source, DataLayerTarget.find(source)!);
     expect(handler).to.not.be.undefined;
   });
 
   it('data handlers should find a data layer using a path', () => {
-    const handler = new DataHandler(DataLayerTarget.find('digitalData.user.profile[0]')!);
+    const source = 'digitalData.user.profile[0]';
+    const handler = new DataHandler(source, DataLayerTarget.find(source)!);
     expect(handler).to.not.be.undefined;
   });
 
   it('non-existent data layers should throw an Error', () => {
-    expect(() => new DataHandler(DataLayerTarget.find('notFound')!)).to.throw();
-    expect(() => new DataHandler(DataLayerTarget.find('notFound')!)).to.throw();
+    const source = 'notFound';
+    expect(() => new DataHandler(source, DataLayerTarget.find(source)!)).to.throw();
+    expect(() => new DataHandler(source, DataLayerTarget.find(source)!)).to.throw();
   });
 
   it('data layer event data should pass to the first operator', () => {
-    const handler = new DataHandler(DataLayerTarget.find('digitalData.page.pageInfo')!);
+    const source = 'digitalData.page.pageInfo';
+    const handler = new DataHandler(source, DataLayerTarget.find(source)!);
 
     const seen: any[] = [];
 
@@ -136,7 +140,8 @@ describe('DataHandler unit tests', () => {
   });
 
   it('transformed data should pass from operator to operator', () => {
-    const handler = new DataHandler(DataLayerTarget.find('digitalData.page')!);
+    const source = 'digitalData.page';
+    const handler = new DataHandler(source, DataLayerTarget.find(source)!);
 
     const seen: any[] = [];
 
@@ -153,7 +158,8 @@ describe('DataHandler unit tests', () => {
   it('debug should print operator transformations to console.debug', () => {
     expectNoCalls(console, 'debug');
 
-    const handler = new DataHandler(DataLayerTarget.find('digitalData.page')!);
+    const source = 'digitalData.page';
+    const handler = new DataHandler(source, DataLayerTarget.find(source)!);
     handler.debug = true;
 
     const seen: any[] = [];
@@ -186,7 +192,8 @@ describe('DataHandler unit tests', () => {
   it('debug output function can be configured', () => {
     const debugMessages: string[] = [];
 
-    const handler = new DataHandler(DataLayerTarget.find('digitalData.page')!);
+    const source = 'digitalData.page';
+    const handler = new DataHandler(source, DataLayerTarget.find(source)!);
     handler.debug = true;
     handler.debugger = (message: string) => debugMessages.push(message);
 
@@ -200,7 +207,8 @@ describe('DataHandler unit tests', () => {
 
   [null, []].forEach((val) => {
     it(`returning ${JSON.stringify(val)} in an operator should halt data handling`, () => {
-      const handler = new DataHandler(DataLayerTarget.find('digitalData.page')!);
+      const source = 'digitalData.page';
+      const handler = new DataHandler(source, DataLayerTarget.find(source)!);
 
       const seen: any[] = [];
 
@@ -216,7 +224,8 @@ describe('DataHandler unit tests', () => {
 
   it('empty object should halt data handling', () => {
     (globalThis as any).digitalData.emptyObject = { undefinedChild: undefined };
-    const handler = new DataHandler(DataLayerTarget.find('digitalData.emptyObject')!);
+    const source = 'digitalData.emptyObject';
+    const handler = new DataHandler(source, DataLayerTarget.find(source));
 
     const seen: any[] = [];
 
@@ -231,7 +240,8 @@ describe('DataHandler unit tests', () => {
   [0, '', false, null, []].forEach((val) => {
     it(`non-empty object with child property value ${JSON.stringify(val)} should not halt data handling`, () => {
       (globalThis as any).digitalData.nonEmptyObject = { undefinedChild: undefined, definedChild: val };
-      const handler = new DataHandler(DataLayerTarget.find('digitalData.nonEmptyObject')!);
+      const source = 'digitalData.nonEmptyObject';
+      const handler = new DataHandler(source, DataLayerTarget.find(source));
 
       const seen: any[] = [];
 
@@ -250,7 +260,8 @@ describe('DataHandler unit tests', () => {
   [0, '', false].forEach((val) => {
     it(`${typeof val} value should not halt data handling`, () => {
       (globalThis as any).digitalData.nonEmptyObject = { val };
-      const handler = new DataHandler(DataLayerTarget.find('digitalData.nonEmptyObject'));
+      const source = 'digitalData.nonEmptyObject';
+      const handler = new DataHandler(source, DataLayerTarget.find(source));
 
       const seen: any[] = [];
 
@@ -267,7 +278,8 @@ describe('DataHandler unit tests', () => {
   });
 
   it('operator exceptions should fail gracefully', () => {
-    const handler = new DataHandler(DataLayerTarget.find('digitalData.page')!);
+    const source = 'digitalData.page';
+    const handler = new DataHandler(source, DataLayerTarget.find(source)!);
 
     const seen: any[] = [];
 
@@ -281,9 +293,10 @@ describe('DataHandler unit tests', () => {
   });
 
   it('objects should only allow manual firing of events', () => {
+    const source = 'digitalData.fn';
     // @ts-ignore
     (globalThis as any).digitalData.fn = () => console.log('Hello World'); // eslint-disable-line no-console
-    const handler = new DataHandler(DataLayerTarget.find('digitalData.fn')!);
+    const handler = new DataHandler(source, DataLayerTarget.find(source)!);
 
     const seen: any[] = [];
 
@@ -294,7 +307,8 @@ describe('DataHandler unit tests', () => {
   });
 
   it('events with unknown types should not be handled', () => {
-    const handler = new DataHandler(DataLayerTarget.find('digitalData.page.pageInfo')!);
+    const source = 'digitalData.page.pageInfo';
+    const handler = new DataHandler(source, DataLayerTarget.find(source)!);
 
     const seen: any[] = [];
 
@@ -309,7 +323,8 @@ describe('DataHandler unit tests', () => {
   });
 
   it('data layer events should be delayed to allow debouncing', (done) => {
-    const handler = new DataHandler(DataLayerTarget.find('digitalData.page.pageInfo')!);
+    const source = 'digitalData.page.pageInfo';
+    const handler = new DataHandler(source, DataLayerTarget.find(source)!);
 
     const seen: any[] = [];
 
@@ -317,7 +332,7 @@ describe('DataHandler unit tests', () => {
     handler.push(echo);
 
     (globalThis as any).digitalData.page.pageInfo.pageID = 'changedPage';
-    handler.handleEvent(createEvent((globalThis as any).digitalData.page, 'pageInfo',
+    handler.handleEvent(createEvent(source, (globalThis as any).digitalData.page, 'pageInfo',
       (globalThis as any).digitalData.page.pageInfo, 'digitalData.page.pageInfo'));
 
     // since this occurs immediately after the handleEvent call, the debounce delay hasn't fully elapsed
@@ -330,7 +345,8 @@ describe('DataHandler unit tests', () => {
   });
 
   it('multiple data layer events should be debounced', (done) => {
-    const handler = new DataHandler(DataLayerTarget.find('digitalData.page.pageInfo')!);
+    const source = 'digitalData.page.pageInfo';
+    const handler = new DataHandler(source, DataLayerTarget.find(source)!);
 
     const seen: any[] = [];
 
@@ -338,11 +354,11 @@ describe('DataHandler unit tests', () => {
     handler.push(echo);
 
     (globalThis as any).digitalData.page.pageInfo.pageID = 'changedAgain';
-    handler.handleEvent(createEvent((globalThis as any).digitalData.page, 'pageInfo',
+    handler.handleEvent(createEvent(source, (globalThis as any).digitalData.page, 'pageInfo',
       (globalThis as any).digitalData.page.pageInfo, 'digitalData.page.pageInfo'));
 
     (globalThis as any).digitalData.page.pageInfo.pageID = 'changedOneMoreTime';
-    handler.handleEvent(createEvent((globalThis as any).digitalData.page, 'pageInfo',
+    handler.handleEvent(createEvent(source, (globalThis as any).digitalData.page, 'pageInfo',
       (globalThis as any).digitalData.page.pageInfo, 'digitalData.page.pageInfo'));
 
     setTimeout(() => {
@@ -352,7 +368,8 @@ describe('DataHandler unit tests', () => {
   });
 
   it('an object with no properties selected from an event should not be handled', (done) => {
-    const handler = new DataHandler(DataLayerTarget.find('digitalData.page.pageInfo[(missingProperty)]')!);
+    const source = 'digitalData.page.pageInfo[(missingProperty)]';
+    const handler = new DataHandler(source, DataLayerTarget.find(source)!);
 
     const seen: any[] = [];
 
@@ -360,7 +377,7 @@ describe('DataHandler unit tests', () => {
     handler.push(echo);
 
     (globalThis as any).digitalData.page.pageInfo.pageID = '1234';
-    handler.handleEvent(createEvent((globalThis as any).digitalData.page, 'pageInfo',
+    handler.handleEvent(createEvent(source, (globalThis as any).digitalData.page, 'pageInfo',
       (globalThis as any).digitalData.page.pageInfo, 'digitalData.page.pageInfo'));
 
     setTimeout(() => {

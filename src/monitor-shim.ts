@@ -64,6 +64,8 @@ export default class ShimMonitor extends Monitor {
         value: this.state,
         writable: this.writable,
       });
+
+      this.sources.clear();
     } catch (err) {
       Logger.getInstance().error(LogMessageType.MonitorRemoveError,
         { path: this.path, property: this.property, reason: err.message });
