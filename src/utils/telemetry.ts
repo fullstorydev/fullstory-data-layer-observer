@@ -13,7 +13,7 @@ interface TelemetrySpanEvent {
 interface TelemetryCountEvent {
   name: string;
   timestamp: string;
-  count: number;
+  value: number;
   attributes?: Attributes;
 }
 
@@ -80,7 +80,7 @@ export class DefaultTelemetryProvider implements TelemetryProvider {
     this.exporter.sendCount({
       name,
       timestamp: new Date().toISOString(),
-      count: value,
+      value,
       attributes,
     });
   }
