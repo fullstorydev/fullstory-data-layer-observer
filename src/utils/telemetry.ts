@@ -1,4 +1,5 @@
 /* eslint-disable max-classes-per-file */
+import { Logger } from './logger';
 
 type Attributes = Record<string, any>;
 
@@ -85,17 +86,54 @@ export class DefaultTelemetryProvider implements TelemetryProvider {
   }
 }
 
+class SafeTelemetrySpan implements TelemetrySpan {
+  // eslint-disable-next-line no-empty-function
+  constructor(private readonly span: TelemetrySpan) {}
+
+  end() {
+    try {
+      this.span.end();
+    } catch (err) {
+      Logger.getInstance().debug('Error ending telemetry span', err.message);
+    }
+  }
+}
+
+class SafeTelemetryProvider implements TelemetryProvider {
+  // eslint-disable-next-line no-empty-function
+  constructor(private readonly provider: TelemetryProvider) {}
+
+  startSpan(name: string, attributes?: Attributes): TelemetrySpan {
+    try {
+      return new SafeTelemetrySpan(this.provider.startSpan(name, attributes));
+    } catch (err) {
+      Logger.getInstance().debug('Error starting telemetry span', err.message);
+      return {
+        end: () => {},
+      };
+    }
+  }
+
+  count(name: string, value: number, attributes?: Attributes) {
+    try {
+      this.provider.count(name, value, attributes);
+    } catch (err) {
+      Logger.getInstance().debug('Error submitting telemetry count', err.message);
+    }
+  }
+}
+
 export class Telemetry {
   private static instance: TelemetryProvider;
 
   static getInstance(provider?: TelemetryProvider, exporter?: TelemetryExporter): TelemetryProvider {
     if (!Telemetry.instance) {
       if (provider) {
-        Telemetry.instance = provider;
+        Telemetry.instance = new SafeTelemetryProvider(provider);
       } else if (exporter) {
-        Telemetry.instance = new DefaultTelemetryProvider(exporter);
+        Telemetry.instance = new SafeTelemetryProvider(new DefaultTelemetryProvider(exporter));
       } else {
-        return new DefaultTelemetryProvider(consoleTelemetryExporter);
+        return new SafeTelemetryProvider(new DefaultTelemetryProvider(consoleTelemetryExporter));
       }
     }
 

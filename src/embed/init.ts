@@ -83,14 +83,19 @@ function _dlo_collectRules(): any[] {
 function _dlo_initializeFromWindow() {
   try {
     const win = (window as { [key: string]: any });
-    const telemetry = Telemetry.getInstance(win._dlo_telemetry_provider, win._dlo_telemetry_exporter);
-    const dloInitializationSpan = telemetry.startSpan('dlo-init');
 
     /*
     This is called so that custom appenders (e.g. 'fullstory') are initialized early enough
     to correctly log initialization errors and recorded stats
     */
     Logger.getInstance(win._dlo_appender);
+    if (win._dlo_logLevel !== undefined) {
+      Logger.getInstance().level = win._dlo_logLevel;
+    }
+    // Telemetry has to get initialized after logging as telemetry reporting errors may be logged at
+    // the debug level
+    const telemetry = Telemetry.getInstance(win._dlo_telemetry_provider, win._dlo_telemetry_exporter);
+    const dloInitializationSpan = telemetry.startSpan('dlo-init');
 
     if (win._dlo_observer) {
       Logger.getInstance().warn(LogMessageType.ObserverMultipleLoad);
