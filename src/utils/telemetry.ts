@@ -127,14 +127,16 @@ export class Telemetry {
   private static instance: TelemetryProvider;
 
   static getInstance(provider?: TelemetryProvider, exporter?: TelemetryExporter): TelemetryProvider {
-    if (!Telemetry.instance) {
-      if (provider) {
-        Telemetry.instance = new SafeTelemetryProvider(provider);
-      } else if (exporter) {
-        Telemetry.instance = new SafeTelemetryProvider(new DefaultTelemetryProvider(exporter));
-      } else {
-        return new SafeTelemetryProvider(new DefaultTelemetryProvider(consoleTelemetryExporter));
-      }
+    if (Telemetry.instance) {
+      return Telemetry.instance;
+    }
+
+    if (provider) {
+      Telemetry.instance = new SafeTelemetryProvider(provider);
+    } else if (exporter) {
+      Telemetry.instance = new SafeTelemetryProvider(new DefaultTelemetryProvider(exporter));
+    } else {
+      Telemetry.instance = new SafeTelemetryProvider(new DefaultTelemetryProvider(consoleTelemetryExporter));
     }
 
     return Telemetry.instance;
