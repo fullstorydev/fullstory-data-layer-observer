@@ -1,3 +1,5 @@
+/* eslint-disable no-console, max-classes-per-file */
+
 /**
  * Optional metadata to include with telemetry events
  */
@@ -48,14 +50,14 @@ interface TelemetryExporter {
   /**
    * Sends a timespan event to some destination
    *
-   * @param {TelemetrySpanEvent} span The timespan event to send
+   * @param span The timespan event to send
    */
   sendSpan: (span: TelemetrySpanEvent) => void;
 
   /**
    * Sends a count event to some destination.
    *
-   * @param {TelemetryCountEvent} count The count event to send
+   * @param count The count event to send
    */
   sendCount: (count: TelemetryCountEvent) => void;
 }
@@ -82,17 +84,102 @@ interface TelemetryProvider {
   /**
    * Starts a new timespan to measure the duration of some operation
    *
-   * @param {string} name The name of the timespan event
-   * @param {Attributes | undefined} attributes Optional metadata to include with the event
+   * @param name The name of the timespan event
+   * @param attributes Optional metadata to include with the event
    */
   startSpan: (name: string, attributes?: Attributes) => TelemetrySpan
 
   /**
    * Captures a new increment value for some count
    *
-   * @param {string} name The name of the count event
-   * @param {number} value The value by which to increment the count event
-   * @param {Attributes | undefined} attributes Optional metadata to include with the event
+   * @param name The name of the count event
+   * @param value The value by which to increment the count event
+   * @param attributes Optional metadata to include with the event
    */
   count: (name: string, value: number, attributes?: Attributes) => void;
+}
+
+/**
+ * A default {@link TelemetrySpan} implementation which handles timespan
+ * duration calculation and invokes a given callback with a timespan event
+ * when the timespan is ended
+ */
+class DefaultTelemetrySpan implements TelemetrySpan {
+  private readonly startTime: number;
+
+  /**
+   * Creates a new {@link DefaultTelemetrySpan} instance
+   *
+   * @param name The name of the timespan event
+   * @param sendSpan The callback to invoke when the timespan is ended
+   * @param attributes Optional metadata to include with the event
+   */
+  constructor(
+      private readonly name: string,
+      private readonly sendSpan: (span: TelemetrySpanEvent) => void,
+      private readonly attributes?: Attributes,
+  ) {
+    this.startTime = DefaultTelemetrySpan.getCurrentTime();
+  }
+
+  /**
+   * Ends the timespan, calculating the duration and invoking the given
+   * sendSpan callback with a timespan event
+   */
+  end() {
+    this.sendSpan({
+      name: this.name,
+      timestamp: new Date().toISOString(),
+      attributes: this.attributes,
+      duration: DefaultTelemetrySpan.getCurrentTime() - this.startTime,
+    });
+  }
+
+  private static getCurrentTime(): number {
+    return (window.performance && window.performance.now()) || new Date().getTime();
+  }
+}
+
+/**
+ * A default {@link TelemetryProvider} implementation which handles timespan
+ * measurement and which sends telemetry events to the given {@link TelemetryExporter}
+ */
+export default class DefaultTelemetryProvider implements TelemetryProvider {
+  /**
+   * Creates a new {@link DefaultTelemetryProvider} instance
+   *
+   * @param exporter The exporter used to send telemetry events
+   */
+  // eslint-disable-next-line no-empty-function
+  constructor(private readonly exporter: TelemetryExporter) {}
+
+  /**
+   * Starts and returns a new {@link DefaultTelemetrySpan}
+   *
+   * @param name The name of the timespan event
+   * @param attributes Optional metadata to include with the event
+   */
+  startSpan(name: string, attributes?: Attributes): TelemetrySpan {
+    return new DefaultTelemetrySpan(
+      name,
+      this.exporter.sendSpan,
+      attributes,
+    );
+  }
+
+  /**
+   * Sends a count event to the given {@link TelemetryExporter}
+   *
+   * @param name The name of the count event
+   * @param value The value by which to increment the count
+   * @param attributes Optional metadata to include with the event
+   */
+  count(name: string, value: number, attributes?: Attributes): void {
+    this.exporter.sendCount({
+      name,
+      timestamp: new Date().toISOString(),
+      attributes,
+      value,
+    });
+  }
 }
