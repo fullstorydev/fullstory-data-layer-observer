@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.12.1
+
+- Change made to allow searching for empty strings with ```''``` or ```""```.  Technically any string comparison can be quoted, but this was specifically added for searching for empty string 
+
 ### 1.12.0
 
 - Rules can no longer be triggered by changes to properties which don't match a rule's selector
