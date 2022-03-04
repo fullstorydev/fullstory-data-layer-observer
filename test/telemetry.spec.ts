@@ -2,8 +2,9 @@
 import { expect } from 'chai';
 import 'mocha';
 
-import DefaultTelemetryProvider from '../src/utils/telemetry';
+import { DefaultTelemetryProvider, consoleTelemetryExporter } from '../src/utils/telemetry';
 import { MockClass } from './mocks/mock';
+import Console from './mocks/console';
 import { expectNoCalls, expectParams } from './utils/mocha';
 
 class MockTelemetryExporter extends MockClass {
@@ -13,75 +14,137 @@ class MockTelemetryExporter extends MockClass {
 }
 
 describe('DefaultTelemetryProvider', () => {
-  describe('startSpan', () => {
-    it('sends span event to telemetry exporter when span is ended', async () => {
-      const name = 'test';
-      const attributes: Record<string, any> = {
-        prop: 'value',
-      };
-      const exporter = new MockTelemetryExporter();
-      const provider = new DefaultTelemetryProvider(exporter);
+  it('sends span event to telemetry exporter when span is ended', async () => {
+    const name = 'test';
+    const attributes: Record<string, any> = {
+      prop: 'value',
+    };
+    const exporter = new MockTelemetryExporter();
+    const provider = new DefaultTelemetryProvider(exporter);
 
-      const span = provider.startSpan(name, attributes);
-      const startTime = new Date().getTime();
-      expectNoCalls(exporter, 'sendSpan');
+    const span = provider.startSpan(name, attributes);
+    const startTime = new Date().getTime();
+    expectNoCalls(exporter, 'sendSpan');
 
-      await new Promise<void>((resolve) => {
-        setTimeout(() => {
-          span.end();
-          resolve();
-        }, 50);
-      });
-
-      const endTime = new Date().getTime();
-      const expectedDuration = endTime - startTime;
-      const [spanEvent] = expectParams(exporter, 'sendSpan');
-
-      expect(spanEvent.name).to.equal(name);
-      expect(spanEvent.duration).to.be.greaterThan(expectedDuration * 0.9);
-      expect(spanEvent.duration).to.be.lessThan(expectedDuration * 1.1);
-
-      Object.keys(attributes).forEach((key) => {
-        expect(spanEvent.attributes[key]).to.equal(attributes[key]);
-      });
-
-      const timestamp = Date.parse(spanEvent.timestamp);
-      expect(timestamp).to.be.gte(startTime);
-      expect(timestamp).to.be.lte(endTime);
-
-      expectNoCalls(exporter, 'sendCount');
+    await new Promise<void>((resolve) => {
+      setTimeout(() => {
+        span.end();
+        resolve();
+      }, 50);
     });
+
+    const endTime = new Date().getTime();
+    const expectedDuration = endTime - startTime;
+    const [spanEvent] = expectParams(exporter, 'sendSpan');
+
+    expect(spanEvent.name).to.equal(name);
+    expect(spanEvent.duration).to.be.greaterThan(expectedDuration * 0.9);
+    expect(spanEvent.duration).to.be.lessThan(expectedDuration * 1.1);
+
+    Object.keys(attributes).forEach((key) => {
+      expect(spanEvent.attributes[key]).to.equal(attributes[key]);
+    });
+
+    const timestamp = Date.parse(spanEvent.timestamp);
+    expect(timestamp).to.be.gte(startTime);
+    expect(timestamp).to.be.lte(endTime);
+
+    expectNoCalls(exporter, 'sendCount');
   });
 
-  describe('count', () => {
-    it('sends count event to telemetry exporter', () => {
-      const name = 'test';
-      const attributes: Record<string, any> = {
-        prop: 'value',
-      };
-      const value = 73;
-      const exporter = new MockTelemetryExporter();
-      const provider = new DefaultTelemetryProvider(exporter);
-      const startTime = new Date().getTime();
-      expectNoCalls(exporter, 'sendCount');
+  it('sends count event to telemetry exporter', () => {
+    const name = 'test';
+    const attributes: Record<string, any> = {
+      prop: 'value',
+    };
+    const value = 73;
+    const exporter = new MockTelemetryExporter();
+    const provider = new DefaultTelemetryProvider(exporter);
+    const startTime = new Date().getTime();
+    expectNoCalls(exporter, 'sendCount');
 
-      provider.count(name, value, attributes);
+    provider.count(name, value, attributes);
 
-      const endTime = new Date().getTime();
-      const [countEvent] = expectParams(exporter, 'sendCount');
+    const endTime = new Date().getTime();
+    const [countEvent] = expectParams(exporter, 'sendCount');
 
-      expect(countEvent.name).to.equal(name);
-      expect(countEvent.value).to.equal(value);
+    expect(countEvent.name).to.equal(name);
+    expect(countEvent.value).to.equal(value);
 
-      Object.keys(attributes).forEach((key) => {
-        expect(countEvent.attributes[key]).to.equal(attributes[key]);
-      });
-
-      const timestamp = Date.parse(countEvent.timestamp);
-      expect(timestamp).to.be.gte(startTime);
-      expect(timestamp).to.be.lte(endTime);
-
-      expectNoCalls(exporter, 'sendSpan');
+    Object.keys(attributes).forEach((key) => {
+      expect(countEvent.attributes[key]).to.equal(attributes[key]);
     });
+
+    const timestamp = Date.parse(countEvent.timestamp);
+    expect(timestamp).to.be.gte(startTime);
+    expect(timestamp).to.be.lte(endTime);
+
+    expectNoCalls(exporter, 'sendSpan');
+  });
+});
+
+describe('ConsoleTelemetryExporter', () => {
+  const originalConsole = globalThis.console;
+  let mockConsole: Console;
+
+  beforeEach(() => {
+    mockConsole = new Console();
+    (globalThis as any).console = mockConsole;
+  });
+
+  afterEach(() => {
+    (globalThis as any).console = originalConsole;
+  });
+
+  it('writes telemetry span to console.debug', () => {
+    expectNoCalls(mockConsole, 'debug');
+    const span = {
+      name: 'test',
+      timestamp: new Date().toISOString(),
+      attributes: {
+        prop: 'value',
+      },
+      duration: 23,
+    };
+
+    consoleTelemetryExporter.sendSpan(span);
+    const [message, event] = expectParams(mockConsole, 'debug');
+
+    expect(message).to.equal('Telemetry Span');
+    expect(event.name).to.equal(span.name);
+    expect(event.timestamp).to.equal(span.timestamp);
+    expect(event.attributes.prop).to.equal(span.attributes.prop);
+    expect(event.duration).to.equal(span.duration);
+
+    expectNoCalls(mockConsole, 'log');
+    expectNoCalls(mockConsole, 'info');
+    expectNoCalls(mockConsole, 'error');
+    expectNoCalls(mockConsole, 'warn');
+  });
+
+  it('writes telemetry count to console.debug', () => {
+    expectNoCalls(mockConsole, 'debug');
+    const count = {
+      name: 'test',
+      timestamp: new Date().toISOString(),
+      attributes: {
+        prop: 'value',
+      },
+      value: 32,
+    };
+
+    consoleTelemetryExporter.sendCount(count);
+    const [message, event] = expectParams(mockConsole, 'debug');
+
+    expect(message).to.equal('Telemetry Count');
+    expect(event.name).to.equal(count.name);
+    expect(event.timestamp).to.equal(count.timestamp);
+    expect(event.attributes.prop).to.equal(count.attributes.prop);
+    expect(event.value).to.equal(count.value);
+
+    expectNoCalls(mockConsole, 'log');
+    expectNoCalls(mockConsole, 'info');
+    expectNoCalls(mockConsole, 'error');
+    expectNoCalls(mockConsole, 'warn');
   });
 });

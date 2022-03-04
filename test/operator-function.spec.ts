@@ -25,7 +25,7 @@ describe('function operator unit tests', () => {
   });
 
   afterEach(() => {
-    (globalThis as any) = originalConsole;
+    (globalThis as any).console = originalConsole;
     delete (globalThis as any).testClosure;
   });
 
