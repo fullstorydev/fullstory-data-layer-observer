@@ -393,14 +393,25 @@ class PathElement {
         case 'boolean':
           if (prop[opProp.name] !== (opProp.value.toLowerCase() === 'true')) return undefined;
           break;
-        case 'string':
+        case 'string': {
+          let realString = opProp.value;
+          // look for quoted values, and strip the quotes off if they are there
+          if (opProp.value) {
+            const firstCharacter = realString.charAt(0);
+            const lastCharacter = realString.charAt(realString.length - 1);
+            if ((firstCharacter === '"' && lastCharacter === '"')
+              || (firstCharacter === "'" && lastCharacter === "'")) {
+              realString = realString.substring(1, realString.length - 1);
+            }
+          }
           // eslint-disable-next-line eqeqeq
-          if (opProp.operator === '==' && prop[opProp.name] != opProp.value) return undefined;
+          if (opProp.operator === '==' && prop[opProp.name] != realString) return undefined;
           // eslint-disable-next-line eqeqeq
-          if (opProp.operator == '!=' && prop[opProp.name] == opProp.value) return undefined;
-          if (opProp.operator === '=^' && !startsWith(prop[opProp.name], opProp.value)) return undefined;
-          if (opProp.operator === '!^' && startsWith(prop[opProp.name], opProp.value)) return undefined;
+          if (opProp.operator == '!=' && prop[opProp.name] == realString) return undefined;
+          if (opProp.operator === '=^' && !startsWith(prop[opProp.name], realString)) return undefined;
+          if (opProp.operator === '!^' && startsWith(prop[opProp.name], realString)) return undefined;
           break;
+        }
         case 'number':
           // eslint-disable-next-line eqeqeq
           if (opProp.operator === '==' && prop[opProp.name] != opProp.value) return undefined;
