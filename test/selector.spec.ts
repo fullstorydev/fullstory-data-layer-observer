@@ -248,6 +248,12 @@ describe('test selection paths', () => {
     expect(select('favorites[?(emptyString!="")]', testData)).to.be.undefined;
     expect(select('favorites[?(emptyString!=" ")]', testData)).to.eq(testData.favorites);
     expect(select('favorites[?(emptyString=" ")]', testData)).to.be.undefined;
+    expect(select('favorites[?(color="red)]', testData)).to.be.undefined;
+    expect(select('favorites[?(color=red")]', testData)).to.be.undefined;
+    expect(select("favorites[?(color='red)]", testData)).to.be.undefined;
+    expect(select("favorites[?(color=red')]", testData)).to.be.undefined;
+    expect(select("favorites[?(color=')]", testData)).to.be.undefined;
+    expect(select('favorites[?(color=")]', testData)).to.be.undefined;
   });
 
   it('filter notation should return a reference to the object', () => {
