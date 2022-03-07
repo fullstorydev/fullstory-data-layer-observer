@@ -49,4 +49,3 @@ The following additional adjustments can be made:
 - If rules have been thoroughly tested, _dlo_validateRules can be set to false.
 - Use the global readOnLoad configuration option only if you have a static data layer.  Each rule can have an individual readOnLoad option depending on the data layer’s behavior.
 - Do not use previewMode set to true when conducting performance tests.  This will result in stringifying data and printing to the console leading to significant time in the fireEvent step.
-
