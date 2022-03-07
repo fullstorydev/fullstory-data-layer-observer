@@ -144,7 +144,7 @@ class DefaultTelemetrySpan implements TelemetrySpan {
  * A default {@link TelemetryProvider} implementation which handles timespan
  * measurement and which sends telemetry events to the given {@link TelemetryExporter}
  */
-export default class DefaultTelemetryProvider implements TelemetryProvider {
+export class DefaultTelemetryProvider implements TelemetryProvider {
   /**
    * Creates a new {@link DefaultTelemetryProvider} instance
    *
@@ -183,3 +183,27 @@ export default class DefaultTelemetryProvider implements TelemetryProvider {
     });
   }
 }
+
+/**
+ * A {@link TelemetryExporter} which writes telemetry events to
+ * console.debug
+ */
+export const consoleTelemetryExporter: TelemetryExporter = {
+  /**
+   * Writes the given timespan event to console.debug
+   *
+   * @param span The timespan event to write
+   */
+  sendSpan: (span: TelemetrySpanEvent) => {
+    console.debug('Telemetry Span', span);
+  },
+
+  /**
+   * Writes the given count event to console.debug
+   *
+   * @param count The count event to write
+   */
+  sendCount: (count: TelemetryCountEvent) => {
+    console.debug('Telemetry Count', count);
+  },
+};
