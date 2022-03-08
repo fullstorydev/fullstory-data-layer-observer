@@ -2,6 +2,7 @@
 import { Logger, LogMessageType } from '../utils/logger';
 import { startsWith } from '../utils/object';
 import { DataLayerObserver } from '../observer';
+import { Telemetry } from '../utils/telemetry';
 
 /*
 This is where we initialize the DataLayerObserver from this info:
@@ -13,6 +14,17 @@ window['_dlo_appender'] = null;
 // Log message level, NONE = -1, ERROR = 0, WARN = 1, INFO = 2, DEBUG = 3
 // Default is null
 window['_dlo_logLevel'] = 1;
+
+// A custom telemetry provider; a default provider is used if not specified
+// Default is null
+window['_dlo_telemetryProvider'] = null;
+
+// A custom telemetry exporter to be used with the default telemetry provider.
+// If a custom telemetry provider is specified, this exporter is not used. A console
+// exporter will be used if neither a custom telemetry provider nor a custom telemetry
+// exporter are specified
+// Default is null
+window['_dlo_telemetryExporter'] = null;
 
 // OperatorOptions that is always used just before before the destination
 // Default is null
@@ -89,6 +101,7 @@ function _dlo_initializeFromWindow() {
     to correctly log initialization errors and recorded stats
     */
     Logger.getInstance(win._dlo_appender);
+    Telemetry.getInstance(win._dlo_telemetryProvider, win._dlo_telemetryExporter);
 
     if (win._dlo_observer) {
       Logger.getInstance().warn(LogMessageType.ObserverMultipleLoad);

@@ -6,6 +6,7 @@ import { DefaultTelemetryProvider, consoleTelemetryExporter } from '../src/utils
 import { MockClass } from './mocks/mock';
 import Console from './mocks/console';
 import { expectNoCalls, expectParams } from './utils/mocha';
+import { Logger } from '../src/utils/logger';
 
 class MockTelemetryExporter extends MockClass {
   sendSpan(): void {}
@@ -14,6 +15,18 @@ class MockTelemetryExporter extends MockClass {
 }
 
 describe('DefaultTelemetryProvider', () => {
+  const originalConsole = globalThis.console;
+  let mockConsole: Console;
+
+  beforeEach(() => {
+    mockConsole = new Console();
+    (globalThis as any).console = mockConsole;
+  });
+
+  afterEach(() => {
+    (globalThis as any).console = originalConsole;
+  });
+
   it('sends span event to telemetry exporter when span is ended', async () => {
     const name = 'test';
     const attributes: Record<string, any> = {
@@ -81,6 +94,45 @@ describe('DefaultTelemetryProvider', () => {
 
     expectNoCalls(exporter, 'sendSpan');
   });
+
+  it('logs telemetry span errors at the debug level', () => {
+    const throwsOnSendSpanExporter = {
+      sendSpan: () => { throw new Error('test error'); },
+      sendCount: () => {},
+    };
+
+    // Default logger appends to console. Need to ensure log level is high
+    // enough to write debug log items
+    Logger.getInstance().level = 3;
+    const provider = new DefaultTelemetryProvider(throwsOnSendSpanExporter);
+    const span = provider.startSpan('test span');
+    expectNoCalls(mockConsole, 'debug');
+
+    span.end();
+
+    const [error] = expectParams(mockConsole, 'debug');
+    expect(error).to.equal('Error sending telemetry span: test error');
+  });
+
+  it('logs telemetry count errors at the debug level', () => {
+    const throwsOnSendCountExporter = {
+      sendSpan: () => {},
+      sendCount: () => { throw new Error('test error'); },
+    };
+
+    // Default logger appends to console. Need to ensure log level is high
+    // enough to write debug log items
+    Logger.getInstance().level = 3;
+    const provider = new DefaultTelemetryProvider(throwsOnSendCountExporter);
+    expectNoCalls(mockConsole, 'debug');
+
+    provider.count('test count', 1);
+
+    const [error] = expectParams(mockConsole, 'debug');
+    expect(error).to.equal('Error sending telemetry count: test error');
+  });
+
+  // TODO(nate): Test default and custom telemetry wiring
 });
 
 describe('ConsoleTelemetryExporter', () => {

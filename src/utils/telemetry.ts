@@ -1,4 +1,5 @@
 /* eslint-disable no-console, max-classes-per-file */
+import { Logger } from './logger';
 
 /**
  * Optional metadata to include with telemetry events
@@ -127,12 +128,16 @@ class DefaultTelemetrySpan implements TelemetrySpan {
    * sendSpan callback with a timespan event
    */
   end() {
-    this.sendSpan({
-      name: this.name,
-      timestamp: new Date().toISOString(),
-      attributes: this.attributes,
-      duration: DefaultTelemetrySpan.getCurrentTime() - this.startTime,
-    });
+    try {
+      this.sendSpan({
+        name: this.name,
+        timestamp: new Date().toISOString(),
+        attributes: this.attributes,
+        duration: DefaultTelemetrySpan.getCurrentTime() - this.startTime,
+      });
+    } catch (err) {
+      Logger.getInstance().debug(`Error sending telemetry span: ${err.message}`);
+    }
   }
 
   private static getCurrentTime(): number {
@@ -142,7 +147,9 @@ class DefaultTelemetrySpan implements TelemetrySpan {
 
 /**
  * A default {@link TelemetryProvider} implementation which handles timespan
- * measurement and which sends telemetry events to the given {@link TelemetryExporter}
+ * measurement and which sends telemetry events to the given {@link TelemetryExporter}.
+ * This provider prevents telemetry collection and exporter invocation from throwing
+ * errors -- instead logging these errors at the debug level
  */
 export class DefaultTelemetryProvider implements TelemetryProvider {
   /**
@@ -160,11 +167,18 @@ export class DefaultTelemetryProvider implements TelemetryProvider {
    * @param attributes Optional metadata to include with the event
    */
   startSpan(name: string, attributes?: Attributes): TelemetrySpan {
-    return new DefaultTelemetrySpan(
-      name,
-      this.exporter.sendSpan,
-      attributes,
-    );
+    try {
+      return new DefaultTelemetrySpan(
+        name,
+        this.exporter.sendSpan,
+        attributes,
+      );
+    } catch (err) {
+      Logger.getInstance().debug(`Error starting telemetry span: ${err.message}`);
+      return {
+        end: () => {},
+      };
+    }
   }
 
   /**
@@ -175,12 +189,16 @@ export class DefaultTelemetryProvider implements TelemetryProvider {
    * @param attributes Optional metadata to include with the event
    */
   count(name: string, value: number, attributes?: Attributes): void {
-    this.exporter.sendCount({
-      name,
-      timestamp: new Date().toISOString(),
-      attributes,
-      value,
-    });
+    try {
+      this.exporter.sendCount({
+        name,
+        timestamp: new Date().toISOString(),
+        attributes,
+        value,
+      });
+    } catch (err) {
+      Logger.getInstance().debug(`Error sending telemetry count: ${err.message}`);
+    }
   }
 }
 
@@ -207,3 +225,35 @@ export const consoleTelemetryExporter: TelemetryExporter = {
     console.debug('Telemetry Count', count);
   },
 };
+
+/**
+ * Telemetry entry point to initialize the singleton {@link TelemetryProvider} or
+ * get the current {@link TelemetryProvider}
+ */
+export class Telemetry {
+  private static instance: TelemetryProvider;
+
+  /**
+   * Gets the singleton {@link TelemetryProvider} configured for the Data Layer Observer instance.
+   * Initializes the singleton {@link TelemetryProvider} on first call
+   *
+   * @param provider The {@link TelemetryProvider} to initialize; only effective on first call
+   * @param exporter The {@link TelemetryExporter} to use with the default Telemetry Provider; only
+   * used if no {@link TelemetryProvider} is given and only effective on first call
+   */
+  static getInstance(provider?: TelemetryProvider, exporter?: TelemetryExporter): TelemetryProvider {
+    if (Telemetry.instance) {
+      return Telemetry.instance;
+    }
+
+    if (provider) {
+      Telemetry.instance = provider;
+    } else if (exporter) {
+      Telemetry.instance = new DefaultTelemetryProvider(exporter);
+    } else {
+      Telemetry.instance = new DefaultTelemetryProvider(consoleTelemetryExporter);
+    }
+
+    return Telemetry.instance;
+  }
+}
