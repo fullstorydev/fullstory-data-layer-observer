@@ -91,7 +91,7 @@ function _dlo_collectRules(): any[] {
   }
 }
 
-function _dlo_initializeFromWindow() {
+export default function _dlo_initializeFromWindow() {
   try {
     const startTime = Date.now();
     const win = (window as { [key: string]: any });
@@ -101,6 +101,8 @@ function _dlo_initializeFromWindow() {
     to correctly log initialization errors and recorded stats
     */
     Logger.getInstance(win._dlo_appender);
+
+    // Logging must be initialized before telemetry since telemetry errors may be logged
     Telemetry.getInstance(win._dlo_telemetryProvider, win._dlo_telemetryExporter);
 
     if (win._dlo_observer) {
