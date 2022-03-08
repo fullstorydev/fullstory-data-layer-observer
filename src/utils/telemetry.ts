@@ -231,7 +231,7 @@ export const consoleTelemetryExporter: TelemetryExporter = {
  * get the current {@link TelemetryProvider}
  */
 export class Telemetry {
-  private static instance: TelemetryProvider;
+  private static instance: TelemetryProvider | undefined;
 
   /**
    * Gets the singleton {@link TelemetryProvider} configured for the Data Layer Observer instance.
@@ -255,5 +255,13 @@ export class Telemetry {
     }
 
     return Telemetry.instance;
+  }
+
+  /**
+   * Clears the initialized telemetry provider allowing telemetry to be reinitialized. Used
+   * within telemetry intialization tests to achieve a clean starting state
+   */
+  static reset(): void {
+    Telemetry.instance = undefined;
   }
 }

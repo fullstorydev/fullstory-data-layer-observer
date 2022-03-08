@@ -1,17 +1,29 @@
-/* eslint-disable class-methods-use-this, @typescript-eslint/no-unused-vars */
+/* eslint-disable class-methods-use-this, max-classes-per-file, @typescript-eslint/no-unused-vars */
 import { expect } from 'chai';
 import 'mocha';
 
-import { DefaultTelemetryProvider, consoleTelemetryExporter } from '../src/utils/telemetry';
+import { DefaultTelemetryProvider, consoleTelemetryExporter, Telemetry } from '../src/utils/telemetry';
 import { MockClass } from './mocks/mock';
 import Console from './mocks/console';
-import { expectNoCalls, expectParams } from './utils/mocha';
+import { expectCall, expectNoCalls, expectParams } from './utils/mocha';
 import { ConsoleAppender, Logger } from '../src/utils/logger';
 
 class MockTelemetryExporter extends MockClass {
   sendSpan(): void {}
 
   sendCount(): void {}
+}
+
+class MockTelemetryProvider extends MockClass {
+  endSpan(): void {}
+
+  startSpan() {
+    return {
+      end: this.endSpan,
+    };
+  }
+
+  count(): void {}
 }
 
 describe('DefaultTelemetryProvider', () => {
@@ -129,8 +141,6 @@ describe('DefaultTelemetryProvider', () => {
     const [error] = expectParams(mockConsole, 'debug');
     expect(error).to.equal('Error sending telemetry count: test error');
   });
-
-  // TODO(nate): Test default and custom telemetry wiring
 });
 
 describe('ConsoleTelemetryExporter', () => {
@@ -197,4 +207,65 @@ describe('ConsoleTelemetryExporter', () => {
     expectNoCalls(mockConsole, 'error');
     expectNoCalls(mockConsole, 'warn');
   });
+});
+
+describe('Telemetry initialization', () => {
+  const originalConsole = globalThis.console;
+  let mockConsole: Console;
+
+  beforeEach(() => {
+    mockConsole = new Console();
+    (globalThis as any).console = mockConsole;
+    Telemetry.reset();
+  });
+
+  afterEach(() => {
+    (globalThis as any).console = originalConsole;
+  });
+
+  it('uses the default telemetry provider and console exporter by default', () => {
+    const provider = Telemetry.getInstance();
+    expectNoCalls(mockConsole, 'debug');
+
+    const span = provider.startSpan('test span');
+    provider.count('test count', 1);
+    span.end();
+
+    expectCall(mockConsole, 'debug', 2);
+  });
+
+  it('uses the default telemetry provider given a custom telemetry exporter', () => {
+    const mockExporter = new MockTelemetryExporter();
+    const provider = Telemetry.getInstance(undefined, mockExporter);
+    expectNoCalls(mockExporter, 'sendSpan');
+    expectNoCalls(mockExporter, 'sendCount');
+
+    const span = provider.startSpan('test span');
+    provider.count('test count', 1);
+    span.end();
+
+    expectCall(mockExporter, 'sendSpan', 1);
+    expectCall(mockExporter, 'sendCount', 1);
+  });
+
+  it('uses a given custom telemetry provider and ignores a given telemetry exporter', () => {
+    const mockProvider = new MockTelemetryProvider();
+    const mockExporter = new MockTelemetryExporter();
+    const provider = Telemetry.getInstance(mockProvider, mockExporter);
+    expectNoCalls(mockProvider, 'endSpan');
+    expectNoCalls(mockProvider, 'count');
+
+    const span = provider.startSpan('test span');
+    provider.count('test count', 1);
+    span.end();
+
+    expectCall(mockProvider, 'endSpan', 1);
+    expectCall(mockProvider, 'count', 1);
+
+    // Exporter should be unused if a custom provider is used
+    expectNoCalls(mockExporter, 'sendSpan');
+    expectNoCalls(mockExporter, 'sendCount');
+  });
+
+  // TODO(nate): Test configuration from _dlo_telemetry* values
 });
