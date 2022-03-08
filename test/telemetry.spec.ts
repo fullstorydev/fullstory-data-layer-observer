@@ -6,7 +6,7 @@ import { DefaultTelemetryProvider, consoleTelemetryExporter } from '../src/utils
 import { MockClass } from './mocks/mock';
 import Console from './mocks/console';
 import { expectNoCalls, expectParams } from './utils/mocha';
-import { Logger } from '../src/utils/logger';
+import { ConsoleAppender, Logger } from '../src/utils/logger';
 
 class MockTelemetryExporter extends MockClass {
   sendSpan(): void {}
@@ -21,10 +21,14 @@ describe('DefaultTelemetryProvider', () => {
   beforeEach(() => {
     mockConsole = new Console();
     (globalThis as any).console = mockConsole;
+    // Ensure log level is high enough to write debug log items
+    Logger.getInstance().level = 3;
+    Logger.getInstance().appender = new ConsoleAppender();
   });
 
   afterEach(() => {
     (globalThis as any).console = originalConsole;
+    Logger.getInstance().level = 1;
   });
 
   it('sends span event to telemetry exporter when span is ended', async () => {
@@ -101,9 +105,6 @@ describe('DefaultTelemetryProvider', () => {
       sendCount: () => {},
     };
 
-    // Default logger appends to console. Need to ensure log level is high
-    // enough to write debug log items
-    Logger.getInstance().level = 3;
     const provider = new DefaultTelemetryProvider(throwsOnSendSpanExporter);
     const span = provider.startSpan('test span');
     expectNoCalls(mockConsole, 'debug');
@@ -120,9 +121,6 @@ describe('DefaultTelemetryProvider', () => {
       sendCount: () => { throw new Error('test error'); },
     };
 
-    // Default logger appends to console. Need to ensure log level is high
-    // enough to write debug log items
-    Logger.getInstance().level = 3;
     const provider = new DefaultTelemetryProvider(throwsOnSendCountExporter);
     expectNoCalls(mockConsole, 'debug');
 
