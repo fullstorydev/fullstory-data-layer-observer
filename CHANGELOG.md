@@ -12,7 +12,7 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ### 1.12.1
 
-- Change made to allow searching for empty strings with ```''``` or ```""```.  Technically any string comparison can be quoted, but this was specifically added for searching for empty string 
+- Change made to allow searching for empty strings with ```''``` or ```""```.  Technically any string comparison can be quoted, but this was specifically added for searching for empty string
 
 ### 1.12.0
 
