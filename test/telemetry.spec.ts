@@ -315,7 +315,7 @@ describe('Telemetry initialization from window', () => {
     // beforehand. If we import the initialization function while rules from other
     // tests are still on the global window, test output noise is generated due to
     // unexpected data layer and rule state
-    initializeFromWindow = (await import('../src/embed/init')).default;
+    initializeFromWindow = (await import('../src/embed/init.impl')).default;
   });
 
   afterEach(() => {
