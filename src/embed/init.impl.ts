@@ -130,6 +130,7 @@ export default function _dlo_initializeFromWindow() {
         break;
       case 'string':
         level = parseInt(win._dlo_logLevel, 10);
+        level = Number.isNaN(level) ? undefined : level;
         break;
       default:
         level = undefined;
