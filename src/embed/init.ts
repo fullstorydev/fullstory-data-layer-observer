@@ -20,7 +20,7 @@ window['_dlo_logLevel'] = 1;
 window['_dlo_telemetryProvider'] = null;
 
 // A custom telemetry exporter to be used with the default telemetry provider.
-// If a custom telemetry provider is specified, this exporter is not used. A console
+// If a custom telemetry provider is specified, this exporter is not used. A null
 // exporter will be used if neither a custom telemetry provider nor a custom telemetry
 // exporter are specified
 // Default is null
@@ -103,7 +103,11 @@ export default function _dlo_initializeFromWindow() {
     Logger.getInstance(win._dlo_appender);
 
     // Logging must be initialized before telemetry since telemetry errors may be logged
-    Telemetry.getInstance(win._dlo_telemetryProvider, win._dlo_telemetryExporter);
+    if (win._dlo_telemetryProvider) {
+      Telemetry.setInstance(win._dlo_telemetryProvider);
+    } else {
+      Telemetry.setInstance(Telemetry.withExporter(win._dlo_telemetryExporter));
+    }
 
     if (win._dlo_observer) {
       Logger.getInstance().warn(LogMessageType.ObserverMultipleLoad);

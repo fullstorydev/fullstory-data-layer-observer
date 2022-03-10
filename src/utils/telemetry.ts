@@ -227,6 +227,21 @@ export const consoleTelemetryExporter: TelemetryExporter = {
 };
 
 /**
+ * A {@link TelemetryExporter} which does nothing with telemetry events
+ */
+export const nullTelemetryExporter: TelemetryExporter = {
+  /**
+   * Does nothing with the timespan event
+   */
+  sendSpan: () => {},
+
+  /**
+   * Does nothing with the count event
+   */
+  sendCount: () => {},
+};
+
+/**
  * Telemetry entry point to initialize the singleton {@link TelemetryProvider} or
  * get the current {@link TelemetryProvider}
  */
@@ -234,34 +249,38 @@ export class Telemetry {
   private static instance: TelemetryProvider | undefined;
 
   /**
-   * Gets the singleton {@link TelemetryProvider} configured for the Data Layer Observer instance.
-   * Initializes the singleton {@link TelemetryProvider} on first call
+   * Sets the singleton {@link TelemetryProvider} to the given provider
    *
-   * @param provider The {@link TelemetryProvider} to initialize; only effective on first call
-   * @param exporter The {@link TelemetryExporter} to use with the default Telemetry Provider; only
-   * used if no {@link TelemetryProvider} is given and only effective on first call
+   * @param provider The {@link TelemetryProvider} for collecting and sending telemetry
    */
-  static getInstance(provider?: TelemetryProvider, exporter?: TelemetryExporter): TelemetryProvider {
-    if (Telemetry.instance) {
-      return Telemetry.instance;
-    }
-
-    if (provider) {
-      Telemetry.instance = provider;
-    } else if (exporter) {
-      Telemetry.instance = new DefaultTelemetryProvider(exporter);
-    } else {
-      Telemetry.instance = new DefaultTelemetryProvider(consoleTelemetryExporter);
-    }
-
-    return Telemetry.instance;
+  static setInstance(provider: TelemetryProvider) {
+    Telemetry.instance = provider;
   }
 
   /**
-   * Clears the initialized telemetry provider allowing telemetry to be reinitialized. Used
-   * within telemetry intialization tests to achieve a clean starting state
+   * Returns a {@link DefaultTelemetryProvider} which sends telemetry to the given
+   * telemetry exporter
+   *
+   * @param exporter The exporter for sending telemetry
    */
-  static reset(): void {
-    Telemetry.instance = undefined;
+  static withExporter(exporter: 'console' | TelemetryExporter | undefined) : TelemetryProvider {
+    if (exporter === 'console') {
+      return new DefaultTelemetryProvider(consoleTelemetryExporter);
+    }
+    if (exporter && typeof exporter !== 'string') {
+      return new DefaultTelemetryProvider(exporter);
+    }
+    return new DefaultTelemetryProvider(nullTelemetryExporter);
+  }
+
+  /**
+   * Gets the configured {@link TelemetryProvider} instance. Initializes a default
+   * telemetry provider if a telemetry provider hasn't been set
+   */
+  static getInstance(): TelemetryProvider {
+    if (!Telemetry.instance) {
+      Telemetry.instance = Telemetry.withExporter(nullTelemetryExporter);
+    }
+    return Telemetry.instance;
   }
 }
