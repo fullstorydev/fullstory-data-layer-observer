@@ -1,11 +1,14 @@
-/* eslint-disable class-methods-use-this, @typescript-eslint/no-unused-vars */
+/* eslint-disable class-methods-use-this, max-classes-per-file, no-underscore-dangle, @typescript-eslint/no-unused-vars */
 import { expect } from 'chai';
 import 'mocha';
 
-import { DefaultTelemetryProvider, consoleTelemetryExporter } from '../src/utils/telemetry';
+import {
+  DefaultTelemetryProvider, consoleTelemetryExporter, Telemetry, nullTelemetryExporter,
+} from '../src/utils/telemetry';
 import { MockClass } from './mocks/mock';
 import Console from './mocks/console';
-import { expectNoCalls, expectParams } from './utils/mocha';
+import { expectCall, expectNoCalls, expectParams } from './utils/mocha';
+import { ConsoleAppender, Logger } from '../src/utils/logger';
 
 class MockTelemetryExporter extends MockClass {
   sendSpan(): void {}
@@ -13,7 +16,35 @@ class MockTelemetryExporter extends MockClass {
   sendCount(): void {}
 }
 
+class MockTelemetryProvider extends MockClass {
+  endSpan(): void {}
+
+  startSpan() {
+    return {
+      end: this.endSpan,
+    };
+  }
+
+  count(): void {}
+}
+
 describe('DefaultTelemetryProvider', () => {
+  const originalConsole = globalThis.console;
+  let mockConsole: Console;
+
+  beforeEach(() => {
+    mockConsole = new Console();
+    (globalThis as any).console = mockConsole;
+    // Ensure log level is high enough to write debug log items
+    Logger.getInstance().level = 3;
+    Logger.getInstance().appender = new ConsoleAppender();
+  });
+
+  afterEach(() => {
+    (globalThis as any).console = originalConsole;
+    Logger.getInstance().level = 1;
+  });
+
   it('sends span event to telemetry exporter when span is ended', async () => {
     const name = 'test';
     const attributes: Record<string, any> = {
@@ -81,6 +112,37 @@ describe('DefaultTelemetryProvider', () => {
 
     expectNoCalls(exporter, 'sendSpan');
   });
+
+  it('logs telemetry span errors at the debug level', () => {
+    const throwsOnSendSpanExporter = {
+      sendSpan: () => { throw new Error('test error'); },
+      sendCount: () => {},
+    };
+
+    const provider = new DefaultTelemetryProvider(throwsOnSendSpanExporter);
+    const span = provider.startSpan('test span');
+    expectNoCalls(mockConsole, 'debug');
+
+    span.end();
+
+    const [error] = expectParams(mockConsole, 'debug');
+    expect(error).to.equal('Error sending telemetry span: test error');
+  });
+
+  it('logs telemetry count errors at the debug level', () => {
+    const throwsOnSendCountExporter = {
+      sendSpan: () => {},
+      sendCount: () => { throw new Error('test error'); },
+    };
+
+    const provider = new DefaultTelemetryProvider(throwsOnSendCountExporter);
+    expectNoCalls(mockConsole, 'debug');
+
+    provider.count('test count', 1);
+
+    const [error] = expectParams(mockConsole, 'debug');
+    expect(error).to.equal('Error sending telemetry count: test error');
+  });
 });
 
 describe('ConsoleTelemetryExporter', () => {
@@ -146,5 +208,191 @@ describe('ConsoleTelemetryExporter', () => {
     expectNoCalls(mockConsole, 'info');
     expectNoCalls(mockConsole, 'error');
     expectNoCalls(mockConsole, 'warn');
+  });
+});
+
+describe('NullTelemetryExporter', () => {
+  it('doesn\'t throw when sending telemetry spans', () => {
+    expect(nullTelemetryExporter.sendSpan).not.to.throw();
+  });
+
+  it('doesn\'t throw when sending telemetry counts', () => {
+    expect(nullTelemetryExporter.sendCount).not.to.throw();
+  });
+});
+
+describe('Direct telemetry initialization', () => {
+  const originalConsole = globalThis.console;
+  let mockConsole: Console;
+
+  beforeEach(() => {
+    mockConsole = new Console();
+    (globalThis as any).console = mockConsole;
+  });
+
+  afterEach(() => {
+    (globalThis as any).console = originalConsole;
+  });
+
+  it('sets and returns the given telemetry provider', () => {
+    const mockProvider = new MockTelemetryProvider();
+    Telemetry.setInstance(mockProvider);
+    const provider = Telemetry.getInstance();
+
+    // endSpan is defined on MockTelemetryProvider to track span.end() calls
+    expectNoCalls(mockProvider, 'endSpan');
+    expectNoCalls(mockProvider, 'count');
+
+    const span = provider.startSpan('test span');
+    provider.count('test count', 1);
+    span.end();
+
+    expectCall(mockProvider, 'endSpan', 1);
+    expectCall(mockProvider, 'count', 1);
+  });
+
+  [undefined, 'unrecognized'].forEach((exporter) => {
+    it('uses the default telemetry provider and a null telemetry exporter by default', () => {
+      const provider = Telemetry.withExporter(exporter as 'console' | undefined);
+
+      expect(() => {
+        const span = provider.startSpan('test span');
+        provider.count('test count', 1);
+        span.end();
+      }).not.to.throw();
+
+      // Verify the console exporter isn't used
+      expectNoCalls(mockConsole, 'debug');
+    });
+  });
+
+  it('uses the default telemetry provider given a custom telemetry exporter', () => {
+    const mockExporter = new MockTelemetryExporter();
+    const provider = Telemetry.withExporter(mockExporter);
+
+    expectNoCalls(mockExporter, 'sendSpan');
+    expectNoCalls(mockExporter, 'sendCount');
+
+    const span = provider.startSpan('test span');
+    provider.count('test count', 1);
+    span.end();
+
+    expectCall(mockExporter, 'sendSpan', 1);
+    expectCall(mockExporter, 'sendCount', 1);
+  });
+
+  it('uses the default telemetry provider and console telemetry exporter given a \'console\' configuration', () => {
+    const provider = Telemetry.withExporter('console');
+
+    expectNoCalls(mockConsole, 'debug');
+
+    const span = provider.startSpan('test span');
+    provider.count('test count', 1);
+    span.end();
+
+    expectCall(mockConsole, 'debug', 2);
+  });
+});
+
+describe('Telemetry initialization from window', () => {
+  const originalConsole = globalThis.console;
+  let mockConsole: Console;
+  const win: any = (window as any);
+  let initializeFromWindow: () => void;
+
+  beforeEach(async () => {
+    mockConsole = new Console();
+    (globalThis as any).console = mockConsole;
+
+    // Clear any rules that may have been configured in other tests
+    Object.keys(win)
+      .filter((key) => key.startsWith('_dlo_rules'))
+      .forEach((key) => {
+        win[key] = [];
+      });
+
+    // We dynamically import the initialization function so we can remove rules
+    // beforehand. If we import the initialization function while rules from other
+    // tests are still on the global window, test output noise is generated due to
+    // unexpected data layer and rule state
+    initializeFromWindow = (await import('../src/embed/init.impl')).default;
+  });
+
+  afterEach(() => {
+    (globalThis as any).console = originalConsole;
+    win._dlo_telemetryProvider = undefined;
+    win._dlo_telemetryExporter = undefined;
+  });
+
+  [undefined, 'unrecognized'].forEach((exporter) => {
+    it('uses the default telemetry provider and null telemetry exporter by default', () => {
+      win._dlo_telemetryExporter = exporter;
+      initializeFromWindow();
+      const provider = Telemetry.getInstance();
+
+      expect(() => {
+        const span = provider.startSpan('test span');
+        provider.count('test count', 1);
+        span.end();
+      }).not.to.throw();
+
+      // Verify the console exporter isn't used
+      expectNoCalls(mockConsole, 'debug');
+    });
+  });
+
+  it('uses the default telemetry provider given a custom telemetry exporter', () => {
+    const mockExporter = new MockTelemetryExporter();
+    win._dlo_telemetryExporter = mockExporter;
+    initializeFromWindow();
+    const provider = Telemetry.getInstance();
+
+    expectNoCalls(mockExporter, 'sendSpan');
+    expectNoCalls(mockExporter, 'sendCount');
+
+    const span = provider.startSpan('test span');
+    provider.count('test count', 1);
+    span.end();
+
+    expectCall(mockExporter, 'sendSpan', 1);
+    expectCall(mockExporter, 'sendCount', 1);
+  });
+
+  it('uses the default telemetry provider and console telemetry exporter given a \'console\' configuration', () => {
+    win._dlo_telemetryExporter = 'console';
+    initializeFromWindow();
+    const provider = Telemetry.getInstance();
+
+    expectNoCalls(mockConsole, 'debug');
+
+    const span = provider.startSpan('test span');
+    provider.count('test count', 1);
+    span.end();
+
+    expectCall(mockConsole, 'debug', 2);
+  });
+
+  it('ignores a given custom telemetry exporter given a custom telemetry provider', () => {
+    const mockProvider = new MockTelemetryProvider();
+    const mockExporter = new MockTelemetryExporter();
+    win._dlo_telemetryProvider = mockProvider;
+    win._dlo_telemetryExporter = mockExporter;
+    initializeFromWindow();
+    const provider = Telemetry.getInstance();
+
+    // endSpan is defined on MockTelemetryProvider to track span.end() calls
+    expectNoCalls(mockProvider, 'endSpan');
+    expectNoCalls(mockProvider, 'count');
+
+    const span = provider.startSpan('test span');
+    provider.count('test count', 1);
+    span.end();
+
+    expectCall(mockProvider, 'endSpan', 1);
+    expectCall(mockProvider, 'count', 1);
+
+    // Exporter should be unused if a custom provider is given
+    expectNoCalls(mockExporter, 'sendSpan');
+    expectNoCalls(mockExporter, 'sendCount');
   });
 });
