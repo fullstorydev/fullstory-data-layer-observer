@@ -120,25 +120,10 @@ export default function _dlo_initializeFromWindow() {
       Logger.getInstance().warn(LogMessageType.ObserverRulesNone);
     }
 
-    // get the log level from win._dlo_logLevel
-    // we allow string or number, and use parseInt if it is a string
-    // otherwise it is set to undefined, which will use the default log level
-    let level;
-    switch (typeof win._dlo_logLevel) {
-      case 'number':
-        level = win._dlo_logLevel;
-        break;
-      case 'string':
-        level = parseInt(win._dlo_logLevel, 10);
-        level = Number.isNaN(level) ? undefined : level;
-        break;
-      default:
-        level = undefined;
-    }
     win._dlo_observer = new DataLayerObserver({
       appender: win._dlo_appender || undefined,
       beforeDestination: win._dlo_beforeDestination || undefined,
-      logLevel: level,
+      logLevel: win._dlo_logLevel,
       previewMode: win._dlo_previewMode === true,
       previewDestination: win._dlo_previewDestination || undefined,
       readOnLoad: win._dlo_readOnLoad === true,

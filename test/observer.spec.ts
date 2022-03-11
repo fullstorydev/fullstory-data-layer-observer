@@ -12,7 +12,7 @@ import {
   expectParams, expectNoCalls, expectCall, ExpectObserver, expectGlobal, expectEqual, setGlobal,
 } from './utils/mocha';
 import { Operator, OperatorOptions } from '../src/operator';
-import { LogEvent, LogLevel } from '../src/utils/logger';
+import { LogEvent, LogLevel, Logger } from '../src/utils/logger';
 import DataHandler from '../src/handler';
 import { MockClass } from './mocks/mock';
 import MonitorFactory from '../src/monitor-factory';
@@ -411,6 +411,28 @@ describe('DataLayerObserver unit tests', () => {
     expect(event).to.not.be.undefined;
 
     ExpectObserver.getInstance().cleanup(observer);
+  });
+
+  [
+    { configLevel: 0, expectedLevel: 0 },
+    { configLevel: 1, expectedLevel: 1 },
+    { configLevel: 2, expectedLevel: 2 },
+    { configLevel: 3, expectedLevel: 3 },
+    // Passing undefined shouldn't change the global log level
+    { configLevel: undefined, expectedLevel: () => Logger.getInstance().level },
+  ].forEach((tc) => {
+    it(`sets the global log level to ${tc.expectedLevel} given config value ${tc.configLevel}`, () => {
+      const expectedLevel = typeof tc.expectedLevel === 'function' ? tc.expectedLevel() : tc.expectedLevel;
+
+      const observer = ExpectObserver.getInstance().create({
+        logLevel: tc.configLevel,
+        rules: [],
+      });
+
+      expect(Logger.getInstance().level).to.equal(expectedLevel);
+
+      ExpectObserver.getInstance().cleanup(observer);
+    });
   });
 
   it('updating properties should trigger the data handler', (done) => {
