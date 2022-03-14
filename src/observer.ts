@@ -126,7 +126,7 @@ export class DataLayerObserver {
 
     // set the level after the appender is assigned since the first call to getInstance()
     // inits the Logger; else the Logger will use the default appender (e.g. console)
-    if (logLevel) {
+    if (logLevel !== undefined) {
       Logger.getInstance().level = logLevel;
     }
 

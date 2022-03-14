@@ -123,7 +123,7 @@ export default function _dlo_initializeFromWindow() {
     win._dlo_observer = new DataLayerObserver({
       appender: win._dlo_appender || undefined,
       beforeDestination: win._dlo_beforeDestination || undefined,
-      logLevel: win._dlo_logLevel || undefined,
+      logLevel: win._dlo_logLevel,
       previewMode: win._dlo_previewMode === true,
       previewDestination: win._dlo_previewDestination || undefined,
       readOnLoad: win._dlo_readOnLoad === true,
