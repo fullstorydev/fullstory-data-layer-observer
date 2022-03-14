@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 1.13.1
+
+- Fixed an initialization bug which prevented configuring a log level of `0`
+
 ### 1.13.0
 
 - Added telemetry provider and exporter concepts to measure timings, error counts, and other metrics. Telemetry is currently initialized but otherwise unused
