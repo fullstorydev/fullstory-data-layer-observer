@@ -2,7 +2,7 @@
 import { Logger, LogMessageType } from '../utils/logger';
 import { startsWith } from '../utils/object';
 import { DataLayerObserver } from '../observer';
-import { Telemetry } from '../utils/telemetry';
+import { defaultDloAttributes, Telemetry, telemetryType } from '../utils/telemetry';
 
 /*
 This is where we initialize the DataLayerObserver from this info:
@@ -67,7 +67,7 @@ window['_dlo_rulesFromOpsTeam'] = [
 
 function _dlo_collectRules(): any[] {
   try {
-    const startTime = Date.now();
+    const ruleCollectionSpan = Telemetry.startSpan(telemetryType.ruleCollectionSpan);
     const results: any[] = [];
     Object.getOwnPropertyNames(window).forEach((propName) => {
       if (startsWith(propName, '_dlo_rules') === false) return;
@@ -83,7 +83,7 @@ function _dlo_collectRules(): any[] {
         results.push(rule);
       });
     });
-    Logger.getInstance().record('DLO rule processing time', { numericValue: startTime - Date.now() });
+    ruleCollectionSpan.end();
     return results;
   } catch (err) {
     Logger.getInstance().error(LogMessageType.RuleRegistrationError, { reason: `Error: ${err}` });
@@ -93,7 +93,6 @@ function _dlo_collectRules(): any[] {
 
 export default function _dlo_initializeFromWindow() {
   try {
-    const startTime = Date.now();
     const win = (window as { [key: string]: any });
 
     /*
@@ -104,10 +103,16 @@ export default function _dlo_initializeFromWindow() {
 
     // Logging must be initialized before telemetry since telemetry errors may be logged
     if (win._dlo_telemetryProvider) {
-      Telemetry.setInstance(win._dlo_telemetryProvider);
+      Telemetry.setProvider(win._dlo_telemetryProvider);
     } else {
-      Telemetry.setInstance(Telemetry.withExporter(win._dlo_telemetryExporter));
+      Telemetry.setProvider(
+        Telemetry
+          .withExporter(win._dlo_telemetryExporter)
+          .withDefaultAttributes(defaultDloAttributes),
+      );
     }
+
+    const initializationSpan = Telemetry.startSpan(telemetryType.initializationSpan);
 
     if (win._dlo_observer) {
       Logger.getInstance().warn(LogMessageType.ObserverMultipleLoad);
@@ -131,7 +136,7 @@ export default function _dlo_initializeFromWindow() {
       urlValidator: win._dlo_urlValidator || undefined,
       rules,
     });
-    Logger.getInstance().record('DLO initialization time', { numericValue: startTime - Date.now() });
+    initializationSpan.end();
   } catch (err) {
     Logger.getInstance().error(LogMessageType.ObserverInitializationError, { reason: `Error: ${err}` });
   }

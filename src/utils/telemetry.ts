@@ -1,5 +1,24 @@
 /* eslint-disable no-console, max-classes-per-file */
 import { Logger } from './logger';
+import pkg from '../../package.json';
+
+/**
+ * Constants used for telemetry event names. These string values should never change
+ */
+export const telemetryType = {
+  initializationSpan: 'dlo_init_span',
+  ruleCollectionSpan: 'dlo_rule_collection_span',
+  ruleRegistrationSpan: 'dlo_rule_registration_span',
+  ruleCount: 'dlo_rule_count',
+  handleEventSpan: 'dlo_handle_event_span',
+};
+
+/**
+ * Default telemetry attributes for DLO
+ */
+export const defaultDloAttributes = {
+  version: pkg.version,
+};
 
 /**
  * Optional metadata to include with telemetry events
@@ -152,6 +171,8 @@ class DefaultTelemetrySpan implements TelemetrySpan {
  * errors -- instead logging these errors at the debug level
  */
 export class DefaultTelemetryProvider implements TelemetryProvider {
+  private defaultAttributes: Attributes = {};
+
   /**
    * Creates a new {@link DefaultTelemetryProvider} instance
    *
@@ -171,7 +192,7 @@ export class DefaultTelemetryProvider implements TelemetryProvider {
       return new DefaultTelemetrySpan(
         name,
         this.exporter.sendSpan,
-        attributes,
+        this.insertDefaultAttributes(attributes),
       );
     } catch (err) {
       Logger.getInstance().debug(`Error starting telemetry span: ${err.message}`);
@@ -193,12 +214,40 @@ export class DefaultTelemetryProvider implements TelemetryProvider {
       this.exporter.sendCount({
         name,
         timestamp: new Date().toISOString(),
-        attributes,
+        attributes: this.insertDefaultAttributes(attributes),
         value,
       });
     } catch (err) {
       Logger.getInstance().debug(`Error sending telemetry count: ${err.message}`);
     }
+  }
+
+  /**
+   * Configures default attributes which are added as metadata to all collected
+   * collected telemetry events
+   *
+   * @param attributes The default attributes to include with all telemetry events
+   */
+  withDefaultAttributes(attributes: Attributes): DefaultTelemetryProvider {
+    this.defaultAttributes = attributes;
+    return this;
+  }
+
+  private insertDefaultAttributes(attributes?: Attributes): Attributes {
+    // We're avoiding Object.assign and object literal spreading since they're
+    // not supported by IE11
+    const mergedAttributes: Attributes = {};
+    [attributes, this.defaultAttributes].forEach((attributeSet) => {
+      if (!attributeSet) {
+        return;
+      }
+      Object.getOwnPropertyNames(attributeSet).forEach((prop) => {
+        if (!Object.prototype.hasOwnProperty.call(mergedAttributes, prop)) {
+          mergedAttributes[prop] = attributeSet[prop];
+        }
+      });
+    });
+    return mergedAttributes;
   }
 }
 
@@ -253,7 +302,7 @@ export class Telemetry {
    *
    * @param provider The {@link TelemetryProvider} for collecting and sending telemetry
    */
-  static setInstance(provider: TelemetryProvider) {
+  static setProvider(provider: TelemetryProvider) {
     Telemetry.instance = provider;
   }
 
@@ -263,7 +312,7 @@ export class Telemetry {
    *
    * @param exporter The exporter for sending telemetry
    */
-  static withExporter(exporter: 'console' | TelemetryExporter | undefined) : TelemetryProvider {
+  static withExporter(exporter: 'console' | TelemetryExporter | undefined) : DefaultTelemetryProvider {
     if (exporter === 'console') {
       return new DefaultTelemetryProvider(consoleTelemetryExporter);
     }
@@ -277,10 +326,31 @@ export class Telemetry {
    * Gets the configured {@link TelemetryProvider} instance. Initializes a default
    * telemetry provider if a telemetry provider hasn't been set
    */
-  static getInstance(): TelemetryProvider {
+  private static getInstance(): TelemetryProvider {
     if (!Telemetry.instance) {
       Telemetry.instance = Telemetry.withExporter(nullTelemetryExporter);
     }
     return Telemetry.instance;
+  }
+
+  /**
+   * Starts a new timespan to measure the duration of some operation
+   *
+   * @param name The name of the timespan event
+   * @param attributes Optional metadata to include with the event
+   */
+  static startSpan(name: string, attributes?: Attributes): TelemetrySpan {
+    return Telemetry.getInstance().startSpan(name, attributes);
+  }
+
+  /**
+   * Captures a new increment value for some count
+   *
+   * @param name The name of the count event
+   * @param value The value by which to increment the count event
+   * @param attributes Optional metadata to include with the event
+   */
+  static count(name: string, value: number, attributes?: Attributes): void {
+    Telemetry.getInstance().count(name, value, attributes);
   }
 }
