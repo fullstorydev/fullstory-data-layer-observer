@@ -8,7 +8,9 @@ import {
 import { FunctionOperator } from './operators';
 import DataLayerTarget from './target';
 import MonitorFactory from './monitor-factory';
-import { Telemetry, telemetryType } from './utils/telemetry';
+import {
+  errorAttributes, errorType, Telemetry, telemetryType,
+} from './utils/telemetry';
 
 /**
  * DataLayerConfig provides global settings for a DataLayerObserver.
@@ -221,6 +223,7 @@ export class DataLayerObserver {
     } catch (err) {
       this.removeHandler(handler);
       Logger.getInstance().error(LogMessageType.OperatorError, { operator: JSON.stringify(options) });
+      Telemetry.count(telemetryType.clientError, 1, errorAttributes(errorType.operatorError));
       throw err;
     }
   }
@@ -243,6 +246,7 @@ export class DataLayerObserver {
       return operator;
     } catch (err) {
       Logger.getInstance().error(LogMessageType.OperatorError, { operator: JSON.stringify(options) });
+      Telemetry.count(telemetryType.clientError, 1, errorAttributes(errorType.operatorError));
       throw err;
     }
   }
@@ -325,6 +329,7 @@ export class DataLayerObserver {
                 selector: workingTarget.selector,
                 reason: err.message,
               });
+            Telemetry.count(telemetryType.clientError, 1, errorAttributes(errorType.observerReadError));
           }
         }
       } else if (workingTarget.type === 'object') {
@@ -338,6 +343,7 @@ export class DataLayerObserver {
               selector: workingTarget.selector,
               reason: err.message,
             });
+          Telemetry.count(telemetryType.clientError, 1, errorAttributes(errorType.observerReadError));
         }
       }
     }
@@ -424,6 +430,7 @@ export class DataLayerObserver {
     if (!source || !destination) {
       Logger.getInstance().error(LogMessageType.RuleInvalid,
         { rule: id, source, reason: `Missing ${source ? 'destination' : 'source'}` });
+      Telemetry.count(telemetryType.clientError, 1, errorAttributes(errorType.invalidRuleError));
       return;
     }
 

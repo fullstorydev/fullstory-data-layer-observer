@@ -2,7 +2,9 @@
 import { Logger, LogMessageType } from '../utils/logger';
 import { startsWith } from '../utils/object';
 import { DataLayerObserver } from '../observer';
-import { defaultDloAttributes, Telemetry, telemetryType } from '../utils/telemetry';
+import {
+  defaultDloAttributes, errorAttributes, errorType, Telemetry, telemetryType,
+} from '../utils/telemetry';
 
 /*
 This is where we initialize the DataLayerObserver from this info:
@@ -87,6 +89,7 @@ function _dlo_collectRules(): any[] {
     return results;
   } catch (err) {
     Logger.getInstance().error(LogMessageType.RuleRegistrationError, { reason: `Error: ${err}` });
+    Telemetry.count(telemetryType.clientError, 1, errorAttributes(errorType.ruleRegistrationError));
     return [];
   }
 }
@@ -139,5 +142,6 @@ export default function _dlo_initializeFromWindow() {
     initializationSpan.end();
   } catch (err) {
     Logger.getInstance().error(LogMessageType.ObserverInitializationError, { reason: `Error: ${err}` });
+    Telemetry.count(telemetryType.clientError, 1, errorAttributes(errorType.observerInitializationError));
   }
 }

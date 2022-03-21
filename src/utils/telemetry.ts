@@ -11,7 +11,32 @@ export const telemetryType = {
   ruleRegistrationSpan: 'dlo_rule_registration_span',
   ruleCount: 'dlo_rule_count',
   handleEventSpan: 'dlo_handle_event_span',
+  clientError: 'dlo_client_error',
 };
+
+/**
+ * Constants used for error types in client error telemetry. These string values should
+ * never change
+ */
+export const errorType = {
+  operatorError: 'dlo_operator_error',
+  monitorRemovalError: 'dlo_monitor_removal_error',
+  monitorCallError: 'dlo_monitor_call_error',
+  monitorEmitError: 'dlo_monitor_emit_error',
+  observerReadError: 'dlo_observer_read_error',
+  invalidRuleError: 'dlo_invalid_rule_error',
+  ruleRegistrationError: 'dlo_rule_registration_error',
+  observerInitializationError: 'dlo_observer_init_error',
+};
+
+/**
+ * Returns {@link Attributes} containing the given error type
+ *
+ * @param type The error type to report as a client error telemetry count
+ */
+export const errorAttributes = (type: string): Attributes => ({
+  errorType: type,
+});
 
 /**
  * Default telemetry attributes for DLO
