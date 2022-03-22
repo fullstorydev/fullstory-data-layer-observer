@@ -3,9 +3,7 @@ import { Operator } from './operator';
 import { DataLayerDetail, createEventType } from './event';
 import DataLayerTarget from './target';
 import { FanOutOperator } from './operators/fan-out';
-import {
-  Telemetry, telemetryType, errorAttributes, errorType,
-} from './utils/telemetry';
+import { Telemetry, telemetryType, errorType } from './utils/telemetry';
 
 /**
  * DataHandler listens for changes from lower level PropertyListeners. Events emitted from
@@ -152,7 +150,7 @@ export default class DataHandler {
         this.runDebugger(`[${i}] ${name} output ${stats}`, handledData, '  ');
       } catch (err) {
         Logger.getInstance().error(LogMessageType.OperatorError, { operator: name, path, reason: err.message });
-        Telemetry.count(telemetryType.clientError, 1, errorAttributes(errorType.operatorError));
+        Telemetry.error(errorType.operatorError);
         return null;
       }
     }

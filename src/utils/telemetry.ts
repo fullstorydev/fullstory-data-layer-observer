@@ -30,15 +30,6 @@ export const errorType = {
 };
 
 /**
- * Returns {@link Attributes} containing the given error type
- *
- * @param type The error type to report as a client error telemetry count
- */
-export const errorAttributes = (type: string): Attributes => ({
-  errorType: type,
-});
-
-/**
  * Default telemetry attributes for DLO
  */
 export const defaultDloAttributes = {
@@ -364,5 +355,15 @@ export class Telemetry {
    */
   static count(name: string, value: number, attributes?: Attributes): void {
     Telemetry.getInstance().count(name, value, attributes);
+  }
+
+  /**
+   * Convenience function for collecting client errors as telemetry counts,
+   * reporting the error type as metadata
+   *
+   * @param type The error type
+   */
+  static error(type: string): void {
+    Telemetry.count(telemetryType.clientError, 1, { errorType: type });
   }
 }
