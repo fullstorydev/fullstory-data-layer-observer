@@ -110,6 +110,7 @@ export default function _dlo_initializeFromWindow() {
     } else {
       Telemetry.setProvider(
         Telemetry
+          // An undefined or null telemetry exporter does not send telemetry to any destination
           .withExporter(win._dlo_telemetryExporter)
           .withDefaultAttributes(defaultDloAttributes),
       );
