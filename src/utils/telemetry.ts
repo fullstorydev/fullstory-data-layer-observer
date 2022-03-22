@@ -217,7 +217,7 @@ export class DefaultTelemetryProvider implements TelemetryProvider {
       return new DefaultTelemetrySpan(
         name,
         this.exporter.sendSpan,
-        this.insertDefaultAttributes(attributes),
+        this.mergeWithDefaultAttributes(attributes),
       );
     } catch (err) {
       Logger.getInstance().debug(`Error starting telemetry span: ${err.message}`);
@@ -239,7 +239,7 @@ export class DefaultTelemetryProvider implements TelemetryProvider {
       this.exporter.sendCount({
         name,
         timestamp: new Date().toISOString(),
-        attributes: this.insertDefaultAttributes(attributes),
+        attributes: this.mergeWithDefaultAttributes(attributes),
         value,
       });
     } catch (err) {
@@ -258,21 +258,8 @@ export class DefaultTelemetryProvider implements TelemetryProvider {
     return this;
   }
 
-  private insertDefaultAttributes(attributes?: Attributes): Attributes {
-    // We're avoiding Object.assign and object literal spreading since they're
-    // not supported by IE11
-    const mergedAttributes: Attributes = {};
-    [attributes, this.defaultAttributes].forEach((attributeSet) => {
-      if (!attributeSet) {
-        return;
-      }
-      Object.getOwnPropertyNames(attributeSet).forEach((prop) => {
-        if (!Object.prototype.hasOwnProperty.call(mergedAttributes, prop)) {
-          mergedAttributes[prop] = attributeSet[prop];
-        }
-      });
-    });
-    return mergedAttributes;
+  private mergeWithDefaultAttributes(attributes?: Attributes): Attributes {
+    return { ...this.defaultAttributes, ...attributes };
   }
 }
 
