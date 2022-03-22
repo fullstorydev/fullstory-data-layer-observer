@@ -63,8 +63,6 @@ export default class DataHandler {
       operatorCount: this.operators.length,
       operatorNames: this.operators
         .map((operator) => operator.options.name)
-        // Unique operator names
-        .filter((name, index, self) => self.indexOf(name) === index)
         .join(','),
     });
 
