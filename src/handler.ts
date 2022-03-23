@@ -3,6 +3,7 @@ import { Operator } from './operator';
 import { DataLayerDetail, createEventType } from './event';
 import DataLayerTarget from './target';
 import { FanOutOperator } from './operators/fan-out';
+import { Telemetry, telemetryType, errorType } from './utils/telemetry';
 
 /**
  * DataHandler listens for changes from lower level PropertyListeners. Events emitted from
@@ -56,6 +57,13 @@ export default class DataHandler {
    * @param event a browser Event or CustomEvent emitted
    */
   handleEvent(event: CustomEvent<DataLayerDetail>): void {
+    const handleEventSpan = Telemetry.startSpan(telemetryType.handleEventSpan, {
+      operatorCount: this.operators.length,
+      operatorNames: this.operators
+        .map((operator) => operator.options.name)
+        .join(','),
+    });
+
     const { detail: { args, value }, type } = event;
     const { path } = this.target;
 
@@ -80,10 +88,12 @@ export default class DataHandler {
           this.timeoutId = window.setTimeout(() => {
             this.timeoutId = null; // clear the timeout used for debouncing
             this.handleData([result]);
+            handleEventSpan.end();
           }, this.debounce);
         }
       } else {
         this.handleData(args || []);
+        handleEventSpan.end();
       }
     } else {
       Logger.getInstance().warn(LogMessageType.EventUnexpected, { path });
@@ -140,6 +150,7 @@ export default class DataHandler {
         this.runDebugger(`[${i}] ${name} output ${stats}`, handledData, '  ');
       } catch (err) {
         Logger.getInstance().error(LogMessageType.OperatorError, { operator: name, path, reason: err.message });
+        Telemetry.error(errorType.operatorError);
         return null;
       }
     }

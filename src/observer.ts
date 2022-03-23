@@ -8,6 +8,7 @@ import {
 import { FunctionOperator } from './operators';
 import DataLayerTarget from './target';
 import MonitorFactory from './monitor-factory';
+import { errorType, Telemetry, telemetryType } from './utils/telemetry';
 
 /**
  * DataLayerConfig provides global settings for a DataLayerObserver.
@@ -131,9 +132,18 @@ export class DataLayerObserver {
     }
 
     if (rules) {
+      const ruleRegistrationSpan = Telemetry.startSpan(telemetryType.ruleRegistrationSpan);
       rules.forEach((rule: DataLayerRule) => this.registerRule(rule));
+      // TODO(nate): Remove this call when the record log level is deprecated. Removing breaks tests
+      // so there may be some test state management issues to address
       Logger.getInstance().record('DLO rule count', { numericValue: rules.length });
+      ruleRegistrationSpan.end();
+      Telemetry.count(telemetryType.ruleCount, rules.length);
+    } else {
+      Telemetry.count(telemetryType.ruleCount, 0);
     }
+    // TODO(nate): Remove this call when the record log level is deprecated. Removing breaks tests
+    // so there may be some test state management issues to address
     Logger.getInstance().record('DLO constructor time', { numericValue: startTime - Date.now() });
   }
 
@@ -211,6 +221,7 @@ export class DataLayerObserver {
     } catch (err) {
       this.removeHandler(handler);
       Logger.getInstance().error(LogMessageType.OperatorError, { operator: JSON.stringify(options) });
+      Telemetry.error(errorType.operatorError);
       throw err;
     }
   }
@@ -233,6 +244,7 @@ export class DataLayerObserver {
       return operator;
     } catch (err) {
       Logger.getInstance().error(LogMessageType.OperatorError, { operator: JSON.stringify(options) });
+      Telemetry.error(errorType.operatorError);
       throw err;
     }
   }
@@ -315,6 +327,7 @@ export class DataLayerObserver {
                 selector: workingTarget.selector,
                 reason: err.message,
               });
+            Telemetry.error(errorType.observerReadError);
           }
         }
       } else if (workingTarget.type === 'object') {
@@ -328,6 +341,7 @@ export class DataLayerObserver {
               selector: workingTarget.selector,
               reason: err.message,
             });
+          Telemetry.error(errorType.observerReadError);
         }
       }
     }
@@ -414,6 +428,7 @@ export class DataLayerObserver {
     if (!source || !destination) {
       Logger.getInstance().error(LogMessageType.RuleInvalid,
         { rule: id, source, reason: `Missing ${source ? 'destination' : 'source'}` });
+      Telemetry.error(errorType.invalidRuleError);
       return;
     }
 

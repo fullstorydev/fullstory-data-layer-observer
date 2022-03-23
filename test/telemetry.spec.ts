@@ -143,6 +143,102 @@ describe('DefaultTelemetryProvider', () => {
     const [error] = expectParams(mockConsole, 'debug');
     expect(error).to.equal('Error sending telemetry count: test error');
   });
+
+  it('sends default attributes if no event specific attributes are given', () => {
+    const defaultAttributes = {
+      version: '1.2.3',
+      source: 'default',
+    };
+    const expectedAttributeCount = 2;
+    const exporter = new MockTelemetryExporter();
+    const provider = new DefaultTelemetryProvider(exporter).withDefaultAttributes(defaultAttributes);
+
+    const span = provider.startSpan('test span');
+    provider.count('test count', 1);
+    span.end();
+
+    const spanAttributes = expectParams(exporter, 'sendSpan').pop().attributes;
+    expect(spanAttributes.version).to.equal(defaultAttributes.version);
+    expect(spanAttributes.source).to.equal(defaultAttributes.source);
+    expect(Object.getOwnPropertyNames(spanAttributes).length).to.equal(expectedAttributeCount);
+
+    const countAttributes = expectParams(exporter, 'sendCount').pop().attributes;
+    expect(countAttributes.version).to.equal(defaultAttributes.version);
+    expect(countAttributes.source).to.equal(defaultAttributes.source);
+    expect(Object.getOwnPropertyNames(countAttributes).length).to.equal(expectedAttributeCount);
+  });
+
+  it('sends event specific attributes if no default attributes are given', () => {
+    const eventAttributes = {
+      version: '1.2.3',
+      source: 'test',
+    };
+    const expectedAttributeCount = 2;
+    const exporter = new MockTelemetryExporter();
+    const provider = new DefaultTelemetryProvider(exporter);
+
+    const span = provider.startSpan('test span', eventAttributes);
+    provider.count('test count', 1, eventAttributes);
+    span.end();
+
+    const spanAttributes = expectParams(exporter, 'sendSpan').pop().attributes;
+    expect(spanAttributes.version).to.equal(eventAttributes.version);
+    expect(spanAttributes.source).to.equal(eventAttributes.source);
+    expect(Object.getOwnPropertyNames(spanAttributes).length).to.equal(expectedAttributeCount);
+
+    const countAttributes = expectParams(exporter, 'sendCount').pop().attributes;
+    expect(countAttributes.version).to.equal(eventAttributes.version);
+    expect(countAttributes.source).to.equal(eventAttributes.source);
+    expect(Object.getOwnPropertyNames(countAttributes).length).to.equal(expectedAttributeCount);
+  });
+
+  it('merges default and event specific attributes if both are given', () => {
+    const defaultAttributes = {
+      version: '1.2.3',
+      source: 'default',
+    };
+    const eventAttributes = {
+      test: 'test',
+      source: 'event',
+    };
+    const expectedAttributeCount = 3;
+    const exporter = new MockTelemetryExporter();
+    const provider = new DefaultTelemetryProvider(exporter).withDefaultAttributes(defaultAttributes);
+
+    const span = provider.startSpan('test span', eventAttributes);
+    provider.count('test count', 1, eventAttributes);
+    span.end();
+
+    const spanAttributes = expectParams(exporter, 'sendSpan').pop().attributes;
+    expect(spanAttributes.test).to.equal(eventAttributes.test);
+    // Event attributes should override default attributes
+    expect(spanAttributes.source).to.equal(eventAttributes.source);
+    expect(spanAttributes.version).to.equal(defaultAttributes.version);
+    expect(Object.getOwnPropertyNames(spanAttributes).length).to.equal(expectedAttributeCount);
+
+    const countAttributes = expectParams(exporter, 'sendCount').pop().attributes;
+    expect(countAttributes.test).to.equal(eventAttributes.test);
+    // Event attributes should override default attributes
+    expect(countAttributes.source).to.equal(eventAttributes.source);
+    expect(countAttributes.version).to.equal(defaultAttributes.version);
+    expect(Object.getOwnPropertyNames(countAttributes).length).to.equal(expectedAttributeCount);
+  });
+
+  it('sends no attributes if neither default nor event specific attributes are given', () => {
+    const expectedAttributeCount = 0;
+    const exporter = new MockTelemetryExporter();
+    const provider = new DefaultTelemetryProvider(exporter);
+
+    const span = provider.startSpan('test span');
+    provider.count('test count', 1);
+    span.end();
+
+    const spanAttributes = expectParams(exporter, 'sendSpan').pop().attributes;
+    expect(Object.getOwnPropertyNames(spanAttributes).length).to.equal(expectedAttributeCount);
+
+    const countAttributes = expectParams(exporter, 'sendCount').pop().attributes;
+    expect(Object.getOwnPropertyNames(countAttributes).length).to.equal(expectedAttributeCount);
+  });
 });
 
 describe('ConsoleTelemetryExporter', () => {
@@ -236,15 +332,14 @@ describe('Direct telemetry initialization', () => {
 
   it('sets and returns the given telemetry provider', () => {
     const mockProvider = new MockTelemetryProvider();
-    Telemetry.setInstance(mockProvider);
-    const provider = Telemetry.getInstance();
+    Telemetry.setProvider(mockProvider);
 
     // endSpan is defined on MockTelemetryProvider to track span.end() calls
     expectNoCalls(mockProvider, 'endSpan');
     expectNoCalls(mockProvider, 'count');
 
-    const span = provider.startSpan('test span');
-    provider.count('test count', 1);
+    const span = Telemetry.startSpan('test span');
+    Telemetry.count('test count', 1);
     span.end();
 
     expectCall(mockProvider, 'endSpan', 1);
@@ -328,11 +423,10 @@ describe('Telemetry initialization from window', () => {
     it('uses the default telemetry provider and null telemetry exporter by default', () => {
       win._dlo_telemetryExporter = exporter;
       initializeFromWindow();
-      const provider = Telemetry.getInstance();
 
       expect(() => {
-        const span = provider.startSpan('test span');
-        provider.count('test count', 1);
+        const span = Telemetry.startSpan('test span');
+        Telemetry.count('test count', 1);
         span.end();
       }).not.to.throw();
 
@@ -345,13 +439,12 @@ describe('Telemetry initialization from window', () => {
     const mockExporter = new MockTelemetryExporter();
     win._dlo_telemetryExporter = mockExporter;
     initializeFromWindow();
-    const provider = Telemetry.getInstance();
 
     expectNoCalls(mockExporter, 'sendSpan');
     expectNoCalls(mockExporter, 'sendCount');
 
-    const span = provider.startSpan('test span');
-    provider.count('test count', 1);
+    const span = Telemetry.startSpan('test span');
+    Telemetry.count('test count', 1);
     span.end();
 
     expectCall(mockExporter, 'sendSpan', 1);
@@ -361,12 +454,11 @@ describe('Telemetry initialization from window', () => {
   it('uses the default telemetry provider and console telemetry exporter given a \'console\' configuration', () => {
     win._dlo_telemetryExporter = 'console';
     initializeFromWindow();
-    const provider = Telemetry.getInstance();
 
     expectNoCalls(mockConsole, 'debug');
 
-    const span = provider.startSpan('test span');
-    provider.count('test count', 1);
+    const span = Telemetry.startSpan('test span');
+    Telemetry.count('test count', 1);
     span.end();
 
     expectCall(mockConsole, 'debug', 2);
@@ -378,14 +470,13 @@ describe('Telemetry initialization from window', () => {
     win._dlo_telemetryProvider = mockProvider;
     win._dlo_telemetryExporter = mockExporter;
     initializeFromWindow();
-    const provider = Telemetry.getInstance();
 
     // endSpan is defined on MockTelemetryProvider to track span.end() calls
     expectNoCalls(mockProvider, 'endSpan');
     expectNoCalls(mockProvider, 'count');
 
-    const span = provider.startSpan('test span');
-    provider.count('test count', 1);
+    const span = Telemetry.startSpan('test span');
+    Telemetry.count('test count', 1);
     span.end();
 
     expectCall(mockProvider, 'endSpan', 1);

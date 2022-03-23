@@ -10,6 +10,11 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 2.0.0
+
+- Changes telemetry collection interfaces from e.g. `Telemetry.getInstance().startSpan` to `Telemetry.startSpan`
+- Instruments significant timing and count metrics
+
 ### 1.13.1
 
 - Fixed an initialization bug which prevented configuring a log level of `0`

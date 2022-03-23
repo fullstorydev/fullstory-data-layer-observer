@@ -1,6 +1,6 @@
 {
   "name": "@fullstory/data-layer-observer",
-  "version": "1.13.1",
+  "version": "2.0.0",
   "description": "Monitor, transform, and send data layer content to FullStory",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -41,6 +41,7 @@
   },
   "homepage": "https://github.com/fullstorydev/fullstory-data-layer-observer#readme",
   "devDependencies": {
+    "@rollup/plugin-json": "^4.1.0",
     "@rollup/plugin-typescript": "^5.0.1",
     "@types/chai": "^4.2.11",
     "@types/jsdom": "^16.2.3",
