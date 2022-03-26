@@ -10,9 +10,22 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 2.0.0
+
+- Changes telemetry collection interfaces from e.g. `Telemetry.getInstance().startSpan` to `Telemetry.startSpan`
+- Instruments significant timing and count metrics
+
+### 1.13.1
+
+- Fixed an initialization bug which prevented configuring a log level of `0`
+
+### 1.13.0
+
+- Added telemetry provider and exporter concepts to measure timings, error counts, and other metrics. Telemetry is currently initialized but otherwise unused
+
 ### 1.12.1
 
-- Change made to allow searching for empty strings with ```''``` or ```""```.  Technically any string comparison can be quoted, but this was specifically added for searching for empty string 
+- Change made to allow searching for empty strings with ```''``` or ```""```.  Technically any string comparison can be quoted, but this was specifically added for searching for empty string
 
 ### 1.12.0
 
