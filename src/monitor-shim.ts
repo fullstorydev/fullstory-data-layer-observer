@@ -1,5 +1,6 @@
 import Monitor from './monitor';
 import { Logger, LogMessage, LogMessageType } from './utils/logger';
+import { Telemetry, errorType } from './utils/telemetry';
 
 /**
  * ShimMonitor watches for changes and function calls through a shim technique.
@@ -69,6 +70,7 @@ export default class ShimMonitor extends Monitor {
     } catch (err) {
       Logger.getInstance().error(LogMessageType.MonitorRemoveError,
         { path: this.path, property: this.property, reason: err.message });
+      Telemetry.error(errorType.monitorRemovalError);
     }
   }
 
@@ -82,6 +84,7 @@ export default class ShimMonitor extends Monitor {
       } catch (err) {
         Logger.getInstance().error(LogMessageType.MonitorCallError,
           { path: this.property, property: this.property, reason: err.message });
+        Telemetry.error(errorType.monitorCallError);
         return null;
       }
     };

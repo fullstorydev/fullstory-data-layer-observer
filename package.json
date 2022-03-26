@@ -1,6 +1,6 @@
 {
   "name": "@fullstory/data-layer-observer",
-  "version": "1.12.1",
+  "version": "2.0.0",
   "description": "Monitor, transform, and send data layer content to FullStory",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -11,8 +11,6 @@
     "examples": "npm run build && http-server",
     "test": "nyc mocha -r ts-node/register -r source-map-support/register -r jsdom-global/register test/*.spec.ts test/**/*.spec.ts",
     "test:fullstory": "nyc mocha -r ts-node/register -r source-map-support/register -r jsdom-global/register test/fullstory.spec.ts",
-    "test:wel-auto-formulate": "npm run examples & cd ./test/web-embed-lab && ./auto-formulate.sh",
-    "test:wel-runner": "npm run build && cd ./test/web-embed-lab && ./run-tests.sh",
     "lint": "eslint --ext .ts src/** test/mocks/** test/utils/** test/*.ts",
     "lint:fix": "eslint --ext .ts --fix src/**  test/mocks/** test/utils/** test/*.ts",
     "prepublishOnly": "lint && test && tsc"
@@ -24,7 +22,7 @@
   },
   "lint-staged": {
     "src/**": "eslint --ext .ts --fix",
-    "test/**": "eslint --ext .ts --fix --ignore-pattern=test/web-embed-lab/**"
+    "test/**": "eslint --ext .ts --fix"
   },
   "repository": {
     "type": "git",
@@ -43,6 +41,7 @@
   },
   "homepage": "https://github.com/fullstorydev/fullstory-data-layer-observer#readme",
   "devDependencies": {
+    "@rollup/plugin-json": "^4.1.0",
     "@rollup/plugin-typescript": "^5.0.1",
     "@types/chai": "^4.2.11",
     "@types/jsdom": "^16.2.3",
@@ -65,7 +64,6 @@
     "rollup-plugin-terser": "^7.0.0",
     "source-map-support": "^0.5.19",
     "ts-node": "^8.10.2",
-    "typescript": "^3.9.5",
-    "web-embed-lab": "^0.2.19"
+    "typescript": "^3.9.5"
   }
 }

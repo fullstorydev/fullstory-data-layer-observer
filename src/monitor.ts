@@ -1,5 +1,6 @@
 import { createEvent } from './event';
 import { Logger, LogMessage, LogMessageType } from './utils/logger';
+import { errorType, Telemetry } from './utils/telemetry';
 
 /**
  * Monitor watches for property changes or function calls.
@@ -69,6 +70,7 @@ export default abstract class Monitor {
     } catch (err) {
       Logger.getInstance().error(LogMessageType.MonitorEmitError,
         { path: this.path, property: this.property, reason: err.message });
+      Telemetry.error(errorType.monitorEmitError);
     }
   }
 
