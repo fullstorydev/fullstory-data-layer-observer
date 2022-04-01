@@ -57,13 +57,6 @@ export default class DataHandler {
    * @param event a browser Event or CustomEvent emitted
    */
   handleEvent(event: CustomEvent<DataLayerDetail>): void {
-    const handleEventSpan = Telemetry.startSpan(telemetryType.handleEventSpan, {
-      operatorCount: this.operators.length,
-      operatorNames: this.operators
-        .map((operator) => operator.options.name)
-        .join(','),
-    });
-
     const { detail: { args, value }, type } = event;
     const { path } = this.target;
 
@@ -88,12 +81,10 @@ export default class DataHandler {
           this.timeoutId = window.setTimeout(() => {
             this.timeoutId = null; // clear the timeout used for debouncing
             this.handleData([result]);
-            handleEventSpan.end();
           }, this.debounce);
         }
       } else {
         this.handleData(args || []);
-        handleEventSpan.end();
       }
     } else {
       Logger.getInstance().warn(LogMessageType.EventUnexpected, { path });
@@ -105,6 +96,13 @@ export default class DataHandler {
    * @param data the data as an array of values emitted from the data layer
    */
   private handleData(data: any[] | null, operatorStartIndex: number = 0): any[] | null {
+    const handleEventSpan = Telemetry.startSpan(telemetryType.handleEventSpan, {
+      operatorCount: this.operators.length,
+      operatorNames: this.operators
+        .map((operator) => operator.options.name)
+        .join(','),
+    });
+
     const { path } = this.target;
 
     this.runDebugger(`${path} handleData entry`, data);
@@ -157,6 +155,7 @@ export default class DataHandler {
 
     this.runDebugger(`${path} handleData exit`, handledData);
 
+    handleEventSpan.end();
     return handledData;
   }
 
