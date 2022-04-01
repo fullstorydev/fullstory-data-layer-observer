@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 2.0.1
+
+- Fixed a bug where debounce time was included in measured event handling duration
+
 ### 2.0.0
 
 - Changes telemetry collection interfaces from e.g. `Telemetry.getInstance().startSpan` to `Telemetry.startSpan`
