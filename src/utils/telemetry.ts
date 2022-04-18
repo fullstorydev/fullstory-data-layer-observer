@@ -9,6 +9,10 @@ export const telemetryType = {
   initializationSpan: 'dlo_init_span',
   ruleCollectionSpan: 'dlo_rule_collection_span',
   ruleRegistrationSpan: 'dlo_rule_registration_span',
+  /**
+   * @deprecated Rule count is reported as metadata on {@link ruleRegistrationSpan} events
+   * and will be removed as a dedicated telemetry type in a future release.
+   */
   ruleCount: 'dlo_rule_count',
   handleEventSpan: 'dlo_handle_event_span',
   clientError: 'dlo_client_error',

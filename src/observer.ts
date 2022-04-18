@@ -132,7 +132,9 @@ export class DataLayerObserver {
     }
 
     if (rules) {
-      const ruleRegistrationSpan = Telemetry.startSpan(telemetryType.ruleRegistrationSpan);
+      const ruleRegistrationSpan = Telemetry.startSpan(telemetryType.ruleRegistrationSpan, {
+        ruleCount: rules.length,
+      });
       rules.forEach((rule: DataLayerRule) => this.registerRule(rule));
       // TODO(nate): Remove this call when the record log level is deprecated. Removing breaks tests
       // so there may be some test state management issues to address
