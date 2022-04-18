@@ -10,7 +10,7 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
-### 2.1.1
+### 2.1.0
 
 - Adds rule count attribute to rule registration span telemetry. Deprecates dedicated rule count telemetry type for removal in a future release.
 
