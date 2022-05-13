@@ -1,6 +1,6 @@
 # Data Layer Observer Telemetry
 
-DLO's telemetry implementation is inspired by Open Telemetry. While DLO doesn't depend on Open Telemetry, DLO telemetry can be configured to be measured by another provider like Open Telemetry or exported to a custom destination for visibility.
+DLO's telemetry implementation is inspired by [Open Telemetry](https://opentelemetry.io/). While DLO doesn't depend on Open Telemetry, DLO telemetry can be configured to be measured by another provider like Open Telemetry or exported to a custom destination for visibility.
 
 ## Exporting Telemetry to a Custom Destination
 
