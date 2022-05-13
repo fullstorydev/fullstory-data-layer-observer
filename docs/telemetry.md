@@ -77,6 +77,9 @@ class OpenTelemetryProvider {
   }
 }
 
+// Before DLO loads and initializes
+window['_dlo_telemetryProvider'] = new OpenTelemetryProvider();
+
 ```
 
 > **Tip:** When `window['_dlo_telemetryProvider']` is defined, `window['_dlo_telemetryExporter']` is ignored. It is assumed a custom `TelemetryProvider` implementation will be responsible for both measuring and exporting telemetry.
