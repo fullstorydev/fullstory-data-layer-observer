@@ -34,7 +34,14 @@ window['_dlo_telemetryExporter']= {
 
 If `DefaultTelemetryProvider` measurement behavior is insufficient, telemetry measurement and exporting can be entirely overridden by configuring a custom `TelemetryProvider`. By configuring a custom `TelemetryProvider` other telemetry libraries like Open Telemetry may be used for telemetry measurement and exporting.
 
+### Open Telemetry Example
+
 ```
+import opentelemetry, { Tracer } from '@opentelemetry/api';
+import { BasicTracerProvider, SimpleSpanProcessor, ConsoleSpanExporter } from '@opentelemetry/sdk-trace-base';
+import { Meter, Counter } from '@opentelemetry/api-metrics';
+import { MeterProvider, ConsoleMetricExporter, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics-base';
+
 class OpenTelemetryProvider {
   private readonly tracer: Tracer;
 
@@ -49,10 +56,13 @@ class OpenTelemetryProvider {
 
     this.tracer = opentelemetry.trace.getTracer('example-basic-tracer');
 
-    this.meter = new MeterProvider({
+    const meterProvider = new MeterProvider();
+    meterProvider.addMetricReader(new PeriodicExportingMetricReader({
+      exportIntervalMillis: 1000,
       exporter: new ConsoleMetricExporter(),
-      interval: 1000,
-    }).getMeter('example-basic-meter');
+    }));
+
+    this.meter = meterProvider.getMeter('example-basic-meter');
   }
 
   startSpan(name: string, attributes?: Attributes): TelemetrySpan {
