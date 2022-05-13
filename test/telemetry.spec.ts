@@ -30,6 +30,7 @@ class MockTelemetryProvider extends MockClass {
 
 describe('DefaultTelemetryProvider', () => {
   const originalConsole = globalThis.console;
+  const originalWindow = globalThis.window;
   let mockConsole: Console;
 
   beforeEach(() => {
@@ -41,6 +42,7 @@ describe('DefaultTelemetryProvider', () => {
   });
 
   afterEach(() => {
+    (globalThis as any).window = originalWindow;
     (globalThis as any).console = originalConsole;
     Logger.getInstance().level = 1;
   });
@@ -238,6 +240,58 @@ describe('DefaultTelemetryProvider', () => {
 
     const countAttributes = expectParams(exporter, 'sendCount').pop().attributes;
     expect(Object.getOwnPropertyNames(countAttributes).length).to.equal(expectedAttributeCount);
+  });
+
+  it('does not send span if duration is a negative number', () => {
+    const exporter = new MockTelemetryExporter();
+    const provider = new DefaultTelemetryProvider(exporter);
+
+    const span = provider.startSpan('test span');
+    provider.count('test count', 1);
+
+    const mockPerf = {
+      now: () => -9999999999,
+    };
+    (globalThis as any).window = { performance: mockPerf };
+
+    span.end();
+
+    expectNoCalls(exporter, 'sendSpan');
+  });
+
+  it('does not send span if duration is not a number', () => {
+    const exporter = new MockTelemetryExporter();
+    const provider = new DefaultTelemetryProvider(exporter);
+
+    const span = provider.startSpan('test span');
+    provider.count('test count', 1);
+
+    const mockPerf = {
+      now: () => 'potato',
+    };
+    (globalThis as any).window = { performance: mockPerf };
+
+    span.end();
+
+    expectNoCalls(exporter, 'sendSpan');
+  });
+
+  it('does not send span if an error is encountered', () => {
+    const exporter = new MockTelemetryExporter();
+    const provider = new DefaultTelemetryProvider(exporter);
+
+    const span = provider.startSpan('test span');
+    provider.count('test count', 1);
+
+    const mockPerf = {
+      now: () => { throw new Error('tomato'); },
+    };
+    (globalThis as any).window = { performance: mockPerf };
+
+    span.end();
+
+    expectNoCalls(exporter, 'sendSpan');
+    expectCall(mockConsole, 'debug');
   });
 });
 
