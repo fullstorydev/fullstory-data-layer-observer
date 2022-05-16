@@ -247,7 +247,6 @@ describe('DefaultTelemetryProvider', () => {
     const provider = new DefaultTelemetryProvider(exporter);
 
     const span = provider.startSpan('test span');
-    provider.count('test count', 1);
 
     const mockPerf = {
       now: () => -9999999999,
@@ -264,7 +263,6 @@ describe('DefaultTelemetryProvider', () => {
     const provider = new DefaultTelemetryProvider(exporter);
 
     const span = provider.startSpan('test span');
-    provider.count('test count', 1);
 
     const mockPerf = {
       now: () => 'potato',
@@ -281,7 +279,6 @@ describe('DefaultTelemetryProvider', () => {
     const provider = new DefaultTelemetryProvider(exporter);
 
     const span = provider.startSpan('test span');
-    provider.count('test count', 1);
 
     const mockPerf = {
       now: () => { throw new Error('tomato'); },
