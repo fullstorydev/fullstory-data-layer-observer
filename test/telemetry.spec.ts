@@ -7,7 +7,9 @@ import {
 } from '../src/utils/telemetry';
 import { MockClass } from './mocks/mock';
 import Console from './mocks/console';
-import { expectCall, expectNoCalls, expectParams } from './utils/mocha';
+import {
+  expectCall, expectNoCalls, ExpectObserver, expectParams,
+} from './utils/mocha';
 import { ConsoleAppender, Logger } from '../src/utils/logger';
 
 class MockTelemetryExporter extends MockClass {
@@ -485,5 +487,23 @@ describe('Telemetry initialization from window', () => {
     // Exporter should be unused if a custom provider is given
     expectNoCalls(mockExporter, 'sendSpan');
     expectNoCalls(mockExporter, 'sendCount');
+  });
+
+  it('should not send telemetry registration span if no rules are set', (done) => {
+    const mockProvider = new MockTelemetryProvider();
+    Telemetry.setProvider(mockProvider);
+
+    // endSpan is defined on MockTelemetryProvider to track span.end() calls
+    expectNoCalls(mockProvider, 'endSpan');
+    expectNoCalls(mockProvider, 'count');
+
+    const observer = ExpectObserver.getInstance().create({
+      rules: [],
+    });
+
+    setTimeout(() => {
+      ExpectObserver.getInstance().cleanup(observer);
+      done();
+    }, 900); // the third retry will not occur so it's 250 + 500 for the first and second
   });
 });
