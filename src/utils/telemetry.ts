@@ -163,16 +163,22 @@ class DefaultTelemetrySpan implements TelemetrySpan {
   }
 
   /**
-   * Ends the timespan, calculating the duration and invoking the given
-   * sendSpan callback with a timespan event
+   * Ends the timespan, calculating the duration and invoking the given sendSpan
+   * callback with a timespan event. Only exports valid durations.
    */
   end() {
     try {
+      const duration = DefaultTelemetrySpan.getCurrentTime() - this.startTime;
+      if (duration < 0 || Number.isNaN(duration)) {
+        Logger.getInstance().debug(`ignoring span, calculated an invalid duration: ${duration}`);
+        return;
+      }
+
       this.sendSpan({
         name: this.name,
         timestamp: new Date().toISOString(),
         attributes: this.attributes,
-        duration: DefaultTelemetrySpan.getCurrentTime() - this.startTime,
+        duration,
       });
     } catch (err) {
       Logger.getInstance().debug(`Error sending telemetry span: ${err.message}`);

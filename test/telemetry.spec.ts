@@ -7,7 +7,9 @@ import {
 } from '../src/utils/telemetry';
 import { MockClass } from './mocks/mock';
 import Console from './mocks/console';
-import { expectCall, expectNoCalls, expectParams } from './utils/mocha';
+import {
+  expectCall, expectNoCalls, ExpectObserver, expectParams,
+} from './utils/mocha';
 import { ConsoleAppender, Logger } from '../src/utils/logger';
 
 class MockTelemetryExporter extends MockClass {
@@ -30,6 +32,7 @@ class MockTelemetryProvider extends MockClass {
 
 describe('DefaultTelemetryProvider', () => {
   const originalConsole = globalThis.console;
+  const originalWindow = globalThis.window;
   let mockConsole: Console;
 
   beforeEach(() => {
@@ -41,6 +44,7 @@ describe('DefaultTelemetryProvider', () => {
   });
 
   afterEach(() => {
+    (globalThis as any).window = originalWindow;
     (globalThis as any).console = originalConsole;
     Logger.getInstance().level = 1;
   });
@@ -238,6 +242,55 @@ describe('DefaultTelemetryProvider', () => {
 
     const countAttributes = expectParams(exporter, 'sendCount').pop().attributes;
     expect(Object.getOwnPropertyNames(countAttributes).length).to.equal(expectedAttributeCount);
+  });
+
+  it('does not send span if duration is a negative number', () => {
+    const exporter = new MockTelemetryExporter();
+    const provider = new DefaultTelemetryProvider(exporter);
+
+    const span = provider.startSpan('test span');
+
+    const mockPerf = {
+      now: () => -9999999999,
+    };
+    (globalThis as any).window = { performance: mockPerf };
+
+    span.end();
+
+    expectNoCalls(exporter, 'sendSpan');
+  });
+
+  it('does not send span if duration is not a number', () => {
+    const exporter = new MockTelemetryExporter();
+    const provider = new DefaultTelemetryProvider(exporter);
+
+    const span = provider.startSpan('test span');
+
+    const mockPerf = {
+      now: () => 'potato',
+    };
+    (globalThis as any).window = { performance: mockPerf };
+
+    span.end();
+
+    expectNoCalls(exporter, 'sendSpan');
+  });
+
+  it('does not send span if an error is encountered', () => {
+    const exporter = new MockTelemetryExporter();
+    const provider = new DefaultTelemetryProvider(exporter);
+
+    const span = provider.startSpan('test span');
+
+    const mockPerf = {
+      now: () => { throw new Error('tomato'); },
+    };
+    (globalThis as any).window = { performance: mockPerf };
+
+    span.end();
+
+    expectNoCalls(exporter, 'sendSpan');
+    expectCall(mockConsole, 'debug');
   });
 });
 
@@ -485,5 +538,23 @@ describe('Telemetry initialization from window', () => {
     // Exporter should be unused if a custom provider is given
     expectNoCalls(mockExporter, 'sendSpan');
     expectNoCalls(mockExporter, 'sendCount');
+  });
+
+  it('should not send telemetry registration span if no rules are set', (done) => {
+    const mockProvider = new MockTelemetryProvider();
+    Telemetry.setProvider(mockProvider);
+
+    // endSpan is defined on MockTelemetryProvider to track span.end() calls
+    expectNoCalls(mockProvider, 'endSpan');
+    expectNoCalls(mockProvider, 'count');
+
+    const observer = ExpectObserver.getInstance().create({
+      rules: [],
+    });
+
+    setTimeout(() => {
+      ExpectObserver.getInstance().cleanup(observer);
+      done();
+    }, 900); // the third retry will not occur so it's 250 + 500 for the first and second
   });
 });
