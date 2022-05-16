@@ -131,7 +131,7 @@ export class DataLayerObserver {
       Logger.getInstance().level = logLevel;
     }
 
-    if (rules) {
+    if (rules && rules.length > 0) {
       const ruleRegistrationSpan = Telemetry.startSpan(telemetryType.ruleRegistrationSpan, {
         ruleCount: rules.length,
       });
