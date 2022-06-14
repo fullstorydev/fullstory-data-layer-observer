@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 2.1.2
+
+- Updating developement dependencies.
+
 ### 2.1.1
 
 - Prevent the telemetry provider from sending a Rule Registration metric if there are no rules registered.
