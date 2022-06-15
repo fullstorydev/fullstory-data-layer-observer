@@ -43,10 +43,10 @@ const nodeTestHarness: RulesetTestHarness = {
   },
 
   popEvent: async (timeoutMs: number = 1000) => new Promise<any[]>((resolve, reject) => {
-    const startTime = performance.now();
+    const startTime = new Date().getTime();
 
     const checkForEvents = setInterval(() => {
-      const currentTime = performance.now();
+      const currentTime = new Date().getTime();
       if (currentTime - startTime >= timeoutMs) {
         clearInterval(checkForEvents);
         reject(new Error(`Timeout ${timeoutMs} exceeded waiting for FS.event call.`));
