@@ -2,7 +2,7 @@
 /* eslint-disable no-underscore-dangle */
 import 'mocha';
 import {
-  BrowserType, Browser, Page, chromium, firefox, webkit,
+  Browser, Page, chromium, firefox, webkit,
 } from 'playwright';
 
 import {
@@ -19,6 +19,7 @@ export interface RulesetTestHarness {
 interface RulesetTestEnvironment {
   name: string;
   createTestHarness: (rules: any, dataLayer: any) => Promise<RulesetTestHarness>;
+  tearDown: () => Promise<void>;
 }
 
 const dloScriptSrc = process.env.PLAYWRIGHT_DLO_SCRIPT_SRC;
@@ -65,12 +66,12 @@ class BrowserTestHarness implements RulesetTestHarness {
 
   private page: Page = null!;
 
-  constructor(private readonly browserType: BrowserType<{}>) {
+  constructor(private readonly browserPromise: Promise<Browser>) {
     // Empty
   }
 
   async setUp(rules: any, dataLayer: any) {
-    this.browser = await this.browserType.launch();
+    this.browser = await this.browserPromise;
     this.page = await this.browser.newPage();
 
     await this.page.evaluate(([localRules, localDataLayer, localDloScriptSrc]) => {
@@ -101,7 +102,7 @@ class BrowserTestHarness implements RulesetTestHarness {
   }
 
   async tearDown() {
-    await this.browser.close();
+    await this.page.close();
   }
 
   async execute(action: (args: any[]) => void, args?: any[]) {
@@ -116,14 +117,20 @@ class BrowserTestHarness implements RulesetTestHarness {
 
 export const getRulesetTestEnvironments = (): RulesetTestEnvironment[] => {
   if (dloScriptSrc) {
-    return [chromium, firefox, webkit].map((browserType) => ({
-      name: browserType.name(),
-      createTestHarness: async (rules: any, dataLayer: any) => {
-        const testHarness = new BrowserTestHarness(browserType);
-        await testHarness.setUp(rules, dataLayer);
-        return testHarness;
-      },
-    }));
+    return [chromium, firefox, webkit].map((browserType) => {
+      const browserPromise = browserType.launch();
+      return {
+        name: browserType.name(),
+        createTestHarness: async (rules: any, dataLayer: any) => {
+          const testHarness = new BrowserTestHarness(browserPromise);
+          await testHarness.setUp(rules, dataLayer);
+          return testHarness;
+        },
+        tearDown: async () => {
+          await (await browserPromise).close();
+        },
+      };
+    });
   }
   return [{
     name: 'node',
@@ -132,5 +139,6 @@ export const getRulesetTestEnvironments = (): RulesetTestEnvironment[] => {
       await testHarness.setUp(rules, dataLayer);
       return testHarness;
     },
+    tearDown: () => Promise.resolve(),
   }];
 };

@@ -22,6 +22,10 @@ describe('CEDDL hybrid node and browser tests', () => {
         await testHarness.tearDown();
       });
 
+      after(async () => {
+        await testEnv.tearDown();
+      });
+
       it('sends the first CEDDL product to FS.event', async () => {
         await testHarness.execute(() => {
           (globalThis as any).digitalData.product[0].attributes = { customProp: 'foo' };
