@@ -80,7 +80,7 @@ class BrowserTestHarness implements RulesetTestHarness {
     this.page = await this.browser.newPage();
 
     await this.page.evaluate(([localRules, localDataLayer, localDloScriptSrc]) => {
-      // This allows node and playwright tests to reference the same global/window name
+      // This allows node and playwright tests to reference the same global/window name.
       const globalThis: any = window;
 
       globalThis._dlo_rules = localRules;
@@ -102,7 +102,7 @@ class BrowserTestHarness implements RulesetTestHarness {
       document.body.appendChild(dloScriptTag);
     }, [rules, dataLayer, dloScriptSrc]);
 
-    // Wait for DLO to initialize
+    // Wait for DLO to initialize.
     await this.page.waitForFunction(() => (window as any)._dlo_observer, undefined, { timeout: 1000 });
   }
 
@@ -123,6 +123,8 @@ class BrowserTestHarness implements RulesetTestHarness {
 export const getRulesetTestEnvironments = (): RulesetTestEnvironment[] => {
   if (isBrowserTest) {
     return [chromium, firefox, webkit].map((browserType) => {
+      // Reuse a single browser instance for each browser type across all tests.
+      // This reduces browser test run time by about half.
       const browserPromise = browserType.launch();
       return {
         name: browserType.name(),
