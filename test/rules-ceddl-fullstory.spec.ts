@@ -2,12 +2,17 @@ import 'mocha';
 
 import { expectEqual, expectMatch, expectUndefined } from './utils/mocha';
 import { RulesetTestHarness, getRulesetTestEnvironments } from './utils/ruleset-test-harness';
-import { basicDigitalData } from './mocks/CEDDL';
+import { basicDigitalData, CEDDL } from './mocks/CEDDL';
 
 import '../rulesets/ceddl.js';
 
 const ceddlRulesKey = '_dlo_rules_ceddl';
 const ceddlRules = (window as Record<string, any>)[ceddlRulesKey];
+
+declare global {
+  // eslint-disable-next-line no-var, vars-on-top
+  var digitalData: CEDDL;
+}
 
 describe('CEDDL to FullStory rules', () => {
   getRulesetTestEnvironments().forEach((testEnv) => {
@@ -28,7 +33,7 @@ describe('CEDDL to FullStory rules', () => {
 
       it('sends the first CEDDL product to FS.event', async () => {
         await testHarness.execute(() => {
-          (globalThis as any).digitalData.product[0].attributes = { customProp: 'foo' };
+          globalThis.digitalData.product[0].attributes = { customProp: 'foo' };
         });
 
         const [eventName, payload] = await testHarness.popEvent();
@@ -40,7 +45,7 @@ describe('CEDDL to FullStory rules', () => {
 
       it('sends CEDDL cart to FS.event', async () => {
         await testHarness.execute(() => {
-          (globalThis as any).digitalData.cart.attributes = { promotion: 'LaborDay2020' };
+          globalThis.digitalData.cart.attributes = { promotion: 'LaborDay2020' };
         });
 
         const [eventName, payload] = await testHarness.popEvent();
@@ -62,7 +67,7 @@ describe('CEDDL to FullStory rules', () => {
         };
 
         await testHarness.execute(([localFirstProduct]) => {
-          (globalThis as any).digitalData.cart.item.push(localFirstProduct);
+          globalThis.digitalData.cart.item.push(localFirstProduct);
         }, [firstProduct]);
 
         let [eventName, payload] = await testHarness.popEvent();
@@ -71,7 +76,7 @@ describe('CEDDL to FullStory rules', () => {
         expectUndefined(payload, 'linkedProduct');
 
         await testHarness.execute(([localSecondProduct]) => {
-          (globalThis as any).digitalData.cart.item.push(localSecondProduct);
+          globalThis.digitalData.cart.item.push(localSecondProduct);
         }, [secondProduct]);
 
         [eventName, payload] = await testHarness.popEvent();
@@ -96,7 +101,7 @@ describe('CEDDL to FullStory rules', () => {
 
       it('sends CEDDL page properties to FS.event', async () => {
         await testHarness.execute(() => {
-          (globalThis as any).digitalData.page.attributes = { framework: 'react' };
+          globalThis.digitalData.page.attributes = { framework: 'react' };
         });
 
         const [eventName, payload] = await testHarness.popEvent();
@@ -122,7 +127,7 @@ describe('CEDDL to FullStory rules', () => {
 
       it('sends CEDDL transaction transactionID and total properties to FS.event', async () => {
         await testHarness.execute(() => {
-          (globalThis as any).digitalData.transaction.attributes = { customProp: 'foo' };
+          globalThis.digitalData.transaction.attributes = { customProp: 'foo' };
         });
 
         const [eventName, payload] = await testHarness.popEvent();
@@ -137,7 +142,7 @@ describe('CEDDL to FullStory rules', () => {
       it('sends CEDDL event to FS.event', async () => {
         await testHarness.execute(() => {
           // Push events that already exist on basicDigitalData.event to trigger rules and simplify assertions
-          (globalThis as any).digitalData.event.push((globalThis as any).digitalData.event[0]);
+          globalThis.digitalData.event.push(globalThis.digitalData.event[0]);
         });
 
         let [eventName, payload] = await testHarness.popEvent();
@@ -146,7 +151,7 @@ describe('CEDDL to FullStory rules', () => {
         expectEqual(payload.primaryCategory, basicDigitalData.event[0].category.primaryCategory);
 
         await testHarness.execute(() => {
-          (globalThis as any).digitalData.event.push((globalThis as any).digitalData.event[1]);
+          globalThis.digitalData.event.push(globalThis.digitalData.event[1]);
         });
 
         [eventName, payload] = await testHarness.popEvent();

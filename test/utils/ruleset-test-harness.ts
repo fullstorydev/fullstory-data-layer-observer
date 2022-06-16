@@ -8,7 +8,7 @@ import {
 import {
   expectFS, ExpectObserver, setupGlobals, expectGlobal,
 } from './mocha';
-import { DataLayerRule } from '../../src/observer';
+import { DataLayerObserver, DataLayerRule } from '../../src/observer';
 
 export interface RulesetTestHarness {
   setUp: (rules: DataLayerRule[], dataLayer: any) => Promise<void>;
@@ -63,6 +63,19 @@ const nodeTestHarness: RulesetTestHarness = {
   }),
 };
 
+declare global {
+  interface Window extends Record<string, any> {
+    // eslint-disable-next-line camelcase
+    _dlo_rules?: DataLayerRule[];
+    events: any[];
+    FS?: {
+      event: (args: any[]) => void
+    };
+    // eslint-disable-next-line camelcase
+    _dlo_observer?: DataLayerObserver;
+  }
+}
+
 class BrowserTestHarness implements RulesetTestHarness {
   private browser: Browser = null!;
 
@@ -82,7 +95,7 @@ class BrowserTestHarness implements RulesetTestHarness {
 
     await this.page.evaluate(([localRules, localDataLayer, localDloScriptSrc]) => {
       // This allows node and playwright tests to reference the same global/window name.
-      const globalThis: any = window;
+      const globalThis = window;
 
       globalThis._dlo_rules = localRules;
 
@@ -104,7 +117,7 @@ class BrowserTestHarness implements RulesetTestHarness {
     }, [rules, dataLayer, dloScriptSrc]);
 
     // Wait for DLO to initialize.
-    await this.page.waitForFunction(() => (window as any)._dlo_observer, undefined, { timeout: 1000 });
+    await this.page.waitForFunction(() => window._dlo_observer, undefined, { timeout: 1000 });
   }
 
   async tearDown() {
@@ -116,8 +129,8 @@ class BrowserTestHarness implements RulesetTestHarness {
   }
 
   async popEvent(timeoutMs: number = 1000) {
-    await this.page.waitForFunction(() => (window as any).events.length, undefined, { timeout: timeoutMs });
-    return this.page.evaluate(() => (window as any).events.pop());
+    await this.page.waitForFunction(() => window.events.length, undefined, { timeout: timeoutMs });
+    return this.page.evaluate(() => window.events.pop());
   }
 }
 
