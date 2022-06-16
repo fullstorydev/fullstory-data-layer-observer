@@ -22,6 +22,7 @@ interface RulesetTestEnvironment {
   tearDown: () => Promise<void>;
 }
 
+const isBrowserTest = process.env.DLO_RUN_BROWSER_TESTS;
 const dloScriptSrc = process.env.PLAYWRIGHT_DLO_SCRIPT_SRC;
 
 const nodeTestHarness: RulesetTestHarness = {
@@ -67,7 +68,11 @@ class BrowserTestHarness implements RulesetTestHarness {
   private page: Page = null!;
 
   constructor(private readonly browserPromise: Promise<Browser>) {
-    // Empty
+    if (!dloScriptSrc) {
+      throw new Error(
+        'PLAYWRIGHT_DLO_SCRIPT_SRC must be configured with a DLO library script location for browser tests.',
+      );
+    }
   }
 
   async setUp(rules: any, dataLayer: any) {
@@ -116,7 +121,7 @@ class BrowserTestHarness implements RulesetTestHarness {
 }
 
 export const getRulesetTestEnvironments = (): RulesetTestEnvironment[] => {
-  if (dloScriptSrc) {
+  if (isBrowserTest) {
     return [chromium, firefox, webkit].map((browserType) => {
       const browserPromise = browserType.launch();
       return {
