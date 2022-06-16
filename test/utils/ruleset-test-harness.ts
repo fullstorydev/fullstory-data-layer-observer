@@ -8,9 +8,10 @@ import {
 import {
   expectFS, ExpectObserver, setupGlobals, expectGlobal,
 } from './mocha';
+import { DataLayerRule } from '../../src/observer';
 
 export interface RulesetTestHarness {
-  setUp: (rules: any, dataLayer: any) => Promise<void>;
+  setUp: (rules: DataLayerRule[], dataLayer: any) => Promise<void>;
   tearDown: () => Promise<void>;
   execute: (action: (args: any[]) => void, args?: any[]) => Promise<void>;
   popEvent: (timeoutMs?: number) => Promise<any[]>;
@@ -18,7 +19,7 @@ export interface RulesetTestHarness {
 
 interface RulesetTestEnvironment {
   name: string;
-  createTestHarness: (rules: any, dataLayer: any) => Promise<RulesetTestHarness>;
+  createTestHarness: (rules: DataLayerRule[], dataLayer: any) => Promise<RulesetTestHarness>;
   tearDown: () => Promise<void>;
 }
 
@@ -26,7 +27,7 @@ const isBrowserTest = process.env.DLO_RUN_BROWSER_TESTS;
 const dloScriptSrc = process.env.PLAYWRIGHT_DLO_SCRIPT_SRC;
 
 const nodeTestHarness: RulesetTestHarness = {
-  setUp: (rules: any, dataLayer: any) => {
+  setUp: (rules: DataLayerRule[], dataLayer: any) => {
     setupGlobals(
       Object.keys(dataLayer).map((key) => [key, dataLayer[key]]),
     );
@@ -75,7 +76,7 @@ class BrowserTestHarness implements RulesetTestHarness {
     }
   }
 
-  async setUp(rules: any, dataLayer: any) {
+  async setUp(rules: DataLayerRule[], dataLayer: any) {
     this.browser = await this.browserPromise;
     this.page = await this.browser.newPage();
 
@@ -128,7 +129,7 @@ export const getRulesetTestEnvironments = (): RulesetTestEnvironment[] => {
       const browserPromise = browserType.launch();
       return {
         name: browserType.name(),
-        createTestHarness: async (rules: any, dataLayer: any) => {
+        createTestHarness: async (rules: DataLayerRule[], dataLayer: any) => {
           const testHarness = new BrowserTestHarness(browserPromise);
           await testHarness.setUp(rules, dataLayer);
           return testHarness;
@@ -141,7 +142,7 @@ export const getRulesetTestEnvironments = (): RulesetTestEnvironment[] => {
   }
   return [{
     name: 'node',
-    createTestHarness: async (rules: any, dataLayer: any) => {
+    createTestHarness: async (rules: DataLayerRule[], dataLayer: any) => {
       const testHarness = nodeTestHarness;
       await testHarness.setUp(rules, dataLayer);
       return testHarness;
