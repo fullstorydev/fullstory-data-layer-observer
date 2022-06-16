@@ -117,6 +117,41 @@ describe('CEDDL hybrid node and browser tests', () => {
         // NOTE we have other ways in FullStory to see these
         expectUndefined(payload, 'destinationURL', 'referringURL');
       });
+
+      it('sends CEDDL transaction transactionID and total properties to FS.event', async () => {
+        await testHarness.execute(() => {
+          (globalThis as any).digitalData.transaction.attributes = { customProp: 'foo' };
+        });
+
+        const [eventName, payload] = await testHarness.popEvent();
+        expectEqual(eventName, 'transaction');
+        expectEqual(payload.transactionID, basicDigitalData.transaction.transactionID);
+        expectMatch(payload, basicDigitalData.transaction.total,
+          'basePrice', 'voucherCode', 'voucherDiscount', 'currency', 'taxRate', 'shipping', 'shippingMethod',
+          'priceWithTax', 'transactionTotal');
+        expectEqual(payload.customProp, 'foo');
+      });
+
+      it('sends CEDDL event to FS.event', async () => {
+        await testHarness.execute(() => {
+          // Push events that already exist on basicDigitalData.event to trigger rules and simplify assertions
+          (globalThis as any).digitalData.event.push((globalThis as any).digitalData.event[0]);
+        });
+
+        let [eventName, payload] = await testHarness.popEvent();
+        expectEqual(eventName, basicDigitalData.event[0].eventInfo.eventName);
+        expectEqual(payload.eventAction, basicDigitalData.event[0].eventInfo.eventAction);
+        expectEqual(payload.primaryCategory, basicDigitalData.event[0].category.primaryCategory);
+
+        await testHarness.execute(() => {
+          (globalThis as any).digitalData.event.push((globalThis as any).digitalData.event[1]);
+        });
+
+        [eventName, payload] = await testHarness.popEvent();
+        expectEqual(eventName, 'event'); // NOTE this tests non-compliant data layers that do not defined eventName
+        expectEqual(payload.eventAction, basicDigitalData.event[1].eventInfo.eventAction);
+        expectEqual(payload.primaryCategory, basicDigitalData.event[1].category.primaryCategory);
+      });
     });
   });
 });
