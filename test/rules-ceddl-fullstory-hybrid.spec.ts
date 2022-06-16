@@ -24,7 +24,7 @@ describe('CEDDL hybrid node and browser tests', () => {
 
       it('sends the first CEDDL product to FS.event', async () => {
         await testHarness.execute(() => {
-          ((globalThis || window) as any).digitalData.product[0].attributes = { customProp: 'foo' };
+          (globalThis as any).digitalData.product[0].attributes = { customProp: 'foo' };
         });
 
         const [eventName, payload] = await testHarness.popEvent();
@@ -36,7 +36,7 @@ describe('CEDDL hybrid node and browser tests', () => {
 
       it('sends CEDDL cart to FS.event', async () => {
         await testHarness.execute(() => {
-          ((globalThis || window) as any).digitalData.cart.attributes = { promotion: 'LaborDay2020' };
+          (globalThis as any).digitalData.cart.attributes = { promotion: 'LaborDay2020' };
         });
 
         const [eventName, payload] = await testHarness.popEvent();
@@ -58,7 +58,7 @@ describe('CEDDL hybrid node and browser tests', () => {
         };
 
         await testHarness.execute(([localFirstProduct]) => {
-          ((globalThis || window) as any).digitalData.cart.item.push(localFirstProduct);
+          (globalThis as any).digitalData.cart.item.push(localFirstProduct);
         }, [firstProduct]);
 
         let [eventName, payload] = await testHarness.popEvent();
@@ -67,7 +67,7 @@ describe('CEDDL hybrid node and browser tests', () => {
         expectUndefined(payload, 'linkedProduct');
 
         await testHarness.execute(([localSecondProduct]) => {
-          ((globalThis || window) as any).digitalData.cart.item.push(localSecondProduct);
+          (globalThis as any).digitalData.cart.item.push(localSecondProduct);
         }, [secondProduct]);
 
         [eventName, payload] = await testHarness.popEvent();
@@ -90,7 +90,7 @@ describe('CEDDL hybrid node and browser tests', () => {
 
       it('sends CEDDL page properties to FS.event', async () => {
         await testHarness.execute(() => {
-          ((globalThis || window) as any).digitalData.page.attributes = { framework: 'react' };
+          (globalThis as any).digitalData.page.attributes = { framework: 'react' };
         });
 
         const [eventName, payload] = await testHarness.popEvent();

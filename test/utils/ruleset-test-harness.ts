@@ -74,17 +74,20 @@ class BrowserTestHarness implements RulesetTestHarness {
     this.page = await this.browser.newPage();
 
     await this.page.evaluate(([localRules, localDataLayer, localDloScriptSrc]) => {
-      (window as any)._dlo_rules = localRules;
+      // This allows node and playwright tests to reference the same global/window name
+      const globalThis: any = window;
+
+      globalThis._dlo_rules = localRules;
 
       Object.keys(localDataLayer).forEach((key) => {
-        (window as any)[key] = localDataLayer[key];
+        globalThis[key] = localDataLayer[key];
       });
 
-      (window as any).events = [];
+      globalThis.events = [];
 
-      (window as any).FS = {
+      globalThis.FS = {
         event: (...args: any) => {
-          (window as any).events.push(args);
+          globalThis.events.push(args);
         },
       };
 
