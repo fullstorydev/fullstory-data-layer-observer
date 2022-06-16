@@ -12,7 +12,7 @@ import {
 export interface RulesetTestHarness {
   setUp: (rules: any, dataLayer: any) => Promise<void>;
   tearDown: () => Promise<void>;
-  execute: (action: (args?: any[]) => void, args?: any[]) => Promise<void>;
+  execute: (action: (args: any[]) => void, args?: any[]) => Promise<void>;
   popEvent: (timeoutMs?: number) => Promise<any[]>;
 }
 
@@ -37,8 +37,8 @@ const nodeTestHarness: RulesetTestHarness = {
     return Promise.resolve();
   },
 
-  execute: (action: (args?: any) => void, args?: any) => {
-    action(args);
+  execute: (action: (args: any[]) => void, args?: any[]) => {
+    action(args || []);
     return Promise.resolve();
   },
 
@@ -101,8 +101,8 @@ class BrowserTestHarness implements RulesetTestHarness {
     await this.browser.close();
   }
 
-  async execute(action: (args?: any[]) => void, args?: any[]) {
-    await this.page.evaluate(action, args);
+  async execute(action: (args: any[]) => void, args?: any[]) {
+    await this.page.evaluate(action, args || []);
   }
 
   async popEvent(timeoutMs: number = 1000) {

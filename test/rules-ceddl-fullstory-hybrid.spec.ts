@@ -57,8 +57,8 @@ describe('CEDDL hybrid node and browser tests', () => {
           },
         };
 
-        await testHarness.execute((args) => {
-          ((globalThis || window) as any).digitalData.cart.item.push(args![0]);
+        await testHarness.execute(([localFirstProduct]) => {
+          ((globalThis || window) as any).digitalData.cart.item.push(localFirstProduct);
         }, [firstProduct]);
 
         let [eventName, payload] = await testHarness.popEvent();
@@ -66,8 +66,8 @@ describe('CEDDL hybrid node and browser tests', () => {
         expectEqual(payload.productInfo.sku, firstProduct.productInfo.sku);
         expectUndefined(payload, 'linkedProduct');
 
-        await testHarness.execute((args) => {
-          ((globalThis || window) as any).digitalData.cart.item.push(args![0]);
+        await testHarness.execute(([localSecondProduct]) => {
+          ((globalThis || window) as any).digitalData.cart.item.push(localSecondProduct);
         }, [secondProduct]);
 
         [eventName, payload] = await testHarness.popEvent();
