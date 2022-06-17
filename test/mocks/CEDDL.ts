@@ -374,6 +374,7 @@ export const basicDigitalData: CEDDL = {
     category: {
       primaryCategory: 'homepage',
     },
+    attributes: {},
   },
   product: [{
     productInfo: {
@@ -392,6 +393,7 @@ export const basicDigitalData: CEDDL = {
       primaryCategory: 'fruit',
     },
     linkedProduct: [],
+    attributes: {},
   }],
   cart: {
     cartID: 'cart-1234',
