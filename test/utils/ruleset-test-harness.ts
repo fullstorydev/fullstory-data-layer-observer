@@ -77,11 +77,9 @@ declare global {
 }
 
 class BrowserTestHarness implements RulesetTestHarness {
-  private browser: Browser = null!;
-
   private page: Page = null!;
 
-  constructor(private readonly browserPromise: Promise<Browser>) {
+  constructor(private readonly browser: Browser) {
     if (!dloScriptSrc) {
       throw new Error(
         'PLAYWRIGHT_DLO_SCRIPT_SRC must be configured with a DLO library script location for browser tests.',
@@ -90,7 +88,6 @@ class BrowserTestHarness implements RulesetTestHarness {
   }
 
   async setUp(rules: DataLayerRule[], dataLayer: any) {
-    this.browser = await this.browserPromise;
     this.page = await this.browser.newPage();
 
     await this.page.evaluate(([localRules, localDataLayer, localDloScriptSrc]) => {
@@ -139,16 +136,17 @@ export const getRulesetTestEnvironments = (): RulesetTestEnvironment[] => {
     return [chromium, firefox, webkit].map((browserType) => {
       // Reuse a single browser instance for each browser type across all tests.
       // This reduces browser test run time by about half.
-      const browserPromise = browserType.launch();
+      let browser: Browser | undefined;
       return {
         name: browserType.name(),
         createTestHarness: async (rules: DataLayerRule[], dataLayer: any) => {
-          const testHarness = new BrowserTestHarness(browserPromise);
+          browser = browser || await browserType.launch();
+          const testHarness = new BrowserTestHarness(browser);
           await testHarness.setUp(rules, dataLayer);
           return testHarness;
         },
         tearDown: async () => {
-          await (await browserPromise).close();
+          await browser?.close();
         },
       };
     });
