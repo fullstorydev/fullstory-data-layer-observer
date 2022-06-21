@@ -14,7 +14,7 @@ declare global {
   var digitalData: CEDDL;
 }
 
-describe('CEDDL to FullStory rules', () => {
+describe('Ruleset: CEDDL to FullStory', () => {
   getRulesetTestEnvironments().forEach((testEnv) => {
     describe(`test environment: ${testEnv.name}`, () => {
       let testHarness: RulesetTestHarness;

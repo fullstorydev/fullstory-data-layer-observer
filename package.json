@@ -11,7 +11,7 @@
     "examples": "npm run build && http-server",
     "test": "nyc mocha -r ts-node/register -r source-map-support/register -r jsdom-global/register test/*.spec.ts test/**/*.spec.ts",
     "test:fullstory": "nyc mocha -r ts-node/register -r source-map-support/register -r jsdom-global/register test/fullstory.spec.ts",
-    "test:browser": "PLAYWRIGHT_BROWSERS_PATH=0 DLO_RUN_BROWSER_TESTS=1 nyc mocha -r ts-node/register -r source-map-support/register -r jsdom-global/register test/*.spec.ts -- --grep 'CEDDL to FullStory'",
+    "test:browser": "PLAYWRIGHT_BROWSERS_PATH=0 DLO_RUN_BROWSER_TESTS=1 nyc mocha -r ts-node/register -r source-map-support/register -r jsdom-global/register test/*.spec.ts -- --grep Ruleset --timeout 3000",
     "test:browser:bootstrap": "PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install",
     "lint": "eslint --ext .ts src/** test/mocks/** test/utils/** test/*.ts",
     "lint:fix": "eslint --ext .ts --fix src/**  test/mocks/** test/utils/** test/*.ts",
