@@ -367,4 +367,8 @@ export const basicAppMeasurement: AppMeasurement = {
   eVar50: 'cca-1234',
   eVar60: '21.95',
   prop1: 'USD',
+  prop10: 'prop-10',
+  prop20: 'prop-20',
+  prop50: 'prop-50',
+  prop60: 'prop-60',
 };
