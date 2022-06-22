@@ -55,7 +55,7 @@ describe('Ruleset: Tealium to FullStory rules', () => {
         expectEqual(id, 'product_view');
         expectMatch(payload, tealiumRetail, 'product_id');
         expectEqual(payload.order_total, '54.47');
-        expectEqual(payload.product_discount_amount, ['2.98']); // NOTE list reduced to single value
+        expectEqual(payload.product_discount_amount, ['2.98']);
         expectUndefined(payload, 'customer_first_name', 'customer_last_name', 'customer_email');
       });
 
