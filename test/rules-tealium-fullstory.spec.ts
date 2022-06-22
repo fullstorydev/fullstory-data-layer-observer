@@ -53,9 +53,7 @@ describe('Ruleset: Tealium to FullStory rules', () => {
 
         const [id, payload] = await testHarness.popEvent();
         expectEqual(id, 'product_view');
-        expectMatch(payload, tealiumRetail, 'product_id');
-        expectEqual(payload.order_total, '54.47');
-        expectEqual(payload.product_discount_amount, ['2.98']);
+        expectMatch(payload, tealiumRetail, 'product_id', 'order_total', 'product_discount_amount');
         expectUndefined(payload, 'customer_first_name', 'customer_last_name', 'customer_email');
       });
 
