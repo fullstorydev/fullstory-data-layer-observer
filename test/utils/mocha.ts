@@ -298,31 +298,3 @@ export function expectFS(methodName: FSMethodName, namespace = 'FS'): any[] {
   expect(fs).to.be.ok;
   return expectParams(fs, methodName);
 }
-
-/**
- * Similar to `expectFS`, `waitForFS` is a convenicne method for `expectParams` that
- * checks the global FullStory object. Unlike `expectFS`, `waitForFS` supports waiting
- * for a global FullStory object method call within a timeout period.
- * @param methodName FullStory API function (`methodName` arg for `expectParams`)
- * @param namespace Global object if FullStory is not `FS`
- * @param timeout Time in milliseconds after which the Promise is rejected
- */
-export function waitForFS(methodName: FSMethodName, namespace = 'FS', timeout: number = 500): Promise<any[]> {
-  const startTime = new Date().getTime();
-
-  return new Promise<any[]>((resolve, reject) => {
-    const expectFSInterval = setInterval(() => {
-      try {
-        const params = expectFS(methodName, namespace);
-        clearInterval(expectFSInterval);
-        resolve(params);
-      } catch {
-        const elapsedTime = new Date().getTime() - startTime;
-        if (elapsedTime >= timeout) {
-          clearInterval(expectFSInterval);
-          reject(new Error('waitForFS timeout exceeded.'));
-        }
-      }
-    }, 50);
-  });
-}
