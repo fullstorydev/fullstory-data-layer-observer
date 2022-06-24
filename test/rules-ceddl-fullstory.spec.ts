@@ -1,4 +1,5 @@
 import 'mocha';
+import { expect } from 'chai';
 
 import { expectEqual, expectMatch, expectUndefined } from './utils/mocha';
 import { RulesetTestHarness, getRulesetTestEnvironments } from './utils/ruleset-test-harness';
@@ -88,15 +89,7 @@ describe('Ruleset: CEDDL to FullStory', () => {
       it('does not send CEDDL cart item products to FS.event on load', async () => {
         // digitalData.cart.item already has an item. Here, we're verifying no FS.event
         // calls were made as would occur if readOnLoad were true
-        await new Promise<void>((resolve, reject) => {
-          testHarness.popEvent(500)
-            .then(() => {
-              reject(new Error('Expected rejected promise due to no FS.event calls being present.'));
-            })
-            .catch(() => {
-              resolve();
-            });
-        });
+        expect(await testHarness.popEvent(500)).to.be.undefined;
       });
 
       it('sends CEDDL page properties to FS.event', async () => {

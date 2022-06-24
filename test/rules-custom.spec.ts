@@ -1,4 +1,5 @@
 import 'mocha';
+import { expect } from 'chai';
 
 import { DataLayerRule } from '../src/observer';
 import { expectEqual } from './utils/mocha';
@@ -71,16 +72,7 @@ describe('Ruleset: Custom rules', () => {
         expectEqual('eVar2', eventName);
         expectEqual('22', payload.eVar22);
 
-        // Verify no other calls were made to rule destinations
-        await new Promise<void>((resolve, reject) => {
-          testHarness.popEvent(500)
-            .then(() => {
-              reject(new Error('Expected rejected promise due to no FS.event calls being present.'));
-            })
-            .catch(() => {
-              resolve();
-            });
-        });
+        expect(await testHarness.popEvent(500)).to.be.undefined;
       });
     });
   });

@@ -14,7 +14,7 @@ export interface RulesetTestHarness {
   setUp: (rules: DataLayerRule[], dataLayer: any) => Promise<void>;
   tearDown: () => Promise<void>;
   execute: (action: (args: any[]) => void, args?: any[]) => Promise<void>;
-  popEvent: (timeoutMs?: number) => Promise<any[]>;
+  popEvent: (timeoutMs?: number) => Promise<any>;
 }
 
 interface RulesetTestEnvironment {
@@ -45,14 +45,14 @@ const nodeTestHarness: RulesetTestHarness = {
     return Promise.resolve();
   },
 
-  popEvent: async (timeoutMs: number = 1000) => new Promise<any[]>((resolve, reject) => {
+  popEvent: async (timeoutMs: number = 1000) => new Promise<any>((resolve) => {
     const startTime = new Date().getTime();
 
     const checkForEvents = setInterval(() => {
       const currentTime = new Date().getTime();
       if (currentTime - startTime >= timeoutMs) {
         clearInterval(checkForEvents);
-        reject(new Error(`Timeout ${timeoutMs} exceeded waiting for FS.event call.`));
+        resolve(undefined);
       }
 
       if (expectGlobal('FS').callQueues.event.length) {
@@ -126,7 +126,11 @@ class BrowserTestHarness implements RulesetTestHarness {
   }
 
   async popEvent(timeoutMs: number = 1000) {
-    await this.page.waitForFunction(() => window.events.length, undefined, { timeout: timeoutMs });
+    try {
+      await this.page.waitForFunction(() => window.events.length, undefined, { timeout: timeoutMs });
+    } catch {
+      return Promise.resolve(undefined);
+    }
     return this.page.evaluate(() => window.events.pop());
   }
 }

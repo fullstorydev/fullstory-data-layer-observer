@@ -1,4 +1,5 @@
 import 'mocha';
+import { expect } from 'chai';
 
 import { expectEqual, expectUndefined } from './utils/mocha';
 import { RulesetTestHarness, getRulesetTestEnvironments } from './utils/ruleset-test-harness';
@@ -58,15 +59,7 @@ describe('Ruleset: Google Analytics Event Measurement to FullStory', () => {
         });
 
         // now check that no calls get queued
-        await new Promise<void>((resolve, reject) => {
-          testHarness.popEvent(500)
-            .then(() => {
-              reject(new Error('Expected rejected promise due to no FS.event calls being present.'));
-            })
-            .catch(() => {
-              resolve();
-            });
-        });
+        expect(await testHarness.popEvent(500)).to.be.undefined;
       });
     });
   });

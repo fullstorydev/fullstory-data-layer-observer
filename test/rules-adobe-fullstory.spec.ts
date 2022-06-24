@@ -1,4 +1,5 @@
 import 'mocha';
+import { expect } from 'chai';
 
 import { expectEqual, expectMatch, expectUndefined } from './utils/mocha';
 import { RulesetTestHarness, getRulesetTestEnvironments } from './utils/ruleset-test-harness';
@@ -27,7 +28,7 @@ describe('Ruleset: Adobe to FullStory rules', () => {
         await testEnv.tearDown();
       });
 
-      it('sends Adobe eVars and props to FS.event', async () => {
+      it('sends Adobe eVars to FS.event', async () => {
         testHarness = await testEnv.createTestHarness(adobeRules, {
           s: {
             eVar1: '',
@@ -35,11 +36,6 @@ describe('Ruleset: Adobe to FullStory rules', () => {
             eVar20: '',
             eVar50: '',
             eVar60: '',
-            prop1: '',
-            prop10: '',
-            prop20: '',
-            prop50: '',
-            prop60: '',
             pageName: '',
           } as AppMeasurement,
         });
@@ -51,6 +47,28 @@ describe('Ruleset: Adobe to FullStory rules', () => {
           globalThis.s.eVar50 = localAppMeasurement.eVar50;
           globalThis.s.eVar60 = localAppMeasurement.eVar60;
 
+          globalThis.s.pageName = localAppMeasurement.pageName;
+        }, [basicAppMeasurement]);
+
+        const [eventName, payload] = await testHarness.popEvent();
+        expectEqual(eventName, 'eVars');
+        expectMatch(basicAppMeasurement, payload, 'eVar1', 'eVar10', 'eVar20', 'eVar50', 'eVar60');
+        expectUndefined(payload, 'pageName');
+      });
+
+      it('sends Adobe props to FS.event', async () => {
+        testHarness = await testEnv.createTestHarness(adobeRules, {
+          s: {
+            prop1: '',
+            prop10: '',
+            prop20: '',
+            prop50: '',
+            prop60: '',
+            pageName: '',
+          } as AppMeasurement,
+        });
+
+        await testHarness.execute(([localAppMeasurement]) => {
           globalThis.s.prop1 = localAppMeasurement.prop1;
           globalThis.s.prop10 = localAppMeasurement.prop10;
           globalThis.s.prop20 = localAppMeasurement.prop20;
@@ -60,14 +78,9 @@ describe('Ruleset: Adobe to FullStory rules', () => {
           globalThis.s.pageName = localAppMeasurement.pageName;
         }, [basicAppMeasurement]);
 
-        let [eventName, payload] = await testHarness.popEvent();
+        const [eventName, payload] = await testHarness.popEvent();
         expectEqual(eventName, 'props');
         expectMatch(basicAppMeasurement, payload, 'prop1', 'prop10', 'prop20', 'prop50', 'prop60');
-        expectUndefined(payload, 'pageName');
-
-        [eventName, payload] = await testHarness.popEvent();
-        expectEqual(eventName, 'eVars');
-        expectMatch(basicAppMeasurement, payload, 'eVar1', 'eVar10', 'eVar20', 'eVar50', 'eVar60');
         expectUndefined(payload, 'pageName');
       });
 
@@ -79,15 +92,7 @@ describe('Ruleset: Adobe to FullStory rules', () => {
           globalThis.s.prop1 = undefined;
         });
 
-        await new Promise<void>((resolve, reject) => {
-          testHarness.popEvent(500)
-            .then(() => {
-              reject(new Error('Expected rejected promise due to no FS.event calls being present.'));
-            })
-            .catch(() => {
-              resolve();
-            });
-        });
+        expect(await testHarness.popEvent(500)).to.be.undefined;
       });
     });
   });
