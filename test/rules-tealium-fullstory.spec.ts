@@ -1,4 +1,5 @@
 import 'mocha';
+import { expect } from 'chai';
 
 import { expectEqual, expectUndefined, expectMatch } from './utils/mocha';
 import { RulesetTestHarness, getRulesetTestEnvironments } from './utils/ruleset-test-harness';
@@ -62,15 +63,7 @@ describe('Ruleset: Tealium to FullStory rules', () => {
           utag.data.outsideScope = true;
         });
 
-        await new Promise<void>((resolve, reject) => {
-          testHarness.popEvent(500)
-            .then(() => {
-              reject(new Error('Expected rejected promise due to no FS.event calls being present.'));
-            })
-            .catch(() => {
-              resolve();
-            });
-        });
+        expect(await testHarness.popEvent(500)).to.be.undefined;
       });
     });
   });
