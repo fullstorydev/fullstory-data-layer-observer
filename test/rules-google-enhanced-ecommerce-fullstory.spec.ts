@@ -3,12 +3,9 @@ import 'mocha';
 import { expectEqual } from './utils/mocha';
 import { RulesetTestHarness, getRulesetTestEnvironments } from './utils/ruleset-test-harness';
 
-// TODO(nate): Update this ruleset to match the rules served by FullStory data layer capture integrations.
-// This will require supplying a "convert" beforeDestination operator to convert string currency values
-// to numbers.
-import '../rulesets/google-ua-enhanced-ecommerce.js';
+import '../rulesets/google-enhanced-ecommerce.js';
 
-const ecommerceRulesKey = '_dlo_rules_google_enhanced_ecommerce';
+const ecommerceRulesKey = '_dlo_rules_google_ec';
 const ecommerceRules = (window as Record<string, any>)[ecommerceRulesKey];
 declare global {
   // eslint-disable-next-line no-var, vars-on-top
@@ -68,7 +65,7 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce to FullStory', () => {
         let [eventName, payload] = await testHarness.popEvent();
         expectEqual(eventName, 'detail_product');
         expectEqual(payload.id, 'P000525722');
-        expectEqual(payload.price, 2.99);
+        expectEqual(payload.price, '2.99');
 
         [eventName, payload] = await testHarness.popEvent();
         expectEqual(eventName, 'detail');
@@ -101,7 +98,7 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce to FullStory', () => {
         let [eventName, payload] = await testHarness.popEvent();
         expectEqual(eventName, 'click_product');
         expectEqual(payload.id, 'P000525722');
-        expectEqual(payload.price, 2.99);
+        expectEqual(payload.price, '2.99');
 
         [eventName, payload] = await testHarness.popEvent();
         expectEqual(eventName, 'click');
@@ -135,7 +132,7 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce to FullStory', () => {
         let [eventName, payload] = await testHarness.popEvent();
         expectEqual(eventName, 'add_product');
         expectEqual(payload.id, 'P000525722');
-        expectEqual(payload.price, 2.99);
+        expectEqual(payload.price, '2.99');
 
         [eventName, payload] = await testHarness.popEvent();
         expectEqual(eventName, 'add');
@@ -168,7 +165,7 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce to FullStory', () => {
         let [eventName, payload] = await testHarness.popEvent();
         expectEqual(eventName, 'remove_product');
         expectEqual(payload.id, 'P000525722');
-        expectEqual(payload.price, 2.99);
+        expectEqual(payload.price, '2.99');
 
         [eventName, payload] = await testHarness.popEvent();
         expectEqual(eventName, 'remove');
@@ -246,16 +243,16 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce to FullStory', () => {
         let [eventName, payload] = await testHarness.popEvent();
         expectEqual(eventName, 'purchase_product');
         expectEqual(payload.id, '668ebb86-60b5-451e-92d3-044157d27823');
-        expectEqual(payload.price, 15.55);
+        expectEqual(payload.price, '15.55');
 
         [eventName, payload] = await testHarness.popEvent();
         expectEqual(eventName, 'purchase_product');
         expectEqual(payload.id, 'P000525722');
-        expectEqual(payload.price, 2.99);
+        expectEqual(payload.price, '2.99');
 
         [eventName, payload] = await testHarness.popEvent();
         expectEqual(eventName, 'purchase');
-        expectEqual(payload.shipping, 5.99);
+        expectEqual(payload.shipping, '5.99');
       });
 
       it('reads enhanced ecommerce checkout', async () => {
@@ -297,12 +294,12 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce to FullStory', () => {
         let [eventName, payload] = await testHarness.popEvent();
         expectEqual(eventName, 'checkout_product');
         expectEqual(payload.id, '668ebb86-60b5-451e-92d3-044157d27823');
-        expectEqual(payload.price, 15.55);
+        expectEqual(payload.price, '15.55');
 
         [eventName, payload] = await testHarness.popEvent();
         expectEqual(eventName, 'checkout_product');
         expectEqual(payload.id, 'P000525722');
-        expectEqual(payload.price, 2.99);
+        expectEqual(payload.price, '2.99');
 
         [eventName, payload] = await testHarness.popEvent();
         expectEqual(eventName, 'checkout');
