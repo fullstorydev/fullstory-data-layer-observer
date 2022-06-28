@@ -18,7 +18,7 @@ Rulesets provide out of the box rules that are compatible with common data layer
 
 ### Enhanced Ecommerce (UA)
 
-- [Ruleset](./google-ua-enhanced-ecommerce.js)
+- [Ruleset](./google-enhanced-ecommerce.js)
 - [Vendor Guidelines](https://developers.google.com/tag-manager/enhanced-ecommerce)
 - [Tests](../test/rules-google-fullstory.spec.ts)
 

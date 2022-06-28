@@ -3,10 +3,7 @@ import 'mocha';
 import { expectEqual } from './utils/mocha';
 import { RulesetTestHarness, getRulesetTestEnvironments } from './utils/ruleset-test-harness';
 
-// TODO(nate): Update this ruleset to match the rules served by FullStory data layer capture integrations.
-// This will require supplying a "convert" beforeDestination operator to convert string currency values
-// to numbers.
-import '../rulesets/google-ua-enhanced-ecommerce.js';
+import '../rulesets/google-enhanced-ecommerce.js';
 
 const ecommerceRulesKey = '_dlo_rules_google_ec';
 const ecommerceRules = (window as Record<string, any>)[ecommerceRulesKey];
