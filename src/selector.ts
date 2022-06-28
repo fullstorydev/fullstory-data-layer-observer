@@ -214,6 +214,10 @@ class PathElement {
   }
 
   select(target: any): any | undefined {
+    if (target === null || target === undefined) {
+      return undefined;
+    }
+
     switch (this.kind) {
       case ElementKind.Pluck:
         return this.selectPluck(target);
@@ -253,7 +257,7 @@ class PathElement {
   }
 
   selectPluck(target: any): any | undefined {
-    return target[this.raw];
+    return target === null ? undefined : target[this.raw];
   }
 
   selectIndex(target: any): any | undefined {
@@ -262,7 +266,7 @@ class PathElement {
     }
 
     const prop = target[this.brackets.prop];
-    if (typeof prop === 'undefined') return undefined;
+    if (typeof prop === 'undefined' || prop === null) return undefined;
 
     let { index } = this.brackets.op;
     if (index >= prop.length) return undefined;
@@ -285,7 +289,7 @@ class PathElement {
     }
 
     const prop: any = target[this.brackets.prop];
-    if (typeof prop === 'undefined') return undefined;
+    if (typeof prop === 'undefined' || prop === null) return undefined;
 
     const results: { [key: string]: any } = {};
     let atLeastOne = false;
@@ -305,7 +309,7 @@ class PathElement {
     }
 
     const prop: any = target[this.brackets.prop];
-    if (typeof prop === 'undefined') return undefined;
+    if (typeof prop === 'undefined' || prop === null) return undefined;
 
     const results: { [key: string]: any } = {};
     let atLeastOne = false;
@@ -326,7 +330,7 @@ class PathElement {
     }
 
     const prop: any = target[this.brackets.prop];
-    if (typeof prop === 'undefined') return undefined;
+    if (typeof prop === 'undefined' || prop === null) return undefined;
 
     const results: { [key: string]: any } = {};
     let atLeastOne = false;
@@ -352,7 +356,7 @@ class PathElement {
     }
 
     const prop: any = target[this.brackets.prop];
-    if (typeof prop === 'undefined') return undefined;
+    if (typeof prop === 'undefined' || prop === null) return undefined;
 
     const results: { [key: string]: any } = {};
     let atLeastOne = false;
@@ -377,7 +381,7 @@ class PathElement {
     }
 
     const prop: any = target[this.brackets.prop];
-    if (typeof prop === 'undefined') return undefined;
+    if (typeof prop === 'undefined' || prop === null) return undefined;
 
     // Check that all of the filter properties are matched (by existence or value)
 

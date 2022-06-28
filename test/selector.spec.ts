@@ -21,6 +21,7 @@ const testData = {
   cities: ['Seattle', 'Atlanta', 'San Francisco', 'New York City'],
   gtmEvent: { event: 'gtm.dom' },
   myEvent: { event: 'myEvent' },
+  nullProperty: null,
 };
 
 describe('test selection paths', () => {
@@ -258,5 +259,27 @@ describe('test selection paths', () => {
 
   it('filter notation should return a reference to the object', () => {
     expect(select('favorites.films[?(action=Rogue One)]', testData)).to.eq(testData.favorites.films);
+  });
+
+  it('filter notation should return a reference to the object', () => {
+    expect(select('favorites.films[?(action=Rogue One)]', testData)).to.eq(testData.favorites.films);
+  });
+
+  it('it should gracefully handle null selection', () => {
+    expect(select('nullProperty.doesNotExist', testData)).to.be.undefined;
+    expect(select('nullProperty[0]', testData)).to.be.undefined;
+    expect(select('nullProperty[(doesNotExist)]', testData)).to.be.undefined;
+    expect(select('nullProperty[!(doesNotExist)]', testData)).to.be.undefined;
+    expect(select('nullProperty[^(doesNotExist)]', testData)).to.be.undefined;
+    expect(select('nullProperty[$(doesNotExist)]', testData)).to.be.undefined;
+    expect(select('nullProperty[?(doesNotExist)]', testData)).to.be.undefined;
+    expect(select('nullProperty[?(doesNotExist=empty)]', testData)).to.be.undefined;
+    expect(select('nullProperty[?(doesNotExist!=empty)]', testData)).to.be.undefined;
+    expect(select('nullProperty[?(doesNotExist!^empty)]', testData)).to.be.undefined;
+    expect(select('nullProperty[?(doesNotExist=^empty)]', testData)).to.be.undefined;
+    expect(select('nullProperty[?(doesNotExist<=1)]', testData)).to.be.undefined;
+    expect(select('nullProperty[?(doesNotExist>=1)]', testData)).to.be.undefined;
+    expect(select('nullProperty[?(doesNotExist>1)]', testData)).to.be.undefined;
+    expect(select('nullProperty[?(doesNotExist<1)]', testData)).to.be.undefined;
   });
 });
