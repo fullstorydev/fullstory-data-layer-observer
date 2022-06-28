@@ -61,6 +61,17 @@ describe('Ruleset: Google Analytics Event Measurement to FullStory', () => {
         // now check that no calls get queued
         expect(await testHarness.popEvent(500)).to.be.undefined;
       });
+
+      it('gracefully handles a "clear" event', async () => {
+        await testHarness.execute(() => {
+          globalThis.dataLayer.push(
+            null,
+          );
+        });
+
+        const event = await testHarness.popEvent();
+        expect(event).to.be.undefined;
+      });
     });
   });
 });
