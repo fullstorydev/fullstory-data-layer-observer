@@ -261,10 +261,6 @@ describe('test selection paths', () => {
     expect(select('favorites.films[?(action=Rogue One)]', testData)).to.eq(testData.favorites.films);
   });
 
-  it('filter notation should return a reference to the object', () => {
-    expect(select('favorites.films[?(action=Rogue One)]', testData)).to.eq(testData.favorites.films);
-  });
-
   it('it should gracefully handle null selection', () => {
     expect(select('nullProperty.doesNotExist', testData)).to.be.undefined;
     expect(select('nullProperty[0]', testData)).to.be.undefined;
