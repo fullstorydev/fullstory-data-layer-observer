@@ -343,7 +343,7 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce to FullStory', () => {
           });
         });
 
-        const event = await testHarness.popEvent();
+        const event = await testHarness.popEvent(500);
         expectEqual(event, undefined);
       });
     });

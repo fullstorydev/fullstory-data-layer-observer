@@ -69,7 +69,7 @@ describe('Ruleset: Google Analytics Event Measurement to FullStory', () => {
           );
         });
 
-        const event = await testHarness.popEvent();
+        const event = await testHarness.popEvent(500);
         expect(event).to.be.undefined;
       });
     });
