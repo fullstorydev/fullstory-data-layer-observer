@@ -111,6 +111,8 @@ export class ConvertOperator implements Operator {
       let enumerableProps = ConvertOperator.enumerableProperties(data[index]);
       // if ignore properties are set, make sure those are filtered out
       if (ignore) {
+        /* no matter what I did, breaking it up into multiple lines, or using curly braces, I couldn't get the line
+           to pass the max-len eslint so I had to disable it */
         // eslint-disable-next-line max-len
         enumerableProps = enumerableProps.filter((key) => ignore.find((element:string) => element === key) === undefined);
       }
