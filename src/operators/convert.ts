@@ -30,6 +30,7 @@ export class ConvertOperator implements Operator {
     preserveArray: { required: false, type: ['boolean'] },
     properties: { required: false, type: ['string,object'] }, // NOTE typeof array is object
     type: { required: false, type: ['string'] },
+    ignore: { required: false, type: ['string,object'] }, // NOTE typeof array is object
   };
 
   readonly index: number;
@@ -88,13 +89,16 @@ export class ConvertOperator implements Operator {
 
     const index = this.index >= 0 ? this.index : data.length + this.index;
 
-    let { properties } = this.options;
+    let { properties, ignore } = this.options;
     const {
       enumerate, force, preserveArray, type,
     } = this.options;
 
     if (typeof properties === 'string') {
       properties = properties.split(',').map((property) => property.trim()); // auto-correct if the CSV has spaces
+    }
+    if (typeof ignore === 'string') {
+      ignore = ignore.split(',').map((property) => property.trim()); // auto-correct if the CSV has spaces
     }
 
     // TODO (van) we don't currently rename properties in child objects, but if we eventually do
@@ -104,7 +108,12 @@ export class ConvertOperator implements Operator {
 
     // if enumerate is set, try to coerce all strings into an equivalent numeric value
     if (enumerate) {
-      const enumerableProps = ConvertOperator.enumerableProperties(data[index]);
+      let enumerableProps = ConvertOperator.enumerableProperties(data[index]);
+      // if ignore properties are set, make sure those are filtered out
+      if (ignore) {
+        // eslint-disable-next-line max-len
+        enumerableProps = enumerableProps.filter((key) => ignore.find((element:string) => element === key) === undefined);
+      }
       enumerableProps.forEach((property) => {
         if (typeof data[index][property] === 'string') {
           // it seems best to leave an empty string as-is rather than have it converted to 0
