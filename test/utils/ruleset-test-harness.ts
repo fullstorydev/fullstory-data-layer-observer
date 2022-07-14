@@ -10,6 +10,7 @@ import {
   expectFS, ExpectObserver, setupGlobals, expectGlobal,
 } from './mocha';
 import { DataLayerObserver, DataLayerRule } from '../../src/observer';
+import { ConsoleAppender, Logger } from '../../src/utils/logger';
 
 export interface RulesetTestHarness {
   setUp: (rules: DataLayerRule[], dataLayer: any) => Promise<void>;
@@ -204,6 +205,7 @@ export const getRulesetTestEnvironments = (): RulesetTestEnvironment[] => {
   return [{
     name: 'node',
     createTestHarness: async (rules: DataLayerRule[], dataLayer: any) => {
+      Logger.getInstance().appender = new ConsoleAppender();
       const testHarness = new NodeTestHarness();
       await testHarness.setUp(rules, dataLayer);
       return testHarness;
