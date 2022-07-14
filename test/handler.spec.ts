@@ -223,18 +223,20 @@ describe('DataHandler unit tests', () => {
   });
 
   it('empty object should halt data handling', () => {
-    (globalThis as any).digitalData.emptyObject = { undefinedChild: undefined };
-    const source = 'digitalData.emptyObject';
+    const source = 'digitalData.page';
     const handler = new DataHandler(source, DataLayerTarget.find(source));
 
     const seen: any[] = [];
 
+    const staticReturn = new StaticReturnOperator([null, { undefinedChild: undefined }]);
     const echo = new EchoOperator(seen);
 
+    handler.push(staticReturn);
     handler.push(echo);
     handler.fireEvent();
 
     expect(seen.length).to.eq(0);
+    expectNoCalls(console, 'error');
   });
 
   [0, '', false, null, []].forEach((val) => {
