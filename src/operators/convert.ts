@@ -10,6 +10,7 @@ export interface ConvertOperatorOptions extends OperatorOptions {
   force?: boolean;
   preserveArray?: boolean;
   properties?: string | string[];
+  ignore?: string | string[];
   type?: ConvertibleType;
 }
 
@@ -111,7 +112,7 @@ export class ConvertOperator implements Operator {
       let enumerableProps = ConvertOperator.enumerableProperties(data[index]);
       // if ignore properties are set, make sure those are filtered out
       if (ignore) {
-        const filterPredicate = (key:string) => ignore.find((element:string) => element === key) === undefined;
+        const filterPredicate = (key:string) => !ignore?.includes(key);
         enumerableProps = enumerableProps.filter(filterPredicate);
       }
       enumerableProps.forEach((property) => {
