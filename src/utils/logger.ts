@@ -12,7 +12,6 @@ export enum LogLevel {
   WARN,
   INFO,
   DEBUG,
-  RECORD, // Record information for statistical analysis
 }
 
 export enum LogMessageType {
@@ -61,9 +60,6 @@ export class ConsoleAppender implements LogAppender {
     const consoleMessage = `${message}${context ? ` ${JSON.stringify(context)}` : ''}`;
 
     switch (level) {
-      case LogLevel.RECORD:
-        // By default we do nothing with stats
-        return undefined;
       case LogLevel.ERROR: return console.error(consoleMessage);
       case LogLevel.WARN: return console.warn(consoleMessage);
       case LogLevel.INFO: return console.info(consoleMessage);
@@ -105,14 +101,8 @@ export class FullStoryAppender implements LogAppender {
 
         this.timeoutId = window.setTimeout(() => {
           this.timeoutId = null;
-          if (event.level === LogLevel.RECORD) {
-            // TODO handle LogLevel.RECORD events with upcoming fs stats call
-          } else {
-            fs.event(customEventName, customEventPayload, customEventSource);
-          }
+          fs.event(customEventName, customEventPayload, customEventSource);
         }, FullStoryAppender.debounceTime);
-      } else if (event.level === LogLevel.RECORD) {
-        // TODO handle LogLevel.RECORD events with upcoming fs stats call
       } else {
         fs.event(customEventName, customEventPayload, customEventSource);
       }
@@ -213,7 +203,7 @@ export class Logger {
    * @param context provides additional metadata related to the log event
    */
   private log(level: LogLevel, message: string, context?: LogContext) {
-    if (level <= this.level || level === LogLevel.RECORD) {
+    if (level <= this.level) {
       this.appender.log({
         level,
         message,
@@ -236,10 +226,5 @@ export class Logger {
 
   debug(message: string, context?: LogContext) {
     this.log(LogLevel.DEBUG, message, context);
-  }
-
-  // Record information for statistical analysis
-  record(message: string, context?: LogContext) {
-    this.log(LogLevel.RECORD, message, context);
   }
 }
