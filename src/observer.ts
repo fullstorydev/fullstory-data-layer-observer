@@ -136,9 +136,6 @@ export class DataLayerObserver {
       });
       rules.forEach((rule: DataLayerRule) => this.registerRule(rule));
       ruleRegistrationSpan.end();
-      Telemetry.count(telemetryType.ruleCount, rules.length);
-    } else {
-      Telemetry.count(telemetryType.ruleCount, 0);
     }
   }
 
