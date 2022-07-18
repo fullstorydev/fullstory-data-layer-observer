@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-underscore-dangle */
 import 'mocha';
@@ -9,12 +10,14 @@ import {
   expectFS, ExpectObserver, setupGlobals, expectGlobal,
 } from './mocha';
 import { DataLayerObserver, DataLayerRule } from '../../src/observer';
+import { ConsoleAppender, Logger } from '../../src/utils/logger';
 
 export interface RulesetTestHarness {
   setUp: (rules: DataLayerRule[], dataLayer: any) => Promise<void>;
   tearDown: () => Promise<void>;
   execute: (action: (args: any[]) => void, args?: any[]) => Promise<void>;
   popEvent: (timeoutMs?: number) => Promise<any>;
+  popError: (timeoutMs?: number) => Promise<any>;
 }
 
 interface RulesetTestEnvironment {
@@ -26,48 +29,78 @@ interface RulesetTestEnvironment {
 const isBrowserTest = process.env.DLO_RUN_BROWSER_TESTS;
 const dloScriptSrc = process.env.PLAYWRIGHT_DLO_SCRIPT_SRC;
 
-const nodeTestHarness: RulesetTestHarness = {
-  setUp: (rules: DataLayerRule[], dataLayer: any) => {
+class NodeTestHarness implements RulesetTestHarness {
+  private originalConsole: Console;
+
+  private mockConsole: Console;
+
+  private readonly errors: any[] = [];
+
+  constructor() {
+    this.originalConsole = globalThis.console;
+    this.mockConsole = {
+      ...this.originalConsole,
+      error: (...args: any[]) => {
+        this.errors.push(...args);
+        this.originalConsole.error(...args);
+      },
+    };
+  }
+
+  setUp(rules: DataLayerRule[], dataLayer: any) {
     setupGlobals(
       Object.keys(dataLayer).map((key) => [key, dataLayer[key]]),
     );
+    setupGlobals([
+      ['console', this.mockConsole],
+    ]);
     ExpectObserver.getInstance().create({ rules });
     return Promise.resolve();
-  },
+  }
 
-  tearDown: () => {
+  tearDown() {
+    setupGlobals([
+      ['console', this.originalConsole],
+    ]);
     ExpectObserver.getInstance().cleanup();
     return Promise.resolve();
-  },
+  }
 
-  execute: (action: (args: any[]) => void, args?: any[]) => {
+  execute(action: (args: any[]) => void, args?: any[]) {
     action(args || []);
     return Promise.resolve();
-  },
+  }
 
-  popEvent: async (timeoutMs: number = 1000) => new Promise<any>((resolve) => {
-    const startTime = new Date().getTime();
+  popEvent(timeoutMs: number = 1000) {
+    return new Promise<any>((resolve) => {
+      const startTime = new Date().getTime();
 
-    const checkForEvents = setInterval(() => {
-      const currentTime = new Date().getTime();
-      if (currentTime - startTime >= timeoutMs) {
-        clearInterval(checkForEvents);
-        resolve(undefined);
-      }
+      const checkForEvents = setInterval(() => {
+        const currentTime = new Date().getTime();
+        if (currentTime - startTime >= timeoutMs) {
+          clearInterval(checkForEvents);
+          resolve(undefined);
+        }
 
-      if (expectGlobal('FS').callQueues.event.length) {
-        clearInterval(checkForEvents);
-        resolve(expectFS('event'));
-      }
-    }, 50);
-  }),
-};
+        if (expectGlobal('FS').callQueues.event.length) {
+          clearInterval(checkForEvents);
+          resolve(expectFS('event'));
+        }
+      }, 50);
+    });
+  }
+
+  popError() {
+    return Promise.resolve(this.errors.pop());
+  }
+}
 
 declare global {
   interface Window extends Record<string, any> {
     // eslint-disable-next-line camelcase
     _dlo_rules?: DataLayerRule[];
     events: any[];
+    errors: any[];
     FS?: {
       event: (args: any[]) => void
     };
@@ -101,11 +134,16 @@ class BrowserTestHarness implements RulesetTestHarness {
       });
 
       globalThis.events = [];
+      globalThis.errors = [];
 
       globalThis.FS = {
         event: (...args: any) => {
           globalThis.events.push(args);
         },
+      };
+
+      globalThis.console.error = (...args: any) => {
+        globalThis.errors.push(...args);
       };
 
       const dloScriptTag = document.createElement('script');
@@ -129,9 +167,18 @@ class BrowserTestHarness implements RulesetTestHarness {
     try {
       await this.page.waitForFunction(() => window.events.length, undefined, { timeout: timeoutMs });
     } catch {
-      return Promise.resolve(undefined);
+      return undefined;
     }
     return this.page.evaluate(() => window.events.pop());
+  }
+
+  async popError(timeoutMs: number = 1000) {
+    try {
+      await this.page.waitForFunction(() => window.errors.length, undefined, { timeout: timeoutMs });
+    } catch {
+      return undefined;
+    }
+    return this.page.evaluate(() => window.errors.pop());
   }
 }
 
@@ -158,7 +205,8 @@ export const getRulesetTestEnvironments = (): RulesetTestEnvironment[] => {
   return [{
     name: 'node',
     createTestHarness: async (rules: DataLayerRule[], dataLayer: any) => {
-      const testHarness = nodeTestHarness;
+      Logger.getInstance().appender = new ConsoleAppender();
+      const testHarness = new NodeTestHarness();
       await testHarness.setUp(rules, dataLayer);
       return testHarness;
     },

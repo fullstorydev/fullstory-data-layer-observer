@@ -173,7 +173,7 @@ export default class DataHandler {
       }
 
       // We don't use Object.values because it isn't supported by IE11
-      if (Object.keys(datum).some((key) => datum[key] !== undefined)) {
+      if (datum !== null && Object.keys(datum).some((key) => datum[key] !== undefined)) {
         return false;
       }
     }

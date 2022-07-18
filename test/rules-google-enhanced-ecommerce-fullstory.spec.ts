@@ -335,6 +335,20 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce to FullStory', () => {
         expectEqual(eventName, 'refund');
         expectEqual(payload.id, 'T12345');
       });
+
+      it('gracefully handles a "clear" event', async () => {
+        await testHarness.execute(() => {
+          globalThis.dataLayer.push({
+            ecommerce: null,
+          });
+        });
+
+        const event = await testHarness.popEvent(500);
+        expectEqual(event, undefined);
+
+        const error = await testHarness.popError(500);
+        expectEqual(error, undefined);
+      });
     });
   });
 });

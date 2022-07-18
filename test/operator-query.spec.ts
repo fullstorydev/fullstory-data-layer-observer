@@ -16,6 +16,7 @@ const testData = {
     },
   },
   cities: ['Seattle', 'Atlanta', 'San Francisco', 'New York City'],
+  nullProperty: null,
 };
 
 describe('query operator unit tests', () => {
@@ -67,5 +68,10 @@ describe('query operator unit tests', () => {
   it('it should return null for empty query results', () => {
     const operator = new QueryOperator({ name: 'query', select: '$.missing' });
     expect(operator.handleData([testData.favorites])).to.be.null;
+  });
+
+  it('it should gracefully handle null selector', () => {
+    const operator = new QueryOperator({ name: 'query', select: '$.nullProperty.doesNotExist' });
+    expect(operator.handleData([testData])).to.be.null;
   });
 });
