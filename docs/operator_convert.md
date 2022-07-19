@@ -136,7 +136,7 @@ Options with an asterisk are required. Note that `enumerate` can be used by itse
 ```javascript
 [
  {
-  userId: '300456',   
+  userId: '300456',
   available: 'false',
   basePrice: '15.55',
   priceWithTax: '16.95',
