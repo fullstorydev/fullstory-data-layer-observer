@@ -10,6 +10,13 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 3.0.0
+
+- Adds an `ignore` option to the `convert` operator which excludes properties from conversion when specifying `enumerate: true`.
+- `null` object values are now treated as empty objects which halt data handler pipeline processing and which are not processed by selectors. Fixes an issue with Google data layers where legitimate `null` events would cause errors to be logged.
+- Removes the `record` log level.
+- Removes the previously deprecated rule count telemetry type.
+
 ### 2.1.2
 
 - Updating developement dependencies.
