@@ -10,7 +10,6 @@ window['_dlo_rules_ceddl'] = [
   },
   {
     "id": "fs-event-ceddl-cart-item", "source": "digitalData.cart.item",
-    "readOnLoad": false,
     "operators": [
       { "name": "query", "select": "$[!(linkedProduct)]" },
       { "name": "insert", "value": "cart_item" },
