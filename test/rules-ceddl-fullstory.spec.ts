@@ -1,5 +1,4 @@
 import 'mocha';
-import { expect } from 'chai';
 
 import { expectEqual, expectMatch, expectUndefined } from './utils/mocha';
 import { RulesetTestHarness, getRulesetTestEnvironments } from './utils/ruleset-test-harness';
@@ -84,12 +83,6 @@ describe('Ruleset: CEDDL to FullStory', () => {
         expectEqual(eventName, 'cart_item');
         expectEqual(payload.productInfo.sku, secondProduct.productInfo.sku);
         expectUndefined(payload, 'linkedProduct');
-      });
-
-      it('does not send CEDDL cart item products to FS.event on load', async () => {
-        // digitalData.cart.item already has an item. Here, we're verifying no FS.event
-        // calls were made as would occur if readOnLoad were true
-        expect(await testHarness.popEvent(500)).to.be.undefined;
       });
 
       it('sends CEDDL page properties to FS.event', async () => {
