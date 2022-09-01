@@ -22,7 +22,7 @@ Options with an asterisk are required.
 ```javascript
 {
  source: 'digitalData.user.profile[0]',
- operators: [ { name: 'rename', properties: { userName: 'displayName' } ],
+ operators: [ { name: 'rename', properties: {userName: 'displayName'}}
  destination: 'FS.identify'
 }
 ```
