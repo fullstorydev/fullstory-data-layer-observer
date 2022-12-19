@@ -4,6 +4,8 @@ The suffix operator can be used to automatically apply the appropriate type suff
 
 To support FullStory-specific APIs, the properties `displayName`, `pageName`, and `email` are not suffixed in a root object. Additionally, the number of properties in a suffixed object is limited to `100` by default. This prevents unintentional, large objects from being sent to the destination, which can result in performance issues or exceeding cardinality quotas. Increase the limit using the `maxProps` option.
 
+Properties that already have a suffix are ignored.  
+
 ## Options
 
 Options with an asterisk are required.
@@ -36,6 +38,7 @@ Options with an asterisk are required.
   basePrice: 15.55,
   voucherCode: '',
   voucherDiscount: 0,
+  forced_str: '1234',   
   currency: 'USD',
   taxRate: 0.09,
   shipping: 5.0,
@@ -54,6 +57,7 @@ Options with an asterisk are required.
   basePrice_real: 15.55,
   voucherCode_str: '',
   voucherDiscount_real: 0,
+  forced_str: '1234',   
   currency_str: 'USD',
   taxRate_real: 0.09,
   shipping_real: 5.0,
