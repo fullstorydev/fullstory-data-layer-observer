@@ -31,7 +31,11 @@ export enum Suffixes {
 }
 
 // squirrel this away so we can use it as a lookup later
-const SuffixValues = Object.values(Suffixes);
+const SuffixValueLookup = new Map<string, string>();
+const suffixValues = Object.values(Suffixes);
+suffixValues.forEach((item) => {
+  SuffixValueLookup.set(item, item);
+});
 
 export interface SuffixOperatorOptions extends OperatorOptions {
   maxProps?: number;
@@ -151,11 +155,12 @@ export class SuffixOperator implements Operator {
     if (prop === undefined || prop === null) {
       return false;
     }
-    let matches = false;
-    for (let i = 0; !matches && i < SuffixValues.length; i += 1) {
-      matches = (prop.endsWith(SuffixValues[i]));
+    const lastIndex = prop.lastIndexOf('_');
+    if (lastIndex < 0) {
+      return false;
     }
-    return matches;
+    const trialSuffix = prop.substring(lastIndex, prop.length);
+    return SuffixValueLookup.has(trialSuffix);
   }
 
   /**
