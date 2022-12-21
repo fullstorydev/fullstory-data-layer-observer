@@ -30,6 +30,9 @@ export enum Suffixes {
   Reals = '_reals',
 }
 
+// squirrel this away so we can use it as a lookup later
+const SuffixValues = Object.values(Suffixes);
+
 export interface SuffixOperatorOptions extends OperatorOptions {
   maxProps?: number;
 }
@@ -149,9 +152,8 @@ export class SuffixOperator implements Operator {
       return false;
     }
     let matches = false;
-    const suffixes:Array<Suffixes> = Object.values(Suffixes);
-    for (let i = 0; !matches && i < suffixes.length; i += 1) {
-      matches = (prop.endsWith(suffixes[i]));
+    for (let i = 0; !matches && i < SuffixValues.length; i += 1) {
+      matches = (prop.endsWith(SuffixValues[i]));
     }
     return matches;
   }
