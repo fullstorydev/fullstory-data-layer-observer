@@ -30,7 +30,7 @@ export enum Suffixes {
   Reals = '_reals',
 }
 
-// squirrel this away so we can use it as a lookup later
+// squirrel the suffix values away so we can use it as a lookup later
 const SuffixValueLookup = new Map<string, string>();
 const suffixValues = Object.values(Suffixes);
 suffixValues.forEach((item) => {
