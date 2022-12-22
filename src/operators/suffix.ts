@@ -32,8 +32,7 @@ export enum Suffixes {
 
 // squirrel the suffix values away so we can use it as a lookup later
 const SuffixValueLookup = new Map<string, string>();
-const suffixValues = Object.values(Suffixes);
-suffixValues.forEach((item) => {
+Object.values(Suffixes).forEach((item) => {
   SuffixValueLookup.set(item, item);
 });
 
@@ -159,7 +158,7 @@ export class SuffixOperator implements Operator {
     if (lastIndex < 0) {
       return false;
     }
-    const trialSuffix = prop.substring(lastIndex, prop.length);
+    const trialSuffix = prop.substring(lastIndex);
     return SuffixValueLookup.has(trialSuffix);
   }
 
