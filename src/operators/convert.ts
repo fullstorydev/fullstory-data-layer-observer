@@ -2,6 +2,7 @@ import {
   Operator, OperatorOptions, OperatorValidator, safeUpdate,
 } from '../operator';
 import { Logger, LogMessageType } from '../utils/logger';
+import { SuffixOperator } from './suffix';
 
 type ConvertibleType = 'bool' | 'date' | 'int' | 'real' | 'string';
 
@@ -11,6 +12,7 @@ export interface ConvertOperatorOptions extends OperatorOptions {
   preserveArray?: boolean;
   properties?: string | string[];
   ignore?: string | string[];
+  ignoreSuffixed?: boolean;
   type?: ConvertibleType;
 }
 
@@ -32,6 +34,7 @@ export class ConvertOperator implements Operator {
     properties: { required: false, type: ['string,object'] }, // NOTE typeof array is object
     type: { required: false, type: ['string'] },
     ignore: { required: false, type: ['string,object'] }, // NOTE typeof array is object
+    ignoreSuffixed: { required: false, type: ['boolean'] },
   };
 
   readonly index: number;
@@ -92,7 +95,7 @@ export class ConvertOperator implements Operator {
 
     let { properties, ignore } = this.options;
     const {
-      enumerate, force, preserveArray, type,
+      enumerate, force, preserveArray, type, ignoreSuffixed,
     } = this.options;
 
     if (typeof properties === 'string') {
@@ -113,6 +116,11 @@ export class ConvertOperator implements Operator {
       // if ignore properties are set, make sure those are filtered out
       if (ignore) {
         const filterPredicate = (key:string) => !ignore?.includes(key);
+        enumerableProps = enumerableProps.filter(filterPredicate);
+      }
+      // if we are to ignore suffixed values, filter out those that are suffixed
+      if (ignoreSuffixed) {
+        const filterPredicate = (key:string) => !SuffixOperator.isAlreadySuffixed(key);
         enumerableProps = enumerableProps.filter(filterPredicate);
       }
       enumerableProps.forEach((property) => {
