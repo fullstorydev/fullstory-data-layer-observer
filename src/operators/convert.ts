@@ -95,7 +95,7 @@ export class ConvertOperator implements Operator {
 
     let { properties, ignore } = this.options;
     const {
-      enumerate, force, preserveArray, type, ignoreSuffixed,
+      enumerate, force, preserveArray, type, ignoreSuffixed = true,
     } = this.options;
 
     if (typeof properties === 'string') {

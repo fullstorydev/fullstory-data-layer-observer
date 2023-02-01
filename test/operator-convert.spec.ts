@@ -419,7 +419,7 @@ describe('convert operator unit tests', () => {
   });
 
   it('ignoreSuffix should not convert suffixed vales', () => {
-    const operator = OperatorFactory.create('convert', { name: 'convert', enumerate: true, ignoreSuffixed: true });
+    const operator = OperatorFactory.create('convert', { name: 'convert', enumerate: true });
     const [enumerated] = operator.handleData([item])!;
     const {
       // eslint-disable-next-line camelcase
@@ -427,6 +427,17 @@ describe('convert operator unit tests', () => {
     } = enumerated;
 
     expect(forced_str).to.eq('12345');
+  });
+
+  it('ignoreSuffix set to false should convert suffixed vales', () => {
+    const operator = OperatorFactory.create('convert', { name: 'convert', enumerate: true, ignoreSuffixed: false });
+    const [enumerated] = operator.handleData([item])!;
+    const {
+      // eslint-disable-next-line camelcase
+      forced_str,
+    } = enumerated;
+
+    expect(forced_str).to.eq(12345);
   });
 
   it('strings can be converted automatically to numbers while converting specific properties', () => {
