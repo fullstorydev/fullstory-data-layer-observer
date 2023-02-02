@@ -4,7 +4,7 @@ The suffix operator can be used to automatically apply the appropriate type suff
 
 To support FullStory-specific APIs, the properties `displayName`, `pageName`, and `email` are not suffixed in a root object. Additionally, the number of properties in a suffixed object is limited to `100` by default. This prevents unintentional, large objects from being sent to the destination, which can result in performance issues or exceeding cardinality quotas. Increase the limit using the `maxProps` option.
 
-Properties that already have a suffix are ignored.  [Suffixes](https://help.fullstory.com/hc/en-us/articles/360020623234#property-name-requirements)
+Properties that have a [known type suffix](https://help.fullstory.com/hc/en-us/articles/360020623234#property-name-requirements) are ignored.
 
 ## Options
 

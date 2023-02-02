@@ -8,16 +8,16 @@ Convert is most useful when paired with `FS.event` for cart and checkout events 
 
 Options with an asterisk are required. Note that `enumerate` can be used by itself or with `properties`.
 
-| Option           | Type                   | Default     | Description                                                                                                                                                                                                         |
-|------------------|------------------------|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `enumerate`*     | `boolean`              | `false`     | Automatically converts all string values into their numeric equivalent.                                                                                                                                             |
-| `ignore`         | `string` or `string[]` | `undefined` | Can be paired with `enumerate` option to ignore one or more properties when performing the `enumerate`.                                                                                                             |
-| `ignoreSuffixed` | `boolean` | `true`      | Can be paired with `enumerate` option to ignore any properties that are suffixed when performing the `enumerate`.  [Suffixes](https://help.fullstory.com/hc/en-us/articles/360020623234#property-name-requirements) |
-| `force`         | `boolean` | `false`     | If the property is undefined or has value `null`, forcibly add the property with value `0`, `0.0`,`false` or empty string.                                                                                          |
-| `index`         | `number` | `0`         | Position of the object to convert in the operator input list.                                                                                                                                                       |
-| `preserveArray` | `boolean` | `false`     | If the conversion value is a list, keep the array type even if the array has a single value.                                                                                                                        |
-| `properties`*   | `string` or `string[]` | `undefined` | List of properties to convert.                                                                                                                                                                                      |
-| `type`*         | `string` | `undefined` | The desired type to convert properties to.                                                                                                                                                                          |
+| Option           | Type                   | Default     | Description                                                                                                                                                                                                   |
+|------------------|------------------------|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `enumerate`*     | `boolean`              | `false`     | Automatically converts all string values into their numeric equivalent.                                                                                                                                       |
+| `ignore`         | `string` or `string[]` | `undefined` | Can be paired with `enumerate` option to ignore one or more properties when performing the `enumerate`.                                                                                                       |
+| `ignoreSuffixed` | `boolean` | `true`      | Can be paired with `enumerate` option to ignore any properties with [known type suffixes](https://help.fullstory.com/hc/en-us/articles/360020623234#property-name-requirements) when performing the `enumerate` |
+| `force`         | `boolean` | `false`     | If the property is undefined or has value `null`, forcibly add the property with value `0`, `0.0`,`false` or empty string.                                                                                    |
+| `index`         | `number` | `0`         | Position of the object to convert in the operator input list.                                                                                                                                                 |
+| `preserveArray` | `boolean` | `false`     | If the conversion value is a list, keep the array type even if the array has a single value.                                                                                                                  |
+| `properties`*   | `string` or `string[]` | `undefined` | List of properties to convert.                                                                                                                                                                                |
+| `type`*         | `string` | `undefined` | The desired type to convert properties to.                                                                                                                                                                    |
 
 > **Tip:** Set the `properties` option to the string `*` to convert *all* properties in an object to a desired type.
 
@@ -160,7 +160,8 @@ Options with an asterisk are required. Note that `enumerate` can be used by itse
  }
 ]
 ```
-## Automatically convert all "numeric" strings ignoring suffixed property
+## Automatically convert all "numeric" strings ignoring suffixed property 
+(ignoreSuffixed defaults to true)
 
 ### Rule
 
@@ -168,7 +169,7 @@ Options with an asterisk are required. Note that `enumerate` can be used by itse
 {
  source: 'digitalData.cart.price[(userId, available,basePrice,cartTotal,priceWithTax)]',
  operators: [
-   { name: 'convert', enumerate: true, ignoreSuffixed: true }, 
+   { name: 'convert', enumerate: true }, 
    { name: 'rename', properties: { userId: 'userId_str' } },     
    { name: 'insert', value: 'Product Viewed' },
  ],
