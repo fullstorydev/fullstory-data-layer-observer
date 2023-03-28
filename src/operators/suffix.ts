@@ -30,6 +30,12 @@ export enum Suffixes {
   Reals = '_reals',
 }
 
+// squirrel the suffix values away so we can use it as a lookup later
+const SuffixValueLookup = new Map<string, string>();
+Object.values(Suffixes).forEach((item) => {
+  SuffixValueLookup.set(item, item);
+});
+
 export interface SuffixOperatorOptions extends OperatorOptions {
   maxProps?: number;
 }
@@ -140,6 +146,23 @@ export class SuffixOperator implements Operator {
   }
 
   /**
+   * Check to see if a prop already contains a suffix
+   * @param prop The prop to check
+   * @return If the prop has a suffix on it already
+   */
+  static isAlreadySuffixed(prop: string) : boolean {
+    if (prop === undefined || prop === null) {
+      return false;
+    }
+    const lastIndex = prop.lastIndexOf('_');
+    if (lastIndex < 0) {
+      return false;
+    }
+    const trialSuffix = prop.substring(lastIndex);
+    return SuffixValueLookup.has(trialSuffix);
+  }
+
+  /**
    * Maps a given object to an object with FS type suffixes on properties.
    * If a value can not be suffixed, it will not be included in the resulting object.
    * @param obj the Object to map
@@ -170,8 +193,8 @@ export class SuffixOperator implements Operator {
 
       // certain properties must adhere to exact naming conventions and should not be suffixed
       // NOTE this is only for root level objects used with FS.identify, setUserVars, setVars
-      const suffix = currentDepth === 0 && (prop === 'pageName' || prop === 'displayName' || prop === 'email') ? ''
-        : SuffixOperator.coerceSuffix(value);
+      const suffix = (currentDepth === 0 && (prop === 'pageName' || prop === 'displayName' || prop === 'email'))
+        || SuffixOperator.isAlreadySuffixed(prop) ? '' : SuffixOperator.coerceSuffix(value);
       const suffixedProp = `${prop}${suffix}`;
 
       // if a suffix exists, it means we support the value

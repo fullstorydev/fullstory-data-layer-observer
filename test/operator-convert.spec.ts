@@ -16,6 +16,7 @@ const item = {
   empty: '',
   saleDate: '12-26-2020',
   vat: null,
+  forced_str: '12345',
   salePrice: ['24.99'],
   discountTiers: ['24.99', '19.99', '12.99'],
   promoCodes: ['', 'bogo', 'july4th'],
@@ -415,6 +416,28 @@ describe('convert operator unit tests', () => {
     expect(discountTiers).to.eql([24.99, 19.99, 12.99]);
     expect(empty).to.eq('');
     expect(promoCodes).to.eql(['', 'bogo', 'july4th']); // NOTE empty string should not become 0
+  });
+
+  it('ignoreSuffix should not convert suffixed vales', () => {
+    const operator = OperatorFactory.create('convert', { name: 'convert', enumerate: true });
+    const [enumerated] = operator.handleData([item])!;
+    const {
+      // eslint-disable-next-line camelcase
+      forced_str,
+    } = enumerated;
+
+    expect(forced_str).to.eq('12345');
+  });
+
+  it('ignoreSuffix set to false should convert suffixed vales', () => {
+    const operator = OperatorFactory.create('convert', { name: 'convert', enumerate: true, ignoreSuffixed: false });
+    const [enumerated] = operator.handleData([item])!;
+    const {
+      // eslint-disable-next-line camelcase
+      forced_str,
+    } = enumerated;
+
+    expect(forced_str).to.eq(12345);
   });
 
   it('strings can be converted automatically to numbers while converting specific properties', () => {

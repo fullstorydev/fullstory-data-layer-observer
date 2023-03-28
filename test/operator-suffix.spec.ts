@@ -9,6 +9,7 @@ const date = new Date();
 
 const testData: any = {
   id: '130983678493',
+  forced_str: '123456789',
   first_name: 'Daniel',
   last_name: 'Falco',
   price: 49.99,
@@ -223,6 +224,7 @@ describe('suffix operator unit test', () => {
     const [suffixedObject] = operator.handleData([testData])!;
 
     expect(suffixedObject).to.haveOwnProperty('id_str');
+    expect(suffixedObject).to.haveOwnProperty('forced_str');
     expect(suffixedObject).to.haveOwnProperty('price_real');
     expect(suffixedObject).to.haveOwnProperty('quantity_real');
     expect(suffixedObject).to.haveOwnProperty('isFeatured_bool');
@@ -232,6 +234,20 @@ describe('suffix operator unit test', () => {
     expect(suffixedObject).to.haveOwnProperty('discountTiers_reals');
     expect(suffixedObject).to.haveOwnProperty('discountPrices_reals');
     expect(suffixedObject).to.haveOwnProperty('variants_strs');
+
+    const [resuffixedObject] = operator.handleData([suffixedObject])!;
+
+    expect(resuffixedObject).to.haveOwnProperty('id_str');
+    expect(resuffixedObject).to.haveOwnProperty('forced_str');
+    expect(resuffixedObject).to.haveOwnProperty('price_real');
+    expect(resuffixedObject).to.haveOwnProperty('quantity_real');
+    expect(resuffixedObject).to.haveOwnProperty('isFeatured_bool');
+    expect(resuffixedObject).to.haveOwnProperty('listedPages_bools');
+    expect(resuffixedObject).to.haveOwnProperty('created_date');
+    expect(resuffixedObject).to.haveOwnProperty('shippingDates_dates');
+    expect(resuffixedObject).to.haveOwnProperty('discountTiers_reals');
+    expect(resuffixedObject).to.haveOwnProperty('discountPrices_reals');
+    expect(resuffixedObject).to.haveOwnProperty('variants_strs');
   });
 
   it('it should re-assign values correctly', () => {
@@ -241,7 +257,7 @@ describe('suffix operator unit test', () => {
     const [suffixedObject] = operator.handleData([testData])!;
 
     Object.getOwnPropertyNames(suffixedObject).forEach((prop) => {
-      if (prop !== 'child_obj' && prop !== 'grandchildren_objs') {
+      if (prop !== 'child_obj' && prop !== 'grandchildren_objs' && prop !== 'forced_str') {
         expect(suffixedObject[prop], `${prop} does not have the same value`).to.eq(
           testData[prop.substring(0, prop.lastIndexOf('_'))],
         );
