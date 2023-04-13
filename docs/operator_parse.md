@@ -22,7 +22,7 @@ To simplify understanding, some simple parsing examples will be placed here to s
 > **Note:** These Data Examples are not full DLO rules.  They are meant to show the input and output of the parse operator under various circumstances. 
 
 ### Simple Parsing
-Many uses of the `parse` operator will just want to parse a property based on one delimiter.  That is readily supported
+Many uses of the `parse` operator will just want to parse a property based on one delimiter.
 ```javascript
 data = {
   events: 'event1,event2,event13,purchase',
@@ -209,7 +209,7 @@ s {
 ### Input
 
 ```javascript
- s {
+s {
     events: 'event1,event2=4.99,event13,purchase',
     products: 'Example product;1;event1=4.99|event2=5.99;eVar1'
 };
@@ -248,7 +248,7 @@ s {
 ### Input
 
 ```javascript
- s {
+s {
     events: 'event1,event13,purchase'
 };
 ```
