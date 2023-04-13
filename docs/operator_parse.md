@@ -63,7 +63,7 @@ operator = {
 }
 ```
 ### Key/Value Parsing
-Demonstrating how key/value parsing works with simply properties getting `null` values.   
+Demonstrating how key/value parsing works with simple properties getting `null` values.   
 ```javascript
 data = {
     events: 'event1,event2=foo',
