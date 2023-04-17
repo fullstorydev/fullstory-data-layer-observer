@@ -160,7 +160,7 @@ Options with an asterisk are required. Note that `enumerate` can be used by itse
  }
 ]
 ```
-## Automatically convert all "numeric" strings ignoring suffixed property 
+## Automatically convert all "numeric" strings ignoring suffixed property
 (ignoreSuffixed defaults to true)
 
 ### Rule
@@ -169,8 +169,8 @@ Options with an asterisk are required. Note that `enumerate` can be used by itse
 {
  source: 'digitalData.cart.price[(userId, available,basePrice,cartTotal,priceWithTax)]',
  operators: [
-   { name: 'convert', enumerate: true }, 
-   { name: 'rename', properties: { userId: 'userId_str' } },     
+   { name: 'convert', enumerate: true },
+   { name: 'rename', properties: { userId: 'userId_str' } },
    { name: 'insert', value: 'Product Viewed' },
  ],
  destination: 'FS.event'
