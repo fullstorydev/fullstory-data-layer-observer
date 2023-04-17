@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import 'mocha';
 import { ParseOperator } from '../src/operators';
 
-describe.only('parse operator unit test', () => {
+describe('parse operator unit test', () => {
   it('it should validate options', () => {
     expect(() => new ParseOperator({
       name: 'parse',
