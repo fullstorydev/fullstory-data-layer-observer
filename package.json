@@ -1,6 +1,6 @@
 {
   "name": "@fullstory/data-layer-observer",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Monitor, transform, and send data layer content to FullStory",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

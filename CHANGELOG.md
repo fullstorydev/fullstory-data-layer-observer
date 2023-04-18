@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 4.0.1
+
+- Fixes an issue where the new `parse` operator was not properly registered to be available for use.
+
 ### 4.0.0
 
 - Adds an `ignoreSuffixed` option to the `convert` operator which excludes properties with known type suffixes when specifying `enumerate: true`. This option defaults to `true`.
