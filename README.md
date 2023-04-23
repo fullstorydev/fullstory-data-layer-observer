@@ -95,7 +95,7 @@ Additional configuration can be added using the below options.
 | _dlo_logLevel | number | `1` | Log messages at this level and below will be logged by the LogAppender. Defaults to WARN. |
 | _dlo_previewDestination | string | `'console.log'` | Output destination using rule selector syntax for use with previewMode. |
 | _dlo_previewMode | boolean | `true` | Redirects output from a destination to previewDestination when testing rules. |
-| _dlo_readOnLoad | boolean | `false` | When true reads data layer target(s) and emits the initial value(s). |
+| _dlo_readOnLoad | boolean | `true` | When true reads data layer target(s) and emits the initial value(s). |
 | _dlo_rules | array | `[]` | Anything that starts with `_dlo_rules` is read as a rules array. |
 | _dlo_validateRules | boolean | `true` | When true validates rules to prevent processing invalid options. |
 | _dlo_urlValidator | function | `(url) => boolean` | Function used to validate the page URL before executing the rules. The default tests `window.location.href`. |
@@ -152,7 +152,7 @@ Each rule provides a set of options for configuration.  Options with an asterisk
 | `maxRetry` | `5` | The maximum number of attempts to search for an `undefined` data layer or test the `waitUntil` predicate. |
 | `monitor` | `true` | Set to true to monitor property changes or function calls |
 | `operators` | `[]` | List of operators that transform data before a destination. |
-| `readOnLoad` | `false` | Rule-specific override for `window[‘_dlo_readOnLoad’]`. |
+| `readOnLoad` | `true` | Rule-specific override for `window[‘_dlo_readOnLoad’]`. |
 | `url` | `undefined` | Specifies a regular expression that enables the rule when the page URL matches. |
 | `waitUntil` | `undefined` | Waits a desired number of milliseconds or predicate function's truthy return type before registering the rule. |
 
