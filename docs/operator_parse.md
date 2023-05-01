@@ -1,6 +1,6 @@
 # Parse Operator
 
-The `parse` operator can be used to parse a string value contained in a specified `property` into individual part.  It supports multiple delimiter values (`propertyDelimiters`) for nested parsing, and supports a separate `keyValue` delimiter for parsing into key/value properties.  The `output` of the `parse` operator can either be in `key: value` pairs (default value of `keyValue`) or in an `array` that replaces the original specified `property` with the parsed values as elements in the array.
+The `parse` operator can be used to parse a string value contained in a specified `property` into individual parts.  It supports multiple delimiter values (`propertyDelimiters`) for nested parsing, and supports a separate `keyValue` delimiter for parsing into key/value properties.  The `output` of the `parse` operator can either be in `key: value` pairs (default value of `keyValue`) or in an `array` that replaces the original specified `property` with the parsed values as elements in the array.
 
 The `parse` operator is designed to feed into other operators such as [query](https://github.com/fullstorydev/fullstory-data-layer-observer/blob/main/docs/operator_query.md) for selecting individual parsed properties in `keyValue` mode, or [fan-out](https://github.com/fullstorydev/fullstory-data-layer-observer/blob/main/docs/operator_fan-out.md) when in `array` mode.  (See the examples below)
 ## Options

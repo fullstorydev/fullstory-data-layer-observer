@@ -207,16 +207,17 @@ See the [Operator Tutorial](https://github.com/fullstorydev/fullstory-data-layer
 
 Click an operator name for additional documentation.
 
-| Name | Description |
-| ---- | ----------- |
-| [convert](./docs/operator_convert.md) | Formats a value to a bool, int, real, or string. |
-| [fan-out](./docs/operator_fan-out.md) | Executes subsequent operators on each item in a list. |
-| [flatten](./docs/operator_flatten.md) | Recursively flattens all properties into an object. |
-| [function](./docs/operator_function.md) | Executes a function and returns the result. |
-| [insert](./docs/operator_insert.md) | Inserts a value into a list at a specified position. |
-| [query](./docs/operator_query.md) | Executes queries using selector syntax to return specific data within an object. |
-| [rename](./docs/operator_rename.md) | Renames existing properties to desired properties. |
-| [suffix](./docs/operator_suffix.md) | Infers and appends a type suffix to an object’s properties. |
+| Name                                    | Description                                                                      |
+|-----------------------------------------|----------------------------------------------------------------------------------|
+| [convert](./docs/operator_convert.md)   | Formats a value to a bool, int, real, or string.                                 |
+| [fan-out](./docs/operator_fan-out.md)   | Executes subsequent operators on each item in a list.                            |
+| [flatten](./docs/operator_flatten.md)   | Recursively flattens all properties into an object.                              |
+| [function](./docs/operator_function.md) | Executes a function and returns the result.                                      |
+| [insert](./docs/operator_insert.md)     | Inserts a value into a list at a specified position.                             |
+| [parse](./docs/operator_parse.md)       | Parses a string value contained in a specified property into individual parts.   |
+| [query](./docs/operator_query.md)       | Executes queries using selector syntax to return specific data within an object. |
+| [rename](./docs/operator_rename.md)     | Renames existing properties to desired properties.                               |
+| [suffix](./docs/operator_suffix.md)     | Infers and appends a type suffix to an object’s properties.                      |
 
 Every operator requires the `name` property.  Additional options can be found by viewing an operator's documentation.
 
