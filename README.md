@@ -179,7 +179,7 @@ The `source` property uses a custom selector syntax.  It’s most often seen as 
 | object[^(property, ...)] | `digitalData.cart.price[^(shipping)]` | Returns an object with properties whose names begin with `property`. |
 | object[$(property, ...)] | `digitalData.page.pageInfo[$(Date)]` | Returns an object with properties whose names end with `property`. |
 | object[?(property, ...)] | `digitalData.cart[?(cartID)]` | Returns the object or null if the object does not have property. |
-| object[?(property=value, ...)] | `digitalData.cart.price[?(basePrice>=10)]` | Returns the object or null if the object's `property` does not compare to `value`. Comparison can be `=`, `<=`, `>=`, `<`, `>`, `!=`, `!^`, and `=^`. Use the value `undefined` to query if a property `=` or `!=` undefined. |
+| object[?(property=value, ...)] | `digitalData.cart.price[?(basePrice>=10)]` | Returns the object or null if the object's `property` does not compare to `value`. Comparison can be `=`, `<=`, `>=`, `<`, `>`, `!=`, `!^`, `=$`, and `=^`. Use the value `undefined` to query if a property `=` or `!=` undefined. |
 
 Selector syntax can be combined to create sophisticated queries to the data layer.  For example, `digitalData.products[-1].attributes.availability[?(pickup)]` can be read as, "From the products list, return the last product's availability if it has the `pickup` property."  This usage of selection can be helpful to record only significant events and disregard others.
 
