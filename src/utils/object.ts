@@ -53,3 +53,23 @@ export function startsWith(target: string, searchString: string, position?: numb
 
   return target.indexOf(searchString, effectivePosition) === effectivePosition;
 }
+
+/**
+ * Returns true if the searchString sequence is the same as the corresponding target sequence
+ * starting at the given target position (defaulting to 0); otherwise returns false.
+ * @param target The string to search within.
+ * @param searchString The string to search for.
+ * @param position The position to start searching witin the target.
+ */
+export function endsWith(target: string, searchString: string, position?: number): boolean {
+  // We provide our own endsWith implementation matching the ES2015 String.prototype.endsWith
+  // function behavior since IE11 doesn't support String.prototype.endsWith
+  let effectivePosition = target.length - searchString.length;
+
+  // 'foo'.endsWith('foo', 100) will return true
+  if (position && position < target.length) {
+    effectivePosition = position;
+  }
+
+  return target.lastIndexOf(searchString, effectivePosition) === effectivePosition;
+}

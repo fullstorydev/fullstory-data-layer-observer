@@ -2,6 +2,7 @@
 /* eslint prefer-destructuring: ["error", {AssignmentExpression: {array: false}}] */
 
 import { getGlobal, startsWith } from './utils/object';
+import { getGlobal, endsWith } from './utils/object';
 import { Logger, LogMessage } from './utils/logger';
 
 // Memoized Paths or false if the path cannot be parsed
@@ -414,6 +415,8 @@ class PathElement {
           if (opProp.operator == '!=' && prop[opProp.name] == realString) return undefined;
           if (opProp.operator === '=^' && !startsWith(prop[opProp.name], realString)) return undefined;
           if (opProp.operator === '!^' && startsWith(prop[opProp.name], realString)) return undefined;
+          if (opProp.operator === '=$' && !endsWith(prop[opProp.name], realString)) return undefined;
+          if (opProp.operator === '!$' && endsWith(prop[opProp.name], realString)) return undefined;
           break;
         }
         case 'number':
