@@ -1,8 +1,7 @@
 /* eslint-disable max-classes-per-file */
 /* eslint prefer-destructuring: ["error", {AssignmentExpression: {array: false}}] */
 
-import { getGlobal, startsWith } from './utils/object';
-import { getGlobal, endsWith } from './utils/object';
+import { getGlobal, startsWith, endsWith } from './utils/object';
 import { Logger, LogMessage } from './utils/logger';
 
 // Memoized Paths or false if the path cannot be parsed
