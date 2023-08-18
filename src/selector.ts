@@ -56,7 +56,7 @@ class OpProp {
     for (let i = 0; i < raw.length; i += 1) {
       const codePoint = raw.charCodeAt(i);
       // the codePoint appears to be some form of comparison operator we support
-      if (codePoint === 33 || (codePoint >= 60 && codePoint <= 62) || codePoint === 94) {
+      if (codePoint === 33 || (codePoint >= 60 && codePoint <= 62) || codePoint === 94 || codePoint === 36) {
         // mark the start pos of the operator
         if (start === 0) {
           start = i;
