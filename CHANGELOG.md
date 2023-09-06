@@ -10,6 +10,10 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 4.0.2
+
+- Adds an `endsWith` operator for properties.
+
 ### 4.0.1
 
 - Fixes an issue where the new `parse` operator was not properly registered to be available for use.
