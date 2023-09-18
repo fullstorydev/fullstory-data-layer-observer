@@ -12,7 +12,7 @@ declare global {
   var dataLayer: any[];
 }
 
-describe('Ruleset: Google Analytics Enhanced Ecommerce to FullStory', () => {
+describe('Ruleset: Google Analytics Enhanced Ecommerce (Universal Analytics) to FullStory', () => {
   getRulesetTestEnvironments().forEach((testEnv) => {
     describe(`test environment: ${testEnv.name}`, () => {
       let testHarness: RulesetTestHarness;

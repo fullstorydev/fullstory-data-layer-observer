@@ -14,7 +14,7 @@ declare global {
   var dataLayer: any[];
 }
 
-describe('Ruleset: Google Analytics Event Measurement to FullStory', () => {
+describe('Ruleset: Google Analytics Event Measurement (Universal Analytics) to FullStory', () => {
   getRulesetTestEnvironments().forEach((testEnv) => {
     describe(`test environment: ${testEnv.name}`, () => {
       let testHarness: RulesetTestHarness;
