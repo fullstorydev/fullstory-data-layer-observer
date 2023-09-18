@@ -3,7 +3,7 @@ import 'mocha';
 import { expectEqual } from './utils/mocha';
 import { RulesetTestHarness, getRulesetTestEnvironments } from './utils/ruleset-test-harness';
 
-import '../rulesets/google-enhanced-ecommerce.js';
+import '../rulesets/google-enhanced-ecommerce-ua.js';
 
 const ecommerceRulesKey = '_dlo_rules_google_ec';
 const ecommerceRules = (window as Record<string, any>)[ecommerceRulesKey];
