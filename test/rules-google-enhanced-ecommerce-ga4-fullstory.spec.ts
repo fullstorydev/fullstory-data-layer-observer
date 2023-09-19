@@ -334,6 +334,91 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         expectEqual(eventProps.quantity, 1);
         expect(eventProps.currency).to.be.undefined;
       });
+
+      /*
+      Event reference:
+      https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtm#select_promotion
+
+      Examples:
+      https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtm#apply_promotions
+      */
+      it('reads select_promotion GTM event', async () => {
+        await testHarness.execute(() => {
+          globalThis.dataLayer.push({
+            event: 'select_promotion',
+            ecommerce: {
+              items: [
+                {
+                  item_id: 'sku_123',
+                  item_name: 'first item',
+                  price: '1.23',
+                  quantity: 1,
+                },
+                {
+                  item_id: 'sku_456',
+                  item_name: 'second item',
+                  price: '4.56',
+                  quantity: 2,
+                },
+              ],
+              promotion_name: 'some promotion',
+            },
+          });
+        });
+
+        const [eventName, eventProps] = await testHarness.popEvent();
+        expectEqual(eventName, 'select_promotion');
+        expectEqual(eventProps.item_id, 'sku_123');
+        expectEqual(eventProps.item_name, 'first item');
+        expectEqual(eventProps.price, 1.23);
+        expectEqual(eventProps.quantity, 1);
+        expect(eventProps.promotion_name).to.be.undefined;
+      });
+
+      /*
+      Event reference:
+      https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtag#select_promotion
+
+      Examples:
+      https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtag#apply_promotions
+      */
+      it('reads select_promotion gtag event', async () => {
+        await testHarness.execute(() => {
+          globalThis.dataLayer.push([
+            'event',
+            'select_promotion',
+            {
+              items: [
+                {
+                  item_id: 'sku_123',
+                  item_name: 'first item',
+                  price: '1.23',
+                  quantity: 1,
+                },
+                {
+                  item_id: 'sku_456',
+                  item_name: 'second item',
+                  price: '4.56',
+                  quantity: 2,
+                },
+              ],
+              promotion_name: 'some promotion',
+            },
+          ]);
+        });
+
+        const [eventName, eventProps] = await testHarness.popEvent();
+        expectEqual(eventName, 'select_promotion');
+        expectEqual(eventProps.item_id, 'sku_123');
+        expectEqual(eventProps.item_name, 'first item');
+        expectEqual(eventProps.price, 1.23);
+        expectEqual(eventProps.quantity, 1);
+        expect(eventProps.promotion_name).to.be.undefined;
+      });
+
+      // select_promotion
+      // view_promotion
+      // purchase
     });
   });
 });
