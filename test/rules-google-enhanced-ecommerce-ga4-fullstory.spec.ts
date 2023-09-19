@@ -39,7 +39,7 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         Event reference: https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtm#select_item
         Examples: https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtm#select_an_item_from_a_list
       */
-      it('reads select_item GTM event', async () => {
+      it('reads select_item gtm event', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push({
             event: 'select_item',
@@ -108,7 +108,7 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         Event reference: https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtm#view_item
         Examples: https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtm#view_item_details
       */
-      it('reads view_item GTM event', async () => {
+      it('reads view_item gtm event', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push({
             event: 'view_item',
@@ -180,7 +180,7 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
       Examples:
       https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtm#add_or_remove_an_item_from_a_shopping_cart
       */
-      it('reads add_to_cart GTM event', async () => {
+      it('reads add_to_cart gtm event', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push({
             event: 'add_to_cart',
@@ -261,7 +261,7 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
       Examples:
       https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtm#add_or_remove_an_item_from_a_shopping_cart
       */
-      it('reads remove_from_cart GTM event', async () => {
+      it('reads remove_from_cart gtm event', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push({
             event: 'remove_from_cart',
@@ -342,7 +342,7 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
       Examples:
       https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtm#apply_promotions
       */
-      it('reads select_promotion GTM event', async () => {
+      it('reads select_promotion gtm event', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push({
             event: 'select_promotion',
@@ -416,9 +416,8 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         expect(eventProps.promotion_name).to.be.undefined;
       });
 
-      // select_promotion
-      // view_promotion
-      // purchase
+      // TODO(nate): view_promotion
+      // TODO(nate): purchase
     });
   });
 });
