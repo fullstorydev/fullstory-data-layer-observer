@@ -33,7 +33,7 @@ describe('Ruleset: Google Analytics Event Measurement (GA4) to FullStory', () =>
 
       it('sends an event to FS.event with the same event name', async () => {
         await testHarness.execute(() => {
-          globalThis.dataLayer.push(['event', 'some-event-name', { 'prop1': 'value1' }]);
+          globalThis.dataLayer.push(['event', 'some-event-name', { prop1: 'value1' }]);
         });
 
         const [eventName, eventProps] = await testHarness.popEvent();
@@ -41,9 +41,9 @@ describe('Ruleset: Google Analytics Event Measurement (GA4) to FullStory', () =>
         expectEqual(eventProps, {
           gtgCommand: 'event',
           gtgAction: 'some-event-name',
-          prop1: 'value1'
+          prop1: 'value1',
         });
-      })
+      });
 
       it('ignores gtm events', async () => {
         await testHarness.execute(() => {
@@ -68,9 +68,13 @@ describe('Ruleset: Google Analytics Event Measurement (GA4) to FullStory', () =>
       it('ignores enhanced ecommerce events', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push(
-            ['event', 'add_to_cart', { items: [{ id: '123', name: 'T-Shirt', price: '19.00', quantity: 1 }] }]
+            ['event', 'add_to_cart', {
+              items: [{
+                id: '123', name: 'T-Shirt', price: '19.00', quantity: 1,
+              }],
+            }],
           );
-        })
+        });
 
         const event = await testHarness.popEvent(500);
 
