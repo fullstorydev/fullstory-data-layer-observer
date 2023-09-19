@@ -36,8 +36,11 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
       });
 
       /*
-        Event reference: https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtm#select_item
-        Examples: https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtm#select_an_item_from_a_list
+      Event reference:
+      https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtm#select_item
+
+      Examples:
+      https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtm#select_an_item_from_a_list
       */
       it('reads select_item gtm event', async () => {
         await testHarness.execute(() => {
@@ -70,8 +73,11 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
       });
 
       /*
-        Event reference: https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtag#select_item
-        Examples: https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtag#select_an_item_from_a_list
+      Event reference:
+      https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtag#select_item
+
+      Examples:
+      https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtag#select_an_item_from_a_list
       */
       it('reads select_item gtag event', async () => {
         await testHarness.execute(() => {
@@ -105,8 +111,11 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
       });
 
       /*
-        Event reference: https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtm#view_item
-        Examples: https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtm#view_item_details
+      Event reference:
+      https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtm#view_item
+
+      Examples:
+      https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtm#view_item_details
       */
       it('reads view_item gtm event', async () => {
         await testHarness.execute(() => {
@@ -139,8 +148,11 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
       });
 
       /*
-        Event reference: https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtag#view_item
-        Examples: https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtag#view_item_details
+      Event reference:
+      https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtag#view_item
+
+      Examples:
+      https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtag#view_item_details
       */
       it('reads view_item gtag event', async () => {
         await testHarness.execute(() => {
