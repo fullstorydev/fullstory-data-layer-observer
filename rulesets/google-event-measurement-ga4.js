@@ -7,8 +7,8 @@ window["_dlo_rules_google_em_ga4"] = [
       { "name": "query", "select": "$[?(0=event)]" },
       { "name": "flatten" },
       { "name": "rename", "properties": { "0": "gtgCommand", "1": "gtgAction" } },
-      { "name": "query", "select": "$[?(gtgCommand!^gtm)]" },
-      { "name": "query", "select": "$[?(gtgCommand!=optimize.domChange)]" },
+      { "name": "query", "select": "$[?(gtgAction!^gtm)]" },
+      { "name": "query", "select": "$[?(gtgAction!=optimize.domChange)]" },
       { "name": "query", "select": "$[?(items=undefined)]" },
       { "name": "insert", "select": "gtgAction" }
     ],
