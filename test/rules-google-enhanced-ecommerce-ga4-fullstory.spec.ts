@@ -35,7 +35,7 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         await testEnv.tearDown();
       });
 
-      it.only('reads select_item GTM event', async () => {
+      it('reads select_item GTM event', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push({
             event: 'select_item',
@@ -65,7 +65,7 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         expect(eventProps.currency).to.be.undefined;
       });
 
-      it.only('reads select_item gtag event', async () => {
+      it('reads select_item gtag event', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push([
             'event',
@@ -96,7 +96,7 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         expect(eventProps.currency).to.be.undefined;
       });
 
-      it.only('reads view_item GTM event', async () => {
+      it('reads view_item GTM event', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push({
             event: 'view_item',
@@ -126,7 +126,7 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         expect(eventProps.currency).to.be.undefined;
       });
 
-      it.only('reads view_item gtag event', async () => {
+      it('reads view_item gtag event', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push([
             'event',
