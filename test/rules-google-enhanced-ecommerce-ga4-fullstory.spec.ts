@@ -35,6 +35,10 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         await testEnv.tearDown();
       });
 
+      /*
+        Event reference: https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtm#select_item
+        Examples: https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtm#select_an_item_from_a_list
+      */
       it('reads select_item GTM event', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push({
@@ -52,7 +56,7 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
                   price: '4.56',
                 },
               ],
-              currency: 'USD',
+              item_list_name: 'some list',
             },
           });
         });
@@ -62,9 +66,13 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         expectEqual(eventProps.item_id, 'sku_123');
         expectEqual(eventProps.item_name, 'first item');
         expectEqual(eventProps.price, 1.23);
-        expect(eventProps.currency).to.be.undefined;
+        expect(eventProps.item_list_name).to.be.undefined;
       });
 
+      /*
+        Event reference: https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtag#select_item
+        Examples: https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtag#select_an_item_from_a_list
+      */
       it('reads select_item gtag event', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push([
@@ -83,7 +91,7 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
                   price: '4.56',
                 },
               ],
-              currency: 'USD',
+              item_list_name: 'some list',
             },
           ]);
         });
@@ -93,9 +101,13 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         expectEqual(eventProps.item_id, 'sku_123');
         expectEqual(eventProps.item_name, 'first item');
         expectEqual(eventProps.price, 1.23);
-        expect(eventProps.currency).to.be.undefined;
+        expect(eventProps.item_list_name).to.be.undefined;
       });
 
+      /*
+        Event reference: https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtm#view_item
+        Examples: https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtm#view_item_details
+      */
       it('reads view_item GTM event', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push({
@@ -126,6 +138,10 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         expect(eventProps.currency).to.be.undefined;
       });
 
+      /*
+        Event reference: https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtag#view_item
+        Examples: https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtag#view_item_details
+      */
       it('reads view_item gtag event', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push([
@@ -157,6 +173,13 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         expect(eventProps.currency).to.be.undefined;
       });
 
+      /*
+      Event reference:
+      https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtm#add_to_cart
+
+      Examples:
+      https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtm#add_or_remove_an_item_from_a_shopping_cart
+      */
       it('reads add_to_cart GTM event', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push({
@@ -190,6 +213,13 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         expect(eventProps.currency).to.be.undefined;
       });
 
+      /*
+      Event reference:
+      https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtag#add_to_cart
+
+      Examples:
+      https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtag#add_or_remove_an_item_from_a_shopping_cart
+      */
       it('reads add_to_cart gtag event', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push([
@@ -224,6 +254,13 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         expect(eventProps.currency).to.be.undefined;
       });
 
+      /*
+      Event reference:
+      https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtm#remove_from_cart
+
+      Examples:
+      https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtm#add_or_remove_an_item_from_a_shopping_cart
+      */
       it('reads remove_from_cart GTM event', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push({
@@ -257,6 +294,13 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         expect(eventProps.currency).to.be.undefined;
       });
 
+      /*
+      Event reference:
+      https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtag#remove_from_cart
+
+      Examples:
+      https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtag#add_or_remove_an_item_from_a_shopping_cart
+      */
       it('reads remove_from_cart gtag event', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push([
