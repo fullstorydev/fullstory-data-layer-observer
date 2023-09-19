@@ -45,7 +45,7 @@ describe('Ruleset: Google Analytics Event Measurement (GA4) to FullStory', () =>
         });
       });
 
-      it('ignores gtm events', async () => {
+      it('ignores gtm prefixed events', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push(['event', 'gtm.click']);
         });
