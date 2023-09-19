@@ -509,7 +509,108 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         expect(eventProps.promotion_name).to.be.undefined;
       });
 
-      // TODO(nate): purchase
+      /*
+      Event reference:
+      https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtm#purchase
+
+      Examples:
+      https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtm#make_a_purchase_or_issue_a_refund
+      */
+      it('reads purchase gtm event', async () => {
+        await testHarness.execute(() => {
+          globalThis.dataLayer.push({
+            event: 'purchase',
+            ecommerce: {
+              items: [
+                {
+                  item_id: 'sku_123',
+                  item_name: 'first item',
+                  price: '1.23',
+                  quantity: 1,
+                },
+                {
+                  item_id: 'sku_456',
+                  item_name: 'second item',
+                  price: '4.56',
+                  quantity: 2,
+                },
+              ],
+              currency: 'USD',
+            },
+          });
+        });
+
+        const [eventName, eventProps] = await testHarness.popEvent();
+        expectEqual(eventName, 'Order Completed');
+        expectEqual(eventProps.currency, 'USD');
+        expectEqual(eventProps.products.length, 2);
+
+        const firstProduct = eventProps.products[0];
+        expectEqual(firstProduct.item_id, 'sku_123');
+        expectEqual(firstProduct.item_name, 'first item');
+        // TODO(nate): We may need to convert these string values to real
+        expectEqual(firstProduct.price, '1.23');
+        expectEqual(firstProduct.quantity, 1);
+
+        const secondProduct = eventProps.products[1];
+        expectEqual(secondProduct.item_id, 'sku_456');
+        expectEqual(secondProduct.item_name, 'second item');
+        // TODO(nate): We may need to convert these string values to real
+        expectEqual(secondProduct.price, '4.56');
+        expectEqual(secondProduct.quantity, 2);
+      });
+
+      /*
+      Event reference:
+      https://developers.google.com/analytics/devguides/collection/ga4/reference/events?client_type=gtag#purchase
+
+      Examples:
+      https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtag#make_a_purchase_or_issue_a_refund
+      */
+      it('reads purchase gtag event', async () => {
+        await testHarness.execute(() => {
+          globalThis.dataLayer.push([
+            'event',
+            'purchase',
+            {
+              items: [
+                {
+                  item_id: 'sku_123',
+                  item_name: 'first item',
+                  price: '1.23',
+                  quantity: 1,
+                },
+                {
+                  item_id: 'sku_456',
+                  item_name: 'second item',
+                  price: '4.56',
+                  quantity: 2,
+                },
+              ],
+              currency: 'USD',
+            },
+          ]);
+        });
+
+        const [eventName, eventProps] = await testHarness.popEvent();
+        expectEqual(eventName, 'Order Completed');
+        expectEqual(eventProps.currency, 'USD');
+        expectEqual(eventProps.products.length, 2);
+
+        const firstProduct = eventProps.products[0];
+        expectEqual(firstProduct.item_id, 'sku_123');
+        expectEqual(firstProduct.item_name, 'first item');
+        // TODO(nate): We may need to convert these string values to real
+        expectEqual(firstProduct.price, '1.23');
+        expectEqual(firstProduct.quantity, 1);
+
+        const secondProduct = eventProps.products[1];
+        expectEqual(secondProduct.item_id, 'sku_456');
+        expectEqual(secondProduct.item_name, 'second item');
+        // TODO(nate): We may need to convert these string values to real
+        expectEqual(secondProduct.price, '4.56');
+        expectEqual(secondProduct.quantity, 2);
+      });
     });
   });
 });
