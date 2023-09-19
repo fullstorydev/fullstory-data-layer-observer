@@ -223,6 +223,73 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         expectEqual(eventProps.quantity, 1);
         expect(eventProps.currency).to.be.undefined;
       });
+
+      it('reads remove_from_cart GTM event', async () => {
+        await testHarness.execute(() => {
+          globalThis.dataLayer.push({
+            event: 'remove_from_cart',
+            ecommerce: {
+              items: [
+                {
+                  item_id: 'sku_123',
+                  item_name: 'first item',
+                  price: '1.23',
+                  quantity: 1,
+                },
+                {
+                  item_id: 'sku_456',
+                  item_name: 'second item',
+                  price: '4.56',
+                  quantity: 2,
+                },
+              ],
+              currency: 'USD',
+            },
+          });
+        });
+
+        const [eventName, eventProps] = await testHarness.popEvent();
+        expectEqual(eventName, 'remove_from_cart');
+        expectEqual(eventProps.item_id, 'sku_123');
+        expectEqual(eventProps.item_name, 'first item');
+        expectEqual(eventProps.price, 1.23);
+        expectEqual(eventProps.quantity, 1);
+        expect(eventProps.currency).to.be.undefined;
+      });
+
+      it('reads remove_from_cart gtag event', async () => {
+        await testHarness.execute(() => {
+          globalThis.dataLayer.push([
+            'event',
+            'remove_from_cart',
+            {
+              items: [
+                {
+                  item_id: 'sku_123',
+                  item_name: 'first item',
+                  price: '1.23',
+                  quantity: 1,
+                },
+                {
+                  item_id: 'sku_456',
+                  item_name: 'second item',
+                  price: '4.56',
+                  quantity: 2,
+                },
+              ],
+              currency: 'USD',
+            },
+          ]);
+        });
+
+        const [eventName, eventProps] = await testHarness.popEvent();
+        expectEqual(eventName, 'remove_from_cart');
+        expectEqual(eventProps.item_id, 'sku_123');
+        expectEqual(eventProps.item_name, 'first item');
+        expectEqual(eventProps.price, 1.23);
+        expectEqual(eventProps.quantity, 1);
+        expect(eventProps.currency).to.be.undefined;
+      });
     });
   });
 });
