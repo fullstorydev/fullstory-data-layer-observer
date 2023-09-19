@@ -35,7 +35,7 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         await testEnv.tearDown();
       });
 
-      it.only('reads enhanced ecommerce select_item GTM event', async () => {
+      it.only('reads select_item GTM event', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push({
             event: 'select_item',
@@ -65,7 +65,7 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         expect(eventProps.currency).to.be.undefined;
       });
 
-      it.only('reads enhanced ecommerce select_item gtag event', async () => {
+      it.only('reads select_item gtag event', async () => {
         await testHarness.execute(() => {
           globalThis.dataLayer.push([
             'event',
@@ -84,12 +84,73 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
                 },
               ],
               currency: 'USD',
-            }
+            },
           ]);
         });
 
         const [eventName, eventProps] = await testHarness.popEvent();
         expectEqual(eventName, 'select_item');
+        expectEqual(eventProps.item_id, 'sku_123');
+        expectEqual(eventProps.item_name, 'first item');
+        expectEqual(eventProps.price, 1.23);
+        expect(eventProps.currency).to.be.undefined;
+      });
+
+      it.only('reads view_item GTM event', async () => {
+        await testHarness.execute(() => {
+          globalThis.dataLayer.push({
+            event: 'view_item',
+            ecommerce: {
+              items: [
+                {
+                  item_id: 'sku_123',
+                  item_name: 'first item',
+                  price: '1.23',
+                },
+                {
+                  item_id: 'sku_456',
+                  item_name: 'second item',
+                  price: '4.56',
+                },
+              ],
+              currency: 'USD',
+            },
+          });
+        });
+
+        const [eventName, eventProps] = await testHarness.popEvent();
+        expectEqual(eventName, 'view_item');
+        expectEqual(eventProps.item_id, 'sku_123');
+        expectEqual(eventProps.item_name, 'first item');
+        expectEqual(eventProps.price, 1.23);
+        expect(eventProps.currency).to.be.undefined;
+      });
+
+      it.only('reads view_item gtag event', async () => {
+        await testHarness.execute(() => {
+          globalThis.dataLayer.push([
+            'event',
+            'view_item',
+            {
+              items: [
+                {
+                  item_id: 'sku_123',
+                  item_name: 'first item',
+                  price: '1.23',
+                },
+                {
+                  item_id: 'sku_456',
+                  item_name: 'second item',
+                  price: '4.56',
+                },
+              ],
+              currency: 'USD',
+            },
+          ]);
+        });
+
+        const [eventName, eventProps] = await testHarness.popEvent();
+        expectEqual(eventName, 'view_item');
         expectEqual(eventProps.item_id, 'sku_123');
         expectEqual(eventProps.item_name, 'first item');
         expectEqual(eventProps.price, 1.23);
