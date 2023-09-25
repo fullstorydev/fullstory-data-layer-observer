@@ -611,6 +611,50 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         expectEqual(secondProduct.price, '4.56');
         expectEqual(secondProduct.quantity, 2);
       });
+
+      [
+        'select_item',
+        'view_item',
+        'add_to_cart',
+        'remove_from_cart',
+        'select_promotion',
+        'view_promotion',
+      ].forEach(eventName => {
+        it(`gracefully handles empty ecommerce.items for ${eventName} gtm events`, async () => {
+          await testHarness.execute(() => {
+            globalThis.dataLayer.push({
+              event: eventName,
+              ecommerce: {
+                items: [],
+              },
+            });
+          });
+
+          const event = await testHarness.popEvent();
+          expect(event).to.be.undefined;
+
+          const error = await testHarness.popError();
+          expect(error).to.be.undefined;
+        });
+
+        it(`gracefully handles empty items for ${eventName} gtag events`, async () => {
+          await testHarness.execute(() => {
+            globalThis.dataLayer.push([
+              'event',
+              eventName,
+              {
+                items: [],
+              },
+            ]);
+          });
+
+          const event = await testHarness.popEvent();
+          expect(event).to.be.undefined;
+
+          const error = await testHarness.popError();
+          expect(error).to.be.undefined;
+        });
+      });
     });
   });
 });
