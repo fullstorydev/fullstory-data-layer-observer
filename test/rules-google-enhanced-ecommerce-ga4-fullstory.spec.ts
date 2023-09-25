@@ -619,7 +619,7 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         'remove_from_cart',
         'select_promotion',
         'view_promotion',
-      ].forEach(eventName => {
+      ].forEach((eventName) => {
         it(`gracefully handles empty ecommerce.items for ${eventName} gtm events`, async () => {
           await testHarness.execute(() => {
             globalThis.dataLayer.push({
