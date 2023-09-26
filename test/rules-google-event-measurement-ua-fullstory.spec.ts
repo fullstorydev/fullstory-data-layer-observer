@@ -4,7 +4,7 @@ import { expect } from 'chai';
 import { expectEqual, expectUndefined } from './utils/mocha';
 import { RulesetTestHarness, getRulesetTestEnvironments } from './utils/ruleset-test-harness';
 
-import '../rulesets/google-event-measurement.js';
+import '../rulesets/google-event-measurement-ua.js';
 
 const eventMeasurementRulesKey = '_dlo_rules_google_em';
 const eventMeasurementRules = (window as Record<string, any>)[eventMeasurementRulesKey];
@@ -14,7 +14,7 @@ declare global {
   var dataLayer: any[];
 }
 
-describe('Ruleset: Google Analytics Event Measurement to FullStory', () => {
+describe('Ruleset: Google Analytics Event Measurement (Universal Analytics) to FullStory', () => {
   getRulesetTestEnvironments().forEach((testEnv) => {
     describe(`test environment: ${testEnv.name}`, () => {
       let testHarness: RulesetTestHarness;
