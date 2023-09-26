@@ -548,14 +548,16 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         const firstProduct = eventProps.products[0];
         expectEqual(firstProduct.item_id, 'sku_123');
         expectEqual(firstProduct.item_name, 'first item');
-        // TODO(nate): We may need to convert these string values to real
+        // Enhanced Ecommerce specifies that price and quantity are numbers. This assertion
+        // demonstrates that we won't convert these values if they're strings. This is currently
+        // a limitation of the DLO library which doesn't traverse into child objects or arrays
+        // when converting properties.
         expectEqual(firstProduct.price, '1.23');
         expectEqual(firstProduct.quantity, 1);
 
         const secondProduct = eventProps.products[1];
         expectEqual(secondProduct.item_id, 'sku_456');
         expectEqual(secondProduct.item_name, 'second item');
-        // TODO(nate): We may need to convert these string values to real
         expectEqual(secondProduct.price, '4.56');
         expectEqual(secondProduct.quantity, 2);
       });
@@ -600,14 +602,16 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         const firstProduct = eventProps.products[0];
         expectEqual(firstProduct.item_id, 'sku_123');
         expectEqual(firstProduct.item_name, 'first item');
-        // TODO(nate): We may need to convert these string values to real
+        // Enhanced Ecommerce specifies that price and quantity are numbers. This assertion
+        // demonstrates that we won't convert these values if they're strings. This is currently
+        // a limitation of the DLO library which doesn't traverse into child objects or arrays
+        // when converting properties.
         expectEqual(firstProduct.price, '1.23');
         expectEqual(firstProduct.quantity, 1);
 
         const secondProduct = eventProps.products[1];
         expectEqual(secondProduct.item_id, 'sku_456');
         expectEqual(secondProduct.item_name, 'second item');
-        // TODO(nate): We may need to convert these string values to real
         expectEqual(secondProduct.price, '4.56');
         expectEqual(secondProduct.quantity, 2);
       });
