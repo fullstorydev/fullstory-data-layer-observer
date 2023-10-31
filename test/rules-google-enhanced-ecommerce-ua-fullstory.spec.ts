@@ -3,7 +3,7 @@ import 'mocha';
 import { expectEqual } from './utils/mocha';
 import { RulesetTestHarness, getRulesetTestEnvironments } from './utils/ruleset-test-harness';
 
-import '../rulesets/google-enhanced-ecommerce.js';
+import '../rulesets/google-enhanced-ecommerce-ua.js';
 
 const ecommerceRulesKey = '_dlo_rules_google_ec';
 const ecommerceRules = (window as Record<string, any>)[ecommerceRulesKey];
@@ -12,7 +12,7 @@ declare global {
   var dataLayer: any[];
 }
 
-describe('Ruleset: Google Analytics Enhanced Ecommerce to FullStory', () => {
+describe('Ruleset: Google Analytics Enhanced Ecommerce (Universal Analytics) to FullStory', () => {
   getRulesetTestEnvironments().forEach((testEnv) => {
     describe(`test environment: ${testEnv.name}`, () => {
       let testHarness: RulesetTestHarness;
