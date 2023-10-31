@@ -55,21 +55,29 @@ export function startsWith(target: string, searchString: string, position?: numb
 }
 
 /**
- * Returns true if the searchString sequence is the same as the corresponding target sequence
- * starting at the given target position (defaulting to 0); otherwise returns false.
- * @param target The string to search within.
- * @param searchString The string to search for.
- * @param position The position to start searching witin the target.
+* Returns true if the target string ends with the searchString.
+* When the position is defined, its calculated from the start of the string not the end,
+* truncating the target to the specified position. If the position is greater
+* than the length of the target string, it will also return true.
+* Otherwise, it returns false.
+*
+ * @param target The string within which we are searching.
+ * @param searchString The string we are looking to match at the end of the target string.
+ * @param position Optional. If specified, function will consider the target as if it ends at this position, truncating the target string.
  */
 export function endsWith(target: string, searchString: string, position?: number): boolean {
-  // We provide our own endsWith implementation matching the ES2015 String.prototype.endsWith
-  // function behavior since IE11 doesn't support String.prototype.endsWith
-  let effectivePosition = target.length - searchString.length;
-
-  // 'foo'.endsWith('foo', 100) will return true
-  if (position && position < target.length) {
-    effectivePosition = position;
+  // Create new variable pos
+  let pos: number;
+  // Default pos to string's length if not given or NaN
+  if (position === undefined || isNaN(position)) {
+    pos = target.length;
+  } else if (position < 0) {
+    // Treat negative position as 0
+    pos = 0;
+  } else {
+    // Ensure pos does not exceed the target string's length
+    pos = Math.min(position, target.length);
   }
 
-  return target.lastIndexOf(searchString, effectivePosition) === effectivePosition;
+  return target.slice(Math.max(0, pos - searchString.length), pos) === searchString;
 }
