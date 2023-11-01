@@ -235,6 +235,10 @@ describe('test selection paths', () => {
     expect(select('favorites[?(number+=25)]', testData)).to.be.undefined;
     expect(select('gtmEvent[?(event!^gtm.)]', testData)).to.be.undefined;
     expect(select('gtmEvent[?(event=^gtm.)]', testData)).to.not.be.undefined;
+    expect(select('gtmEvent[?(event=$gtm)]', testData)).to.be.undefined;
+    expect(select('gtmEvent[?(event=$dom)]', testData)).to.not.be.undefined;
+    expect(select('gtmEvent[?(event!$dom)]', testData)).to.be.undefined;
+    expect(select('gtmEvent[?(event!$gtm)]', testData)).to.not.be.undefined;
     expect(select('myEvent[?(event!^gtm.)]', testData)).to.not.be.undefined;
     expect(select('myEvent[?(event=^gtm.)]', testData)).to.be.undefined;
     expect(select('myEvent[?(event=^my)]', testData)).to.not.be.undefined;
@@ -244,6 +248,10 @@ describe('test selection paths', () => {
     expect(select('myEvent[?(event!^"gtm.")]', testData)).to.not.be.undefined;
     expect(select('myEvent[?(event=^"gtm.")]', testData)).to.be.undefined;
     expect(select('myEvent[?(event=^"my")]', testData)).to.not.be.undefined;
+    expect(select('myEvent[?(event=$Event)]', testData)).to.not.be.undefined;
+    expect(select('myEvent[?(event=$my)]', testData)).to.be.undefined;
+    expect(select('myEvent[?(event!$Event)]', testData)).to.be.undefined;
+    expect(select('myEvent[?(event!$my)]', testData)).to.not.be.undefined;
     expect(select('favorites[?(missing=^"my")]', testData)).to.be.undefined;
     expect(select('favorites[?(emptyString="")]', testData)).to.eq(testData.favorites);
     expect(select('favorites[?(emptyString!="")]', testData)).to.be.undefined;
@@ -273,6 +281,8 @@ describe('test selection paths', () => {
     expect(select('nullProperty[?(doesNotExist!=empty)]', testData)).to.be.undefined;
     expect(select('nullProperty[?(doesNotExist!^empty)]', testData)).to.be.undefined;
     expect(select('nullProperty[?(doesNotExist=^empty)]', testData)).to.be.undefined;
+    expect(select('nullProperty[?(doesNotExist=$empty)]', testData)).to.be.undefined;
+    expect(select('nullProperty[?(doesNotExist!$empty)]', testData)).to.be.undefined;
     expect(select('nullProperty[?(doesNotExist<=1)]', testData)).to.be.undefined;
     expect(select('nullProperty[?(doesNotExist>=1)]', testData)).to.be.undefined;
     expect(select('nullProperty[?(doesNotExist>1)]', testData)).to.be.undefined;

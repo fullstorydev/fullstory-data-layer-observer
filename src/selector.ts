@@ -1,7 +1,7 @@
 /* eslint-disable max-classes-per-file */
 /* eslint prefer-destructuring: ["error", {AssignmentExpression: {array: false}}] */
 
-import { getGlobal, startsWith } from './utils/object';
+import { getGlobal, startsWith, endsWith } from './utils/object';
 import { Logger, LogMessage } from './utils/logger';
 
 // Memoized Paths or false if the path cannot be parsed
@@ -56,7 +56,7 @@ class OpProp {
     for (let i = 0; i < raw.length; i += 1) {
       const codePoint = raw.charCodeAt(i);
       // the codePoint appears to be some form of comparison operator we support
-      if (codePoint === 33 || (codePoint >= 60 && codePoint <= 62) || codePoint === 94) {
+      if (codePoint === 33 || (codePoint >= 60 && codePoint <= 62) || codePoint === 94 || codePoint === 36) {
         // mark the start pos of the operator
         if (start === 0) {
           start = i;
@@ -414,6 +414,8 @@ class PathElement {
           if (opProp.operator == '!=' && prop[opProp.name] == realString) return undefined;
           if (opProp.operator === '=^' && !startsWith(prop[opProp.name], realString)) return undefined;
           if (opProp.operator === '!^' && startsWith(prop[opProp.name], realString)) return undefined;
+          if (opProp.operator === '=$' && !endsWith(prop[opProp.name], realString)) return undefined;
+          if (opProp.operator === '!$' && endsWith(prop[opProp.name], realString)) return undefined;
           break;
         }
         case 'number':
