@@ -625,14 +625,14 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         'view_promotion',
       ].forEach((eventName) => {
         it(`gracefully handles empty ecommerce.items for ${eventName} gtm events`, async () => {
-          await testHarness.execute(() => {
+          await testHarness.execute(([localEventName]) => {
             globalThis.dataLayer.push({
-              event: eventName,
+              event: localEventName,
               ecommerce: {
                 items: [],
               },
             });
-          });
+          }, [eventName]);
 
           const event = await testHarness.popEvent();
           expect(event).to.be.undefined;
@@ -642,15 +642,15 @@ describe('Ruleset: Google Analytics Enhanced Ecommerce (GA4) to FullStory', () =
         });
 
         it(`gracefully handles empty items for ${eventName} gtag events`, async () => {
-          await testHarness.execute(() => {
+          await testHarness.execute(([localEventName]) => {
             globalThis.dataLayer.push([
               'event',
-              eventName,
+              localEventName,
               {
                 items: [],
               },
             ]);
-          });
+          }, [eventName]);
 
           const event = await testHarness.popEvent();
           expect(event).to.be.undefined;
