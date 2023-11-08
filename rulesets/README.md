@@ -10,17 +10,29 @@ Rulesets provide out of the box rules that are compatible with common data layer
 
 ## Google
 
-### Event Measurement
+### Event Measurement (GA4 / gtag)
 
-- [Ruleset](./google-event-measurement.js)
+- [Ruleset](./google-event-measurement-ga4.js)
+- [Vendor Guidelines](https://support.google.com/analytics/answer/9216061?hl=en)
+- [Tests](../test/rules-google-event-measurement-ga4-fullstory.spec.ts)
+
+### Event Measurement (Universal Analytics / Google Tag Manager)
+
+- [Ruleset](./google-event-measurement-ua.js)
 - [Vendor Guidelines](https://developers.google.com/analytics/devguides/collection/analyticsjs/events)
-- [Tests](../test/rules-google-fullstory.spec.ts)
+- [Tests](../test/rules-google-event-measurement-ua-fullstory.spec.ts)
 
-### Enhanced Ecommerce (UA)
+### Enhanced Ecommerce (GA4)
 
-- [Ruleset](./google-enhanced-ecommerce.js)
+- [Ruleset](./google-enhanced-ecommerce-ga4.js)
+- [Vendor Guidelines](https://developers.google.com/analytics/devguides/collection/ga4/ecommerce?client_type=gtag)
+- [Tests](../test/rules-google-enhanced-ecommerce-ga4-fullstory.spec.ts)
+
+### Enhanced Ecommerce (Universal Analytics)
+
+- [Ruleset](./google-enhanced-ecommerce-ua.js)
 - [Vendor Guidelines](https://developers.google.com/tag-manager/enhanced-ecommerce)
-- [Tests](../test/rules-google-fullstory.spec.ts)
+- [Tests](../test/rules-google-enhanced-ecommerce-ua-fullstory.spec.ts)
 
 ## Customer Experience Digital Data Layer 1.0 (CEDDL)
 

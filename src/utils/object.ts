@@ -53,3 +53,31 @@ export function startsWith(target: string, searchString: string, position?: numb
 
   return target.indexOf(searchString, effectivePosition) === effectivePosition;
 }
+
+/**
+* Returns true if the target string ends with the searchString.
+* When the position is defined, its calculated from the start of the string not the end,
+* truncating the target to the specified position. If the position is greater
+* than the length of the target string, it will also return true.
+* Otherwise, it returns false.
+*
+ * @param target The string within which we are searching.
+ * @param searchString The string we are looking to match at the end of the target string.
+ * @param position Optional. If specified, function will consider the target as if it ends at this position, truncating the target string.
+ */
+export function endsWith(target: string, searchString: string, position?: number): boolean {
+  // Create new variable pos
+  let pos: number;
+  // Default pos to string's length if not given or NaN
+  if (position === undefined || isNaN(position)) {
+    pos = target.length;
+  } else if (position < 0) {
+    // Treat negative position as 0
+    pos = 0;
+  } else {
+    // Ensure pos does not exceed the target string's length
+    pos = Math.min(position, target.length);
+  }
+
+  return target.slice(Math.max(0, pos - searchString.length), pos) === searchString;
+}
