@@ -55,6 +55,7 @@ Sensitive, private, and confidential information should never be added to a data
 
 DLO is a JavaScript asset that is included on a web page.  FullStory hosts versions of DLO on our CDN.  Versioned releases have the naming convention `<version>.js`, and the most recent version is named `latest.js`:
 
+- https://edge.fullstory.com/datalayer/v4/v4.0.2.js
 - https://edge.fullstory.com/datalayer/v4/latest.js
 
 If you would like the most up to date version of DLO on your site always, use `latest.js`.  If you'd rather use stable releases and perform manual upgrades, use `<version>.js`.
