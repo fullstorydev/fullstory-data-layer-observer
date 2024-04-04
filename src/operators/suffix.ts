@@ -31,10 +31,12 @@ export enum Suffixes {
   Reals = '_reals',
 }
 
+type SuffixKey = keyof typeof Suffixes;
+
 // squirrel the suffix values away so we can use it as a lookup later
 const SuffixValueLookup = new Set<string>();
 Object.keys(Suffixes).forEach((key) => {
-  const item = Suffixes[key as keyof typeof Suffixes];
+  const item = Suffixes[key as SuffixKey];
   SuffixValueLookup.add(item);
 });
 
