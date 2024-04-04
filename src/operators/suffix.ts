@@ -30,10 +30,13 @@ export enum Suffixes {
   Reals = '_reals',
 }
 
+type SuffixKey = keyof typeof Suffixes;
+
 // squirrel the suffix values away so we can use it as a lookup later
-const SuffixValueLookup = new Map<string, string>();
-Object.values(Suffixes).forEach((item) => {
-  SuffixValueLookup.set(item, item);
+const SuffixValueLookup = new Set<string>();
+Object.keys(Suffixes).forEach((key) => {
+  const item = Suffixes[key as SuffixKey];
+  SuffixValueLookup.add(item);
 });
 
 export interface SuffixOperatorOptions extends OperatorOptions {

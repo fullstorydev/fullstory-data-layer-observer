@@ -47,7 +47,8 @@ export class FanOutOperator implements Operator {
       if (Array.isArray(datum)) {
         plucked.push(...datum);
       } else {
-        Object.values(datum).forEach((value: any) => {
+        Object.keys(datum).forEach((key: any) => {
+          const value = datum[key];
           if (Array.isArray(value)) {
             plucked.push(...value);
           } else if (typeof value === 'object') {

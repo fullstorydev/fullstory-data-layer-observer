@@ -308,10 +308,9 @@ describe('convert operator unit tests', () => {
   });
 
   it('strings can be enumerated', () => {
-    const range = [...Array(101).keys()];
-    range.forEach((number) => {
+    for (let number = 0; number <= 101; number += 1) {
       expect(ConvertOperator.enumerate(`${number}`)).to.eq(number);
-    });
+    }
     expect(ConvertOperator.enumerate('-1')).to.eql(-1);
   });
 
