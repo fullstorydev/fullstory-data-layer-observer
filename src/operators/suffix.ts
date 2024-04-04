@@ -1,4 +1,3 @@
-// import '../typeAugmentations/allow';
 import {
   OperatorValidator, OperatorOptions, Operator, safeUpdate,
 } from '../operator';
