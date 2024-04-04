@@ -1,12 +1,11 @@
 {
   "compilerOptions": {
-    "target": "es2015",
+    "target": "ES5",
     "module": "commonjs",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
     "strict": true,
-    "keyofStringsOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
@@ -15,9 +14,8 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "lib": [
-      "es6",
       "dom",
-      "es2017"
+      "es5"
     ]
   },
   "include": [

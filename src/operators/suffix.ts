@@ -1,3 +1,4 @@
+import '../typeAugmentations/allow';
 import {
   OperatorValidator, OperatorOptions, Operator, safeUpdate,
 } from '../operator';
@@ -32,7 +33,8 @@ export enum Suffixes {
 
 // squirrel the suffix values away so we can use it as a lookup later
 const SuffixValueLookup = new Map<string, string>();
-Object.values(Suffixes).forEach((item) => {
+Object.keys(Suffixes).forEach((key) => {
+  const item = Suffixes[key as keyof typeof Suffixes];
   SuffixValueLookup.set(item, item);
 });
 
