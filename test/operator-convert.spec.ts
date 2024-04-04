@@ -308,7 +308,7 @@ describe('convert operator unit tests', () => {
   });
 
   it('strings can be enumerated', () => {
-    const range = [...Array(101).keys()];
+    const range = Array.from({ length: 101 }).map((_, i) => i);
     range.forEach((number) => {
       expect(ConvertOperator.enumerate(`${number}`)).to.eq(number);
     });
