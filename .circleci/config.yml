@@ -2,7 +2,7 @@ version: 2.1
 executors:
   browser-executor:
     docker:
-      - image: circleci/node:20-browsers
+      - image: cimg/node:20g-browsers
     working_directory: ~/repo
 jobs:
   build:
