@@ -10,6 +10,9 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 4.0.4
+- Update some build dependencies
+
 ### 4.0.3
 
 - Fixes some syntax incompatible with older browsers
