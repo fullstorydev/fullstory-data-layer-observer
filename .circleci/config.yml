@@ -2,7 +2,7 @@ version: 2.1
 executors:
   browser-executor:
     docker:
-      - image: cimg/node:20g-browsers
+      - image: cimg/node:20-browsers
     working_directory: ~/repo
 jobs:
   build:
