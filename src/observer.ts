@@ -60,7 +60,7 @@ export interface DataLayerRule {
   debug?: boolean;
   source: string;
   operators?: OperatorOptions[];
-  destination: string | Function;
+  destination?: string | Function;
   readOnLoad?: boolean;
   url?: string;
   id?: string;
@@ -68,6 +68,15 @@ export interface DataLayerRule {
   monitor?: boolean;
   waitUntil?: number | Function;
   maxRetry?: number;
+  version?: number;
+  fsApi?: string;
+}
+
+enum FS_API_CONSTANTS {
+  SET_IDENTITY = 'setIdentity',
+  TRACK_EVENT = 'trackEvent',
+  SET_USER_PROPERTIES = 'setUserProperties',
+  SET_PAGE_PROPERTIES = 'setPageProperties'
 }
 
 /**
@@ -190,9 +199,37 @@ export class DataLayerObserver {
    * adding the operator, the DataHandler will be removed to prevent unexpected data processing.
    * @param handler to add operators to
    * @param options for operators used to configure each Operator
+   * @param destination The javascript function to execute (must be one of destination or fsApi)
+   * @param fsApi The special FullStory constant to be executed (must be one of destination or fsApi)
    */
-  private addOperators(handler: DataHandler, options: OperatorOptions[], destination: string | Function) {
+  private addOperators(handler: DataHandler, options: OperatorOptions[],
+    destination: string | Function | undefined = undefined, fsApi: string | undefined = undefined,
+    version: number = 1) {
     const { beforeDestination, previewDestination = 'console.log', previewMode } = this.config;
+
+    // sanity check destination and fsApi parameters
+    if (!destination && !fsApi) {
+      Logger.getInstance().error(LogMessageType.OperatorError, {
+        reason: LogMessage.MissingDestination,
+      });
+      Telemetry.error(errorType.operatorError);
+      throw new Error(LogMessage.MissingDestination);
+    }
+
+    if (destination && fsApi) {
+      Logger.getInstance().error(LogMessageType.OperatorError, {
+        reason: LogMessage.DuplicateDestination,
+      });
+      Telemetry.error(errorType.operatorError);
+      throw new Error(LogMessage.DuplicateDestination);
+    }
+
+    if (fsApi && !Object.values(FS_API_CONSTANTS).includes(fsApi as FS_API_CONSTANTS)) {
+      const reason = Logger.format(LogMessage.UnsupportedFsApi, fsApi);
+      Logger.getInstance().error(LogMessageType.OperatorError, { reason });
+      Telemetry.error(errorType.operatorError);
+      throw new Error(reason);
+    }
 
     try {
       // sequentially add the operators to the handler
@@ -200,16 +237,32 @@ export class DataLayerObserver {
         handler.push(this.getOperator(optionSet));
       });
 
-      // optionally perform a final transformation
+      // optionally perform a final transformation if version is 1
       // useful if every rule needs the same operator run before the destination
-      if (beforeDestination) {
+      if (beforeDestination && (version === 1)) {
         const beforeOptions = Array.isArray(beforeDestination) ? beforeDestination : [beforeDestination];
         beforeOptions.forEach((operator) => handler.push(this.getOperator(operator)));
       }
 
-      // end with destination
-      const func = previewMode ? previewDestination : destination;
-      handler.push(new FunctionOperator({ name: 'function', func }));
+      if (fsApi) {
+        switch (fsApi) {
+          case FS_API_CONSTANTS.SET_IDENTITY:
+            break;
+          case FS_API_CONSTANTS.SET_PAGE_PROPERTIES:
+            break;
+          case FS_API_CONSTANTS.SET_USER_PROPERTIES:
+            break;
+          case FS_API_CONSTANTS.TRACK_EVENT:
+            break;
+          default:
+            Logger.getInstance().error(`Unexpected coding error: Unknown fsApi value ${fsApi}`);
+        }
+      } else if (destination) {
+        const func = previewMode ? previewDestination : destination;
+        handler.push(new FunctionOperator({ name: 'function', func }));
+      } else {
+        Logger.getInstance().error('Unexpected coding error: Missing fsApi or destination');
+      }
     } catch (err) {
       this.removeHandler(handler);
       Logger.getInstance().error(LogMessageType.OperatorError, { operator: JSON.stringify(options) });
@@ -263,22 +316,26 @@ export class DataLayerObserver {
    * @param source from the rule monitoring the data layer
    * @param target from the data layer
    * @param options list of OperatorOptions to transform data before a destination
-   * @param destination function using selector syntax or native function
    * @param read when true reads data layer target and emit the initial value
    * @param monitor when true property changes or function calls re-run the operators
    * @param debug when true the rule prints debug for each Operator transformation
    * @param debounce number of milliseconds to debounce property assignments before handling the event
+   * @param version version of this rule, defaults to 1
+   * @param destination function using selector syntax or native function
+   * @param fsApi special Fullstory API Constant
    * @throws error if an error occurs during handler creation
    */
   registerTarget(
     source: string,
     target: DataLayerTarget,
     options: OperatorOptions[],
-    destination: string | Function,
+    destination: string | Function | undefined = undefined,
+    fsApi: string | undefined = undefined,
     read = false,
     monitor = true,
     debug = false,
     debounce = DataHandler.DefaultDebounceTime,
+    version:number = 1,
   ): DataHandler {
     let workingTarget = target;
     const targetValue = workingTarget.value;
@@ -289,8 +346,8 @@ export class DataLayerObserver {
      */
     if (monitor && Array.isArray(targetValue)) {
       if (targetValue.push && targetValue.unshift) {
-        this.registerTarget(source, DataLayerTarget.find(`${target.path}.unshift`), options, destination, false, true,
-          debug, debounce);
+        this.registerTarget(source, DataLayerTarget.find(`${target.path}.unshift`), options, destination, fsApi,
+          false, true, debug, debounce, version);
         workingTarget = DataLayerTarget.find(`${target.path}.push`);
       } else {
         Logger.getInstance().warn(LogMessageType.MonitorCreateError, {
@@ -303,7 +360,7 @@ export class DataLayerObserver {
     }
 
     const handler = this.addHandler(source, workingTarget, !!debug, debounce);
-    this.addOperators(handler, options, destination);
+    this.addOperators(handler, options, destination, fsApi, version);
 
     if (read) {
       // For read-on-load for targeted arrays we do a sort of manual fan-out of the items
@@ -408,6 +465,8 @@ export class DataLayerObserver {
       source,
       operators = [],
       destination,
+      fsApi,
+      version,
       readOnLoad: ruleReadOnLoad,
       url,
       monitor = true,
@@ -432,7 +491,8 @@ export class DataLayerObserver {
     try {
       const register = () => {
         const target = DataLayerTarget.find(source);
-        this.registerTarget(source, target, operators, destination, readOnLoad, monitor, debug, debounce);
+        this.registerTarget(source, target, operators, destination, fsApi, readOnLoad, monitor, debug,
+          debounce, version);
       };
       const timeout = () => Logger.getInstance().warn(LogMessageType.RuleRegistrationError, {
         rule: id, source, reason: 'Max Retries Attempted',
