@@ -9,6 +9,10 @@ import { FunctionOperator } from './operators';
 import DataLayerTarget from './target';
 import MonitorFactory from './monitor-factory';
 import { errorType, Telemetry, telemetryType } from './utils/telemetry';
+import TrackEventOperator from './operators/fsApi/trackEvent';
+import SetIdentityOperator from './operators/fsApi/setIdentity';
+import SetPagePropertiesOperator from './operators/fsApi/setPageProperties';
+import SetUserPropertiesOperator from './operators/fsApi/setUserProperties';
 
 /**
  * DataLayerConfig provides global settings for a DataLayerObserver.
@@ -207,30 +211,6 @@ export class DataLayerObserver {
     version: number = 1) {
     const { beforeDestination, previewDestination = 'console.log', previewMode } = this.config;
 
-    // sanity check destination and fsApi parameters
-    if (!destination && !fsApi) {
-      Logger.getInstance().error(LogMessageType.OperatorError, {
-        reason: LogMessage.MissingDestination,
-      });
-      Telemetry.error(errorType.operatorError);
-      throw new Error(LogMessage.MissingDestination);
-    }
-
-    if (destination && fsApi) {
-      Logger.getInstance().error(LogMessageType.OperatorError, {
-        reason: LogMessage.DuplicateDestination,
-      });
-      Telemetry.error(errorType.operatorError);
-      throw new Error(LogMessage.DuplicateDestination);
-    }
-
-    if (fsApi && !Object.values(FS_API_CONSTANTS).includes(fsApi as FS_API_CONSTANTS)) {
-      const reason = Logger.format(LogMessage.UnsupportedFsApi, fsApi);
-      Logger.getInstance().error(LogMessageType.OperatorError, { reason });
-      Telemetry.error(errorType.operatorError);
-      throw new Error(reason);
-    }
-
     try {
       // sequentially add the operators to the handler
       options.forEach((optionSet) => {
@@ -247,12 +227,16 @@ export class DataLayerObserver {
       if (fsApi) {
         switch (fsApi) {
           case FS_API_CONSTANTS.SET_IDENTITY:
+            handler.push(new SetIdentityOperator({ name: 'setIdentity' }));
             break;
           case FS_API_CONSTANTS.SET_PAGE_PROPERTIES:
+            handler.push(new SetPagePropertiesOperator({ name: 'setPageProperties' }));
             break;
           case FS_API_CONSTANTS.SET_USER_PROPERTIES:
+            handler.push(new SetUserPropertiesOperator({ name: 'setUserProperties' }));
             break;
           case FS_API_CONSTANTS.TRACK_EVENT:
+            handler.push(new TrackEventOperator({ name: 'trackEvent' }));
             break;
           default:
             Logger.getInstance().error(`Unexpected coding error: Unknown fsApi value ${fsApi}`);
@@ -476,10 +460,34 @@ export class DataLayerObserver {
     // rule properties override global ones
     const readOnLoad = ruleReadOnLoad === undefined ? globalReadOnLoad : ruleReadOnLoad;
 
-    if (!source || !destination) {
+    if (!source) {
       Logger.getInstance().error(LogMessageType.RuleInvalid,
-        { rule: id, source, reason: `Missing ${source ? 'destination' : 'source'}` });
+        { rule: id, source, reason: 'Missing source' });
       Telemetry.error(errorType.invalidRuleError);
+      return;
+    }
+
+    // sanity check destination and fsApi parameters
+    if (!destination && !fsApi) {
+      Logger.getInstance().error(LogMessageType.OperatorError, {
+        reason: LogMessage.MissingDestination,
+      });
+      Telemetry.error(errorType.operatorError);
+      return;
+    }
+
+    if (destination && fsApi) {
+      Logger.getInstance().error(LogMessageType.OperatorError, {
+        reason: LogMessage.DuplicateDestination,
+      });
+      Telemetry.error(errorType.operatorError);
+      return;
+    }
+
+    if (fsApi && !Object.values(FS_API_CONSTANTS).includes(fsApi as FS_API_CONSTANTS)) {
+      const reason = Logger.format(LogMessage.UnsupportedFsApi, fsApi);
+      Logger.getInstance().error(LogMessageType.OperatorError, { reason });
+      Telemetry.error(errorType.operatorError);
       return;
     }
 
