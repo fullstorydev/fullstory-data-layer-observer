@@ -104,7 +104,7 @@ export class DataLayerObserver {
     }
     if (typeof value === 'object') {
       // for object-based data layers, query the data layer to run either the selector or get the value
-      // in either case, a data layer withno properties means there's no properties to monitor and we should wait
+      // in either case, a data layer with no properties means there's no properties to monitor and we should wait
       const result = target.query();
       return result !== undefined && Object.getOwnPropertyNames(result).length > 0;
     }
