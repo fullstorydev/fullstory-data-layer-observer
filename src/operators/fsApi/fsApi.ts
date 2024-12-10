@@ -19,8 +19,13 @@ export default abstract class FSApiOperator implements Operator {
     if (typeof fsFunction !== 'function') {
       throw new Error('_fs_namespace is not a function');
     }
-
+    // subclasses will determine how to prepare the data
     const realData = this.prepareData(data);
+    if (realData === null) {
+      return null;
+    }
+    // make sure to push dlo as last parameter
+    realData.push('dlo');
     const returnValue = fsFunction.apply(thisArg, realData);
     if (returnValue === undefined || returnValue === null) {
       return null;
@@ -33,5 +38,5 @@ export default abstract class FSApiOperator implements Operator {
     validator.validate(FSApiOperator.specification);
   }
 
-  abstract prepareData(inputData:any[]): any[];
+  abstract prepareData(inputData:any[]): any[] | null;
 }

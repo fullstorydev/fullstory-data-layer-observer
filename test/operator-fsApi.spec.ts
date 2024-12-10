@@ -1,25 +1,25 @@
 import { expect } from 'chai';
 import 'mocha';
 
-// import { expectParams, expectNoCalls } from './utils/mocha';
 import SetIdentityOperator from '../src/operators/fsApi/setIdentity';
 import SetUserPropertiesOperator from '../src/operators/fsApi/setUserProperties';
 import SetPagePropertiesOperator from '../src/operators/fsApi/setPageProperties';
 import TrackEventOperator from '../src/operators/fsApi/trackEvent';
 import {
+  ConsoleAppender,
   DataLayerObserver, FS_API_CONSTANTS, Logger, LogMessage, LogMessageType,
 } from '../src';
 import Console from './mocks/console';
 import { expectNoCalls, expectParams } from './utils/mocha';
-// import DataLayerTarget from "../src/target";
+import { clearCallQueues, fullstoryMock, getCallQueues } from './mocks/fullstoryV2';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function fullstoryMock(parameters:any[]) {}
 const originalConsole = globalThis.console;
 const console = new Console();
 
-describe.only('fsApi operator unit tests', () => {
+describe('fsApi operator unit tests', () => {
   beforeEach(() => {
+    Logger.getInstance().appender = new ConsoleAppender();
     (globalThis as any).console = console;
     // eslint-disable-next-line no-underscore-dangle
     (globalThis as any)._fs_namespace = 'FS';
@@ -29,6 +29,7 @@ describe.only('fsApi operator unit tests', () => {
   afterEach(() => {
     // eslint-disable-next-line no-underscore-dangle
     (globalThis as any).console = originalConsole;
+    clearCallQueues();
     // eslint-disable-next-line no-underscore-dangle
     delete (globalThis as any)._fs_namespace;
     delete (globalThis as any).FS;
@@ -85,15 +86,182 @@ describe.only('fsApi operator unit tests', () => {
     delete (globalThis as any).foo;
   });
 
-  /*
-  it('it should call a function using string path', () => {
-    expectNoCalls(console, 'log');
-
-    const operator = new FunctionOperator({ name: 'function', func: 'console.log' });
-    operator.handleData(['Hello World']);
-
-    const [hello] = expectParams(console, 'log');
-    expect(hello).to.eq('Hello World');
+  it('it should throw error when missing FullStory function', () => {
+    // this tests base class FSApiOperator so one example will be used
+    const operator = new SetIdentityOperator({ name: 'setIdentity' });
+    expect(() => operator.handleData([])).to.not.throw();
+    // eslint-disable-next-line no-underscore-dangle
+    delete (globalThis as any)._fs_namespace;
+    expect(() => operator.handleData([])).to.throw();
+    // eslint-disable-next-line no-underscore-dangle
+    (globalThis as any)._fs_namespace = 'FS';
+    expect(() => operator.handleData([])).to.not.throw();
+    delete (globalThis as any).FS;
+    expect(() => operator.handleData([])).to.throw();
   });
-*/
+
+  it('it should process trackEvent properly', () => {
+    const operator = new TrackEventOperator({ name: 'trackEvent' });
+    const inputData = [
+      'Test Event',
+      {
+        inputValue: 'My Input Value',
+        anotherValue: 5,
+      },
+    ];
+    const expectedOutput = [
+      'trackEvent',
+      {
+        name: inputData[0],
+        properties: inputData[1],
+      },
+      'dlo',
+    ];
+    operator.handleData(inputData);
+    const callQueues = getCallQueues();
+    expect(callQueues).to.not.be.null;
+    expect(callQueues.length).to.eq(1);
+    const output = callQueues[0];
+    expect(output).to.deep.eq(expectedOutput);
+  });
+
+  it('it should ignore improper trackEvent data', () => {
+    const operator = new TrackEventOperator({ name: 'trackEvent' });
+    const inputData = [
+      {
+        inputValue: 'My Input Value',
+        anotherValue: 5,
+      },
+    ];
+    operator.handleData(inputData);
+    const callQueues = getCallQueues();
+    expect(callQueues).to.not.be.null;
+    expect(callQueues.length).to.eq(0);
+    const output = callQueues[0];
+    expect(output).to.be.undefined;
+  });
+
+  it('it should process set user properties properly', () => {
+    const operator = new SetUserPropertiesOperator({ name: 'userProperties' });
+    const inputData = [
+      {
+        inputValue: 'My Input Value',
+        anotherValue: 5,
+      },
+    ];
+    const expectedOutput = [
+      'setProperties',
+      {
+        type: 'user',
+        properties: inputData[0],
+      },
+      'dlo',
+    ];
+    operator.handleData(inputData);
+    const callQueues = getCallQueues();
+    expect(callQueues).to.not.be.null;
+    expect(callQueues.length).to.eq(1);
+    const output = callQueues[0];
+    expect(output).to.deep.eq(expectedOutput);
+  });
+
+  it('it should ignore improper user properties data', () => {
+    const operator = new SetUserPropertiesOperator({ name: 'user properties' });
+    const inputData:any = [];
+    operator.handleData(inputData);
+    const callQueues = getCallQueues();
+    expect(callQueues).to.not.be.null;
+    expect(callQueues.length).to.eq(0);
+    const output = callQueues[0];
+    expect(output).to.be.undefined;
+  });
+
+  it('it should process set page properties properly', () => {
+    const operator = new SetPagePropertiesOperator({ name: 'pageProperties' });
+    const inputData = [
+      {
+        inputValue: 'My Input Value',
+        anotherValue: 5,
+      },
+    ];
+    const expectedOutput = [
+      'setProperties',
+      {
+        type: 'page',
+        properties: inputData[0],
+      },
+      'dlo',
+    ];
+    operator.handleData(inputData);
+    const callQueues = getCallQueues();
+    expect(callQueues).to.not.be.null;
+    expect(callQueues.length).to.eq(1);
+    const output = callQueues[0];
+    expect(output).to.deep.eq(expectedOutput);
+  });
+
+  it('it should ignore improper page properties data', () => {
+    const operator = new SetPagePropertiesOperator({ name: 'page properties' });
+    const inputData:any = [];
+    operator.handleData(inputData);
+    const callQueues = getCallQueues();
+    expect(callQueues).to.not.be.null;
+    expect(callQueues.length).to.eq(0);
+    const output = callQueues[0];
+    expect(output).to.be.undefined;
+  });
+
+  it('it should process set identity with no properties properly', () => {
+    const operator = new SetIdentityOperator({ name: 'setIdentity' });
+    const inputData = ['12345'];
+    const expectedOutput = [
+      'setIdentity',
+      {
+        uid: inputData[0],
+      },
+      'dlo',
+    ];
+    operator.handleData(inputData);
+    const callQueues = getCallQueues();
+    expect(callQueues).to.not.be.null;
+    expect(callQueues.length).to.eq(1);
+    const output = callQueues[0];
+    expect(output).to.deep.eq(expectedOutput);
+  });
+
+  it('it should process set identity with properties properly', () => {
+    const operator = new SetIdentityOperator({ name: 'setIdentity' });
+    const inputData = [
+      '12345',
+      {
+        inputValue: 'My Input Value',
+        anotherValue: 5,
+      },
+    ];
+    const expectedOutput = [
+      'setIdentity',
+      {
+        uid: inputData[0],
+        properties: inputData[1],
+      },
+      'dlo',
+    ];
+    operator.handleData(inputData);
+    const callQueues = getCallQueues();
+    expect(callQueues).to.not.be.null;
+    expect(callQueues.length).to.eq(1);
+    const output = callQueues[0];
+    expect(output).to.deep.eq(expectedOutput);
+  });
+
+  it('it should ignore improper setIdentity data', () => {
+    const operator = new SetIdentityOperator({ name: 'setIdentity' });
+    const inputData:any = [];
+    operator.handleData(inputData);
+    const callQueues = getCallQueues();
+    expect(callQueues).to.not.be.null;
+    expect(callQueues.length).to.eq(0);
+    const output = callQueues[0];
+    expect(output).to.be.undefined;
+  });
 });
