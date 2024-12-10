@@ -364,6 +364,33 @@ describe('DataLayerObserver unit tests', () => {
     ExpectObserver.getInstance().cleanup(observer);
   });
 
+  it('it should ignore beforeDestination on version 2 rule', () => {
+    expectNoCalls(globalMock.console, 'log');
+
+    const observer = ExpectObserver.getInstance().create({ beforeDestination: { name: 'toUpper' }, rules: [] });
+
+    observer.registerOperator('toUpper', new UppercaseOperator());
+    observer.registerRule({
+      source: 'digitalData.page.category',
+      operators: [],
+      destination: 'console.log',
+      version: 2,
+      monitor: false,
+    });
+
+    expect(observer.handlers.length).to.eq(1);
+
+    observer.handlers[0].fireEvent();
+
+    const [category] = expectParams(globalMock.console, 'log');
+    // shouldn't be upper case as beforeDestination is ignored on version 2 rules
+    expect((category as PageCategory).primaryCategory).to.eq(
+      globalMock.digitalData.page.category.primaryCategory,
+    );
+
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
   it('it should register and call multiple operators before the destination', () => {
     const observer = ExpectObserver.getInstance().create({
       beforeDestination: [
