@@ -1,10 +1,11 @@
 import FSApiOperator from './fsApi';
 
-export default class SetIdentityOperator extends FSApiOperator {
+// eslint-disable-next-line import/prefer-default-export
+export class SetIdentityOperator extends FSApiOperator {
   // eslint-disable-next-line class-methods-use-this
   prepareData(inputData:any[]): any[] | null {
     if (inputData === null || inputData.length < 1) {
-      return null;
+      throw new Error('Input data is empty');
     }
     const realData:any[] = [
       'setIdentity',

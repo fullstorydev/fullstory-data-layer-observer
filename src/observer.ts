@@ -5,14 +5,12 @@ import DataHandler from './handler';
 import {
   Logger, LogAppender, LogMessageType, LogMessage, LogLevel,
 } from './utils/logger';
-import { FunctionOperator } from './operators';
+import {
+  FunctionOperator, SetIdentityOperator, SetPagePropertiesOperator, SetUserPropertiesOperator, TrackEventOperator,
+} from './operators';
 import DataLayerTarget from './target';
 import MonitorFactory from './monitor-factory';
 import { errorType, Telemetry, telemetryType } from './utils/telemetry';
-import TrackEventOperator from './operators/fsApi/trackEvent';
-import SetIdentityOperator from './operators/fsApi/setIdentity';
-import SetPagePropertiesOperator from './operators/fsApi/setPageProperties';
-import SetUserPropertiesOperator from './operators/fsApi/setUserProperties';
 
 /**
  * DataLayerConfig provides global settings for a DataLayerObserver.
@@ -73,7 +71,7 @@ export interface DataLayerRule {
   waitUntil?: number | Function;
   maxRetry?: number;
   version?: number;
-  fsApi?: string;
+  fsApi?: FS_API_CONSTANTS;
 }
 
 export enum FS_API_CONSTANTS {
@@ -207,7 +205,7 @@ export class DataLayerObserver {
    * @param fsApi The special FullStory constant to be executed (must be one of destination or fsApi)
    */
   private addOperators(handler: DataHandler, options: OperatorOptions[],
-    destination: string | Function | undefined = undefined, fsApi: string | undefined = undefined,
+    destination: string | Function | undefined = undefined, fsApi: FS_API_CONSTANTS | undefined = undefined,
     version: number = 1) {
     const { beforeDestination, previewDestination = 'console.log', previewMode } = this.config;
 
@@ -227,16 +225,16 @@ export class DataLayerObserver {
       if (fsApi) {
         switch (fsApi) {
           case FS_API_CONSTANTS.SET_IDENTITY:
-            handler.push(new SetIdentityOperator({ name: 'setIdentity' }));
+            handler.push(new SetIdentityOperator({ name: FS_API_CONSTANTS.SET_IDENTITY }));
             break;
           case FS_API_CONSTANTS.SET_PAGE_PROPERTIES:
-            handler.push(new SetPagePropertiesOperator({ name: 'setPageProperties' }));
+            handler.push(new SetPagePropertiesOperator({ name: FS_API_CONSTANTS.SET_PAGE_PROPERTIES }));
             break;
           case FS_API_CONSTANTS.SET_USER_PROPERTIES:
-            handler.push(new SetUserPropertiesOperator({ name: 'setUserProperties' }));
+            handler.push(new SetUserPropertiesOperator({ name: FS_API_CONSTANTS.SET_USER_PROPERTIES }));
             break;
           case FS_API_CONSTANTS.TRACK_EVENT:
-            handler.push(new TrackEventOperator({ name: 'trackEvent' }));
+            handler.push(new TrackEventOperator({ name: FS_API_CONSTANTS.TRACK_EVENT }));
             break;
           default:
             Logger.getInstance().error(`Unexpected coding error: Unknown fsApi value ${fsApi}`);
@@ -314,7 +312,7 @@ export class DataLayerObserver {
     target: DataLayerTarget,
     options: OperatorOptions[],
     destination: string | Function | undefined = undefined,
-    fsApi: string | undefined = undefined,
+    fsApi: FS_API_CONSTANTS | undefined = undefined,
     read = false,
     monitor = true,
     debug = false,

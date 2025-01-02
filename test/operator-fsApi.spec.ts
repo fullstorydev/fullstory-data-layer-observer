@@ -1,10 +1,9 @@
 import { expect } from 'chai';
 import 'mocha';
 
-import SetIdentityOperator from '../src/operators/fsApi/setIdentity';
-import SetUserPropertiesOperator from '../src/operators/fsApi/setUserProperties';
-import SetPagePropertiesOperator from '../src/operators/fsApi/setPageProperties';
-import TrackEventOperator from '../src/operators/fsApi/trackEvent';
+import {
+  SetIdentityOperator, SetUserPropertiesOperator, SetPagePropertiesOperator, TrackEventOperator,
+} from '../src/operators';
 import {
   ConsoleAppender,
   DataLayerObserver, FS_API_CONSTANTS, Logger, LogMessage, LogMessageType,
@@ -53,6 +52,7 @@ describe('fsApi operator unit tests', () => {
   it('it should log error when both fsApi and destination are present', () => {
     const observer = new DataLayerObserver();
     // no fsApi or destination
+    // @ts-ignore
     observer.registerRule({ source: 'foo', fsApi: 'bar', destination: 'test' });
     const [error] = expectParams(console, 'error');
     expect(error).to.eq(
@@ -77,6 +77,7 @@ describe('fsApi operator unit tests', () => {
     const observer = new DataLayerObserver();
     (globalThis as any).foo = 'test';
     // no fsApi or destination
+    // @ts-ignore
     observer.registerRule({ source: 'foo', fsApi: 'bar' });
     const [error] = expectParams(console, 'error');
     const reason = Logger.format(LogMessage.UnsupportedFsApi, 'bar');
@@ -89,13 +90,13 @@ describe('fsApi operator unit tests', () => {
   it('it should throw error when missing FullStory function', () => {
     // this tests base class FSApiOperator so one example will be used
     const operator = new SetIdentityOperator({ name: 'setIdentity' });
-    expect(() => operator.handleData([])).to.not.throw();
+    expect(() => operator.handleData([])).to.throw();
     // eslint-disable-next-line no-underscore-dangle
     delete (globalThis as any)._fs_namespace;
     expect(() => operator.handleData([])).to.throw();
     // eslint-disable-next-line no-underscore-dangle
     (globalThis as any)._fs_namespace = 'FS';
-    expect(() => operator.handleData([])).to.not.throw();
+    expect(() => operator.handleData([])).to.throw();
     delete (globalThis as any).FS;
     expect(() => operator.handleData([])).to.throw();
   });
@@ -125,7 +126,7 @@ describe('fsApi operator unit tests', () => {
     expect(output).to.deep.eq(expectedOutput);
   });
 
-  it('it should ignore improper trackEvent data', () => {
+  it('it should throw error on improper trackEvent data', () => {
     const operator = new TrackEventOperator({ name: 'trackEvent' });
     const inputData = [
       {
@@ -133,12 +134,7 @@ describe('fsApi operator unit tests', () => {
         anotherValue: 5,
       },
     ];
-    operator.handleData(inputData);
-    const callQueues = getCallQueues();
-    expect(callQueues).to.not.be.null;
-    expect(callQueues.length).to.eq(0);
-    const output = callQueues[0];
-    expect(output).to.be.undefined;
+    expect(() => operator.handleData(inputData)).to.throw();
   });
 
   it('it should process set user properties properly', () => {
@@ -165,15 +161,10 @@ describe('fsApi operator unit tests', () => {
     expect(output).to.deep.eq(expectedOutput);
   });
 
-  it('it should ignore improper user properties data', () => {
+  it('it should throw error on improper user properties data', () => {
     const operator = new SetUserPropertiesOperator({ name: 'user properties' });
     const inputData:any = [];
-    operator.handleData(inputData);
-    const callQueues = getCallQueues();
-    expect(callQueues).to.not.be.null;
-    expect(callQueues.length).to.eq(0);
-    const output = callQueues[0];
-    expect(output).to.be.undefined;
+    expect(() => operator.handleData(inputData)).to.throw();
   });
 
   it('it should process set page properties properly', () => {
@@ -200,15 +191,10 @@ describe('fsApi operator unit tests', () => {
     expect(output).to.deep.eq(expectedOutput);
   });
 
-  it('it should ignore improper page properties data', () => {
+  it('it should throw error on improper page properties data', () => {
     const operator = new SetPagePropertiesOperator({ name: 'page properties' });
     const inputData:any = [];
-    operator.handleData(inputData);
-    const callQueues = getCallQueues();
-    expect(callQueues).to.not.be.null;
-    expect(callQueues.length).to.eq(0);
-    const output = callQueues[0];
-    expect(output).to.be.undefined;
+    expect(() => operator.handleData(inputData)).to.throw();
   });
 
   it('it should process set identity with no properties properly', () => {
@@ -254,14 +240,9 @@ describe('fsApi operator unit tests', () => {
     expect(output).to.deep.eq(expectedOutput);
   });
 
-  it('it should ignore improper setIdentity data', () => {
+  it('it should throw error on improper setIdentity data', () => {
     const operator = new SetIdentityOperator({ name: 'setIdentity' });
     const inputData:any = [];
-    operator.handleData(inputData);
-    const callQueues = getCallQueues();
-    expect(callQueues).to.not.be.null;
-    expect(callQueues.length).to.eq(0);
-    const output = callQueues[0];
-    expect(output).to.be.undefined;
+    expect(() => operator.handleData(inputData)).to.throw();
   });
 });

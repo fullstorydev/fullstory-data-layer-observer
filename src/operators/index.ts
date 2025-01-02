@@ -7,3 +7,7 @@ export * from './suffix';
 export * from './rename';
 export * from './query';
 export * from './parse';
+export * from './fsApi/setIdentity';
+export * from './fsApi/setPageProperties';
+export * from './fsApi/setUserProperties';
+export * from './fsApi/trackEvent';
