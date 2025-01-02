@@ -203,6 +203,7 @@ export class DataLayerObserver {
    * @param options for operators used to configure each Operator
    * @param destination The javascript function to execute (must be one of destination or fsApi)
    * @param fsApi The special FullStory constant to be executed (must be one of destination or fsApi)
+   * @param version The version of DLO you are using.  As of version 2, beforeDestination will not be used.
    */
   private addOperators(handler: DataHandler, options: OperatorOptions[],
     destination: string | Function | undefined = undefined, fsApi: FS_API_CONSTANTS | undefined = undefined,
