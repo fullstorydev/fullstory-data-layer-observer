@@ -6,7 +6,12 @@ import {
   Logger, LogAppender, LogMessageType, LogMessage, LogLevel,
 } from './utils/logger';
 import {
-  FunctionOperator, SetIdentityOperator, SetPagePropertiesOperator, SetUserPropertiesOperator, TrackEventOperator,
+  FunctionOperator,
+  InsertOperator,
+  SetIdentityOperator,
+  SetPagePropertiesOperator,
+  SetUserPropertiesOperator,
+  TrackEventOperator,
 } from './operators';
 import DataLayerTarget from './target';
 import MonitorFactory from './monitor-factory';
@@ -242,6 +247,12 @@ export class DataLayerObserver {
         }
       } else if (destination) {
         const func = previewMode ? previewDestination : destination;
+        // if the version is greater than 1 it should ignore beforeDestination but still add dlo output
+        if (version > 1) {
+          handler.push(new InsertOperator({
+            name: 'insert', position: -1, value: 'dlo',
+          }));
+        }
         handler.push(new FunctionOperator({ name: 'function', func }));
       } else {
         Logger.getInstance().error('Unexpected coding error: Missing fsApi or destination');
