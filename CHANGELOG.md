@@ -10,7 +10,7 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
-### 5.0.0
+### 4.1.0
 - Updates to use version 2 of the FS Browser API
 - No longer adds type suffixes to properties
 
