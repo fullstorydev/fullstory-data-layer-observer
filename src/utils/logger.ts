@@ -34,6 +34,8 @@ export enum LogMessageType {
 export enum LogMessage {
   DataLayerMissing = 'Data layer not found',
   DuplicateValue = 'Value $0 already used',
+  DuplicateDestination = 'Only one of destination or fsApi can be defined',
+  MissingDestination = 'destination or fsApi must be defined',
   ShimFail = 'Shim not allowed because object is $0',
   SelectorInvalidIndex = 'Selector index $0 is not a number in $1',
   SelectorIncorrectTokenCount = 'Selector has incorrect number ($0) of tokens in $1',
@@ -45,6 +47,7 @@ export enum LogMessage {
   TargetPropertyMissing = 'Target property is missing',
   TargetPathMissing = 'Target path is missing',
   UnknownValue = 'Unknown value $0',
+  UnsupportedFsApi = 'Unsupported fsApi $0',
   UnsupportedType = 'Unsupported type $0',
 }
 

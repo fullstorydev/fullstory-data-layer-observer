@@ -88,19 +88,19 @@ DLO is configurable by adding relevant options as `window` properties to the pag
 
 Additional configuration can be added using the below options.
 
-| Option | Type | Default | Description |
-| ------ | ---- | ------- | ----------- |
-| _dlo_appender | LogAppender or string | `console` | Defines a custom log appender to redirect log messages. |
-| _dlo_beforeDestination | OperatorOptions | `undefined` | An optional operator that is always used just before before the destination. |
-| _dlo_logLevel | number | `1` | Log messages at this level and below will be logged by the LogAppender. Defaults to WARN. |
-| _dlo_previewDestination | string | `'console.log'` | Output destination using rule selector syntax for use with previewMode. |
-| _dlo_previewMode | boolean | `true` | Redirects output from a destination to previewDestination when testing rules. |
-| _dlo_readOnLoad | boolean | `false` | When true reads data layer target(s) and emits the initial value(s). |
-| _dlo_rules | array | `[]` | Anything that starts with `_dlo_rules` is read as a rules array. |
-| _dlo_validateRules | boolean | `true` | When true validates rules to prevent processing invalid options. |
-| _dlo_urlValidator | function | `(url) => boolean` | Function used to validate the page URL before executing the rules. The default tests `window.location.href`. |
-| _dlo_telemetryProvider | TelemetryProvider | `DefaultTelemetryProvider` | Measures performance timings and client errors. |
-| _dlo_telemetryExporter | TelemetryExporter | `nullTelemetryExporter` | Exports performance timings measured by the `DefaultTelemetryProvider` to a custom destination. Ignored when `_dlo_telemetryProvider` is defined. |
+| Option | Type | Default | Description                                                                                                                                         |
+| ------ | ---- | ------- |-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| _dlo_appender | LogAppender or string | `console` | Defines a custom log appender to redirect log messages.                                                                                             |
+| _dlo_beforeDestination | OperatorOptions | `undefined` | An optional operator that is always used just before before the `destination` or `fsApi`. Rules with `version` of `2` will skip `beforeDestiation`. |
+| _dlo_logLevel | number | `1` | Log messages at this level and below will be logged by the LogAppender. Defaults to WARN.                                                           |
+| _dlo_previewDestination | string | `'console.log'` | Output destination using rule selector syntax for use with previewMode.                                                                             |
+| _dlo_previewMode | boolean | `true` | Redirects output from a destination to previewDestination when testing rules.                                                                       |
+| _dlo_readOnLoad | boolean | `false` | When true reads data layer target(s) and emits the initial value(s).                                                                                |
+| _dlo_rules | array | `[]` | Anything that starts with `_dlo_rules` is read as a rules array.                                                                                    |
+| _dlo_validateRules | boolean | `true` | When true validates rules to prevent processing invalid options.                                                                                    |
+| _dlo_urlValidator | function | `(url) => boolean` | Function used to validate the page URL before executing the rules. The default tests `window.location.href`.                                        |
+| _dlo_telemetryProvider | TelemetryProvider | `DefaultTelemetryProvider` | Measures performance timings and client errors.                                                                                                     |
+| _dlo_telemetryExporter | TelemetryExporter | `nullTelemetryExporter` | Exports performance timings measured by the `DefaultTelemetryProvider` to a custom destination. Ignored when `_dlo_telemetryProvider` is defined.   |
 
 ## Data Layer Rules
 
@@ -109,7 +109,9 @@ To observe a data layer, DLO uses rules to define what to observe and how to han
 A rule is composed of three primary pieces of information:
 
 - `source` targets an object in the data layer using a selector.  The selector can also be used to choose which data in an object is recorded.
-- `destination` declares a function, which acts as a destination for data.  The function is an API that already exists on the page - like `FS.event`.
+- One of
+    - `destination` declares a function, which acts as a destination for data.  The function is an API that already exists on the page - like `FS.event`.
+  - `fsApi` A built in Fullstory function like `setIdentity`, `trackEvent`, `setUserProperties` or `setPageProperties`.
 - `operators` provide intermediate transformations of the data between the source and destination.
 
 A rule is expressed as JSON and multiple rules are included in a `_dlo_rules` list.
@@ -128,12 +130,12 @@ window['_dlo_rules'] = [
   description: 'send CEDDL transaction transactionID and total properties to FS.event as an "Order Completed" event',
   source: 'digitalData.transaction[(transactionID,total)]',
   operators: [ { name: 'flatten' }, { name: 'insert', value: 'Order Completed' } ],
-  destination: 'FS.event'
+  fsApi: 'trackEvent'
  }
 ];
 ```
 
-The above sample contains two rules that respectively send all properties in the `digitalData.user.profile` object to the function `FS.setUserVars` and sends specific properties from the `digitalData.transaction` object to the `FS.event` function.  The mechanics of how this is done is explained in the [Operator Tutorial](https://github.com/fullstorydev/fullstory-data-layer-observer/tree/main/docs/operator_tutorial.md) in greater detail.
+The above sample contains two rules that respectively send all properties in the `digitalData.user.profile` object to the function `FS.setUserVars` and sends specific properties from the `digitalData.transaction` object to the built in `trackEvent` function.  The mechanics of how this is done is explained in the [Operator Tutorial](https://github.com/fullstorydev/fullstory-data-layer-observer/tree/main/docs/operator_tutorial.md) in greater detail.
 
 > **Tip**: While not required, a best practice is to include an `id` in every rule.  The `id` should uniquely identify the rule for troubleshooting purposes.  A `description` is also optional but often helps explain the intent of a rule.
 
@@ -141,22 +143,26 @@ The above sample contains two rules that respectively send all properties in the
 
 Each rule provides a set of options for configuration.  Options with an asterisk are required.
 
-| Option | Default | Description |
-| ------ | ------- | ----------- |
-| `source`* | `undefined` | Data layer source object using selector syntax. |
-| `destination`* | `undefined` | Destination function using selector syntax. |
-| `debounce` | `250` | Milliseconds that must pass before multiple, sequential changes to a data layer are handled (increase for highly active data layers) |
-| `debug` | `false` | Set to true if the rule should print debug for each operator transformation. |
-| `description` | `undefined` | Text description of the rule. |
-| `id` | `undefined` | Unique identifier for the rule. |
-| `maxRetry` | `5` | The maximum number of attempts to search for an `undefined` data layer or test the `waitUntil` predicate. |
-| `monitor` | `true` | Set to true to monitor property changes or function calls |
-| `operators` | `[]` | List of operators that transform data before a destination. |
-| `readOnLoad` | `false` | Rule-specific override for `window[‘_dlo_readOnLoad’]`. |
-| `url` | `undefined` | Specifies a regular expression that enables the rule when the page URL matches. |
-| `waitUntil` | `undefined` | Waits a desired number of milliseconds or predicate function's truthy return type before registering the rule. |
+| Option        | Default     | Description                                                                                                                                         |
+|---------------|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `source`*     | `undefined` | Data layer source object using selector syntax.                                                                                                     |
+| `destination` | `undefined` | Destination function using selector syntax.  Must have exactly one of `destination` or `fsApi`.                                                     |
+| `fsApi`       | `undefined` | Use a built in Fullstory function instead of a `destination`.                                                                                       |
+| `debounce`    | `250`       | Milliseconds that must pass before multiple, sequential changes to a data layer are handled (increase for highly active data layers)                |
+| `debug`       | `false`     | Set to true if the rule should print debug for each operator transformation.                                                                        |
+| `description` | `undefined` | Text description of the rule.                                                                                                                       |
+| `id`          | `undefined` | Unique identifier for the rule.                                                                                                                     |
+| `maxRetry`    | `5`         | The maximum number of attempts to search for an `undefined` data layer or test the `waitUntil` predicate.                                           |
+| `monitor`     | `true`      | Set to true to monitor property changes or function calls                                                                                           |
+| `operators`   | `[]`        | List of operators that transform data before a `destination` or `fsApi`.                                                                            |
+| `readOnLoad`  | `false`     | Rule-specific override for `window[‘_dlo_readOnLoad’]`.                                                                                             |
+| `url`         | `undefined` | Specifies a regular expression that enables the rule when the page URL matches.                                                                     |
+| `waitUntil`   | `undefined` | Waits a desired number of milliseconds or predicate function's truthy return type before registering the rule.                                      |
+| `version`     | `1`         | The rule version to use. Currently supported values are `1` (default) or `2`.  Rule version `2` ignores any `beforeDestination` that is configured. |
 
 > **Tip:** Use `url` to limit when data is read from a data layer and enhance performance.
+
+> **Tip:** Use `version` = `2` on any rule that you want to skip `beforeDestination` on.
 
 ## Data Handling
 
@@ -183,18 +189,57 @@ The `source` property uses a custom selector syntax.  It’s most often seen as 
 
 Selector syntax can be combined to create sophisticated queries to the data layer.  For example, `digitalData.products[-1].attributes.availability[?(pickup)]` can be read as, "From the products list, return the last product's availability if it has the `pickup` property."  This usage of selection can be helpful to record only significant events and disregard others.
 
-The properties in the object returned from source selection will be monitored for changes.  For example, using the selector `digitalData.cart` will observe *all* properties in the `digitalData.cart` object because no refinement of the data is done by the selector.  Alternatively, `digitalData.cart[(cartID,price)]` will only observe *only* `cartID` and `price` in `digitalData.cart`.  Similarly, `digitalData.cart.price[^(shipping)]` would observe all properties beginning with shipping.  Selectors allow you to be specific about which data to send to a destination and only monitor changes on desired properties.
+The properties in the object returned from source selection will be monitored for changes.  For example, using the selector `digitalData.cart` will observe *all* properties in the `digitalData.cart` object because no refinement of the data is done by the selector.  Alternatively, `digitalData.cart[(cartID,price)]` will only observe *only* `cartID` and `price` in `digitalData.cart`.  Similarly, `digitalData.cart.price[^(shipping)]` would observe all properties beginning with shipping.  Selectors allow you to be specific about which data to send to a `destination` or `fsApi` and only monitor changes on desired properties.
 
 > **Tip:** A selector returns the most current subject from the data layer at the lowest level. For example, `digitalData.cart.price[?(basePrice>=10)]` returns the `price` object - not `cart`. If you need `cart` returned, use `digitalData.cart` as the selector and the use the query operator.
 
 ## Destination Selection
 
-For every `source` there must also be a `destination`.  A `destination` is a JavaScript function that is located using selector syntax.  (Though it’s often less expressive since dot notation is usually enough to find the function.)  A simple example of a destination is `console.log`, which would print the output of a data layer to the console.
+For every `source` there can also be a single `destination` (One `destination` or `fsApi` is required).  A `destination` is a JavaScript function that is located using selector syntax.  (Though it’s often less expressive since dot notation is usually enough to find the function.)  A simple example of a destination is `console.log`, which would print the output of a data layer to the console.
 
 Because `destination` is a function, this gives DLO a very flexible way to hand off data to a third party.  You can think of this hand off as DLO calling a specific JavaScript function with arguments.  The arguments are the data emitted from the data layer and anything added by `operators`.  In the simple `console.log` destination example, the object taken from the data layer would call `console.log(object)`, which would simply print the object on the console.
 
 A more practical example is calling FullStory’s [event](https://developer.fullstory.com/custom-events) function by setting the destination to `FS.event`.  There’s one catch though: the object emitted from the data layer must be the second argument for `FS.event`.  To add the first argument and move the object to the second, an operator will be used.  The next section talks about operators and the [Operator Tutorial](https://github.com/fullstorydev/fullstory-data-layer-observer/tree/main/docs/operator_tutorial.md) explains the process in more detail.
 
+## fsApi Reference
+In place of a `destination`, a built in `fsApi` function can be specified. `fsApi` hides the complexity of setting up and calling the new version of the Fullstory browser [API](https://developer.fullstory.com/browser/getting-started/).  Unlike `destination`, where you would need to specify the full Javascript call, you can just use the built in constants below to make the call. The [Fullstory Namespace](https://help.fullstory.com/hc/en-us/articles/360020624694-What-if-the-identifier-FS-is-used-by-another-script-on-my-site) used on the page is automatically discovered and used in the API calls.
+
+| Name                | Function                                                                                               | Notes                                                                                                  |
+|---------------------|--------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| `setIdentity`       | [setIdentity](https://developer.fullstory.com/browser/identification/identify-users/)                  | Uses first value (required) as the identity, and (optional) second value as the `properties` parameter |
+| `trackEvent`        | [trackEvent](https://developer.fullstory.com/browser/capture-events/analytics-events/)                 | Uses first value (required) as the event name, and second value (required) as the properties           |
+| `setUserProperties` | [setProperties type=user](https://developer.fullstory.com/browser/identification/set-user-properties/) | Uses only first value (required) as the properties                                                     |
+| `setPageProperties` | [setProperties type=page](https://developer.fullstory.com/browser/set-page-properties/) | Uses only first value (required) as the properties                                                     |
+
+Here are some example rules utilizing `fsApi` 
+
+```javascript
+window['_dlo_rules'] = [
+  {
+    id: 'fs-uservars-user-all',
+    source: 'digitalData.user.profile[0]',
+    operators: [ { name: 'flatten' } ],
+    fsApi: 'setUserProperties'
+  },
+  {
+    id: 'fs-event-transaction-id-total',
+    source: 'digitalData.transaction[(transactionID,total)]',
+    operators: [ { name: 'flatten' }, { name: 'insert', value: 'Order Completed' } ],
+    fsApi: 'trackEvent'
+  },
+  {
+    id: 'fs-event-page-all',
+    source: 'digitalData.page.vars',
+    operators: [ { name: 'flatten' } ],
+    fsApi: 'setPageProperties'
+  },
+  {
+    id: 'fs-identify-user',
+    source: 'digitalData.user.profile[0].id',
+    fsApi: 'setIdentity'
+  }
+];
+```
 ## Data Layer Operators
 
 If a source emits data and a destination is the recipient, what makes the two compatible?  The answer is an `operator`.  An operator is designed to perform light transformation of an object emitted from the data layer so that it can be received by a destination.  Operators are chained together using the `operators` property in a rule.  Each operator performs a small transformation and provides the result to the next operator.  An operator can also choose to not pass along data (by returning `null`) at which point data handling stops and the destination is not called.
@@ -221,13 +266,13 @@ Click an operator name for additional documentation.
 
 Every operator requires the `name` property.  Additional options can be found by viewing an operator's documentation.
 
-> **Tip:** If an operator is required every time, use the `window['_dlo_beforeDestination']` configuration option.  This will define an operator that is always run just prior to a destination.  This can make rule writing less tedious and is applicable to scenarios like `suffix` where a `FS` destination always requires a suffixed payload.
+> **Tip:** If an operator is required every time, use the `window['_dlo_beforeDestination']` configuration option.  This will define an operator that is always run just prior to a destination or fsApi.  This can make rule writing less tedious and is applicable to scenarios like `suffix` where a `FS` destination always requires a suffixed payload. *Note: Rule version `2` ignores `beforeDestination`* 
 
 ## Preview and Debug Rules
 
 Rule writing can sometimes take a few attempts to get it right.  Fortunately, the following two options can help.
 
-- When the configuration option `_dlo_previewMode` is set to `true`, output will be written to `console.log` rather than the `destination`.
+- When the configuration option `_dlo_previewMode` is set to `true`, output will be written to `console.log` rather than the `destination` or `fsApi`.
 - When a particular rule's `debug` property is set to `true`, the incremental transformations performed by `operators` and additional logging will be written to `console.debug`.
 
 Viewing the JavaScript console with the above option set to `true` prints the following example.
@@ -263,7 +308,7 @@ In addition to showing the data conversions, debug includes the following statis
 
 Once rules have been verified in a test environment, they can be moved to production.  New rules can be added to any existing rules such as those in `window['_dlo_rules']`.  Alternatively, new rules can be placed in their own rule set to allow contribution from different teams or parts of a site.  This can be done by creating a new configuration option that begins with `_dlo_rules` - for example `window['_dlo_rules_cart_and_checkout']`.  When DLO initializes all properties that begin with `_dlo_rules` will be processed.
 
-After new rules are deployed, visit the site and ensure the data is being sent to the destination.  One approach is to simply review in FullStory that the custom event or user variable has been set.  If data is not found, set the `debug` property to `true` for any problematic rules.  If problems still persist, see the Monitoring section to verify something else isn’t at fault.
+After new rules are deployed, visit the site and ensure the data is being sent to the `destination` or `fsApi`.  One approach is to simply review in FullStory that the custom event or user variable has been set.  If data is not found, set the `debug` property to `true` for any problematic rules.  If problems still persist, see the Monitoring section to verify something else isn’t at fault.
 
 ## Logging
 
