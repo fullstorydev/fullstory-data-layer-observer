@@ -16,6 +16,7 @@ import {
 import DataLayerTarget from './target';
 import MonitorFactory from './monitor-factory';
 import { errorType, Telemetry, telemetryType } from './utils/telemetry';
+import DataLayerValue from './value';
 
 /**
  * DataLayerConfig provides global settings for a DataLayerObserver.
@@ -162,7 +163,7 @@ export class DataLayerObserver {
    * @param debug when true enables debugging of operator transformations
    * @param debounce number of milliseconds to debounce property assignments before handling the event
    */
-  private addHandler(source: string, target: DataLayerTarget, debug = false,
+  private addHandler(source: string, target: DataLayerValue, debug = false,
     debounce = DataHandler.DefaultDebounceTime): DataHandler {
     const handler = new DataHandler(source, target, debug, debounce);
     this.handlers.push(handler);
@@ -321,7 +322,7 @@ export class DataLayerObserver {
    */
   registerTarget(
     source: string,
-    target: DataLayerTarget,
+    target: DataLayerValue,
     options: OperatorOptions[],
     destination: string | Function | undefined = undefined,
     fsApi: FS_API_CONSTANTS | undefined = undefined,
@@ -346,8 +347,6 @@ export class DataLayerObserver {
       } else {
         Logger.getInstance().warn(LogMessageType.MonitorCreateError, {
           path: workingTarget.path,
-          property: workingTarget.property,
-          selector: workingTarget.selector,
           reason: 'Browser does not support push and unshift',
         });
       }
@@ -366,8 +365,6 @@ export class DataLayerObserver {
             Logger.getInstance().error(LogMessageType.ObserverReadError,
               {
                 path: workingTarget.path,
-                property: workingTarget.property,
-                selector: workingTarget.selector,
                 reason: err.message,
               });
             Telemetry.error(errorType.observerReadError);
@@ -380,8 +377,6 @@ export class DataLayerObserver {
           Logger.getInstance().error(LogMessageType.ObserverReadError,
             {
               path: workingTarget.path,
-              property: workingTarget.property,
-              selector: workingTarget.selector,
               reason: err.message,
             });
           Telemetry.error(errorType.observerReadError);
@@ -390,9 +385,9 @@ export class DataLayerObserver {
     }
 
     // NOTE functions are always monitored
-    if (monitor || workingTarget.type === 'function') {
+    if ((monitor || workingTarget.type === 'function') && (workingTarget instanceof DataLayerTarget)) {
       try {
-        this.addMonitor(source, workingTarget);
+        this.addMonitor(source, workingTarget as DataLayerTarget);
       } catch (err) {
         Logger.getInstance().warn(LogMessageType.MonitorCreateError,
           {
