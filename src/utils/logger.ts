@@ -29,6 +29,7 @@ export enum LogMessageType {
   RuleInvalid = 'Invalid Rule',
   RuleRegistrationError = 'Rule Registration Error',
   ObserverInitializationError = 'Observer Initialization Error',
+  RegisterError = 'Register Error',
 }
 
 export enum LogMessage {
