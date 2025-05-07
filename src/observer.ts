@@ -17,6 +17,7 @@ import DataLayerTarget from './target';
 import MonitorFactory from './monitor-factory';
 import { errorType, Telemetry, telemetryType } from './utils/telemetry';
 import DataLayerValue from './value';
+import SimpleDataLayerValue from './simpleValue';
 
 /**
  * DataLayerConfig provides global settings for a DataLayerObserver.
@@ -100,7 +101,7 @@ export class DataLayerObserver {
 
   listeners: { [path: string]: EventListener[] } = {};
 
-  static DefaultWaitUntil = (target: DataLayerTarget) => {
+  static DefaultWaitUntil = (target: DataLayerValue) => {
     const { value } = target;
 
     // perform supported data layers check
@@ -476,14 +477,14 @@ export class DataLayerObserver {
 
     if (!source && !domSource) {
       Logger.getInstance().error(LogMessageType.RuleInvalid,
-        { rule: id, source, reason: 'Missing both source and domSource' });
+        { reason: LogMessage.MissingSource });
       Telemetry.error(errorType.invalidRuleError);
       return;
     }
 
     if (source && domSource) {
       Logger.getInstance().error(LogMessageType.RuleInvalid,
-        { rule: id, source, reason: 'Has both source and domSource' });
+        { reason: LogMessage.DuplicateSource });
       Telemetry.error(errorType.invalidRuleError);
       return;
     }
@@ -524,10 +525,22 @@ export class DataLayerObserver {
           this.registerTarget(target, operators, source, undefined, destination, fsApi, readOnLoad, monitor, debug,
             debounce, version);
         } else if (domSource) {
-          // TODO: Figure out what type of source we have and create one accordingly
-          // for domSource, readOnLoad is true, and monitor is false
-          // this.registerTarget(target, operators, undefined, domSource, destination, fsApi, true, false, debug,
-          //   debounce, version);
+          const list = document.querySelectorAll(domSource);
+          list.forEach((element) => {
+            try {
+              if (element.textContent) {
+                const simpleValue = new SimpleDataLayerValue(domSource, JSON.parse(element.textContent));
+                // for domSource, readOnLoad is true, and monitor is false
+                this.registerTarget(simpleValue, operators, undefined, domSource, destination, fsApi, true,
+                  false, debug, debounce, version);
+              } else {
+                Logger.getInstance().warn(`Found element for ${domSource} but had no text content`);
+              }
+            } catch (err) {
+              Logger.getInstance().warn(LogMessageType.RuleRegistrationError,
+                { rule: id, source, reason: err.message });
+            }
+          });
         } else {
           Logger.getInstance().warn('Unexpected path of code in registeringTarget');
         }
@@ -537,22 +550,30 @@ export class DataLayerObserver {
       });
       const { maxRetry = 5 } = rule;
 
-      switch (typeof waitUntil) {
-        case 'number':
-          // NOTE this delay is scheduled *after* the data layer is found to be defined on the page (not after page load)
-          setTimeout(() => {
+      // if domSource then wait for dom content loaded, otherwise use normal waitUntil
+      if (domSource) {
+        if (document.readyState !== 'loading') {
+          register();
+        } else {
+          // DOM is not ready, add the event listener
+          document.addEventListener('DOMContentLoaded', () => {
             register();
-          }, waitUntil > -1 ? waitUntil : 0); // negative values will schedule immediately
-          break;
-        case 'function':
-          if (source) {
+          });
+        }
+      } else if (source) {
+        switch (typeof waitUntil) {
+          case 'number':
+            // NOTE this delay is scheduled *after* the data layer is found to be defined on the page (not after page load)
+            setTimeout(() => {
+              register();
+            }, waitUntil > -1 ? waitUntil : 0); // negative values will schedule immediately
+            break;
+          case 'function':
             this.sleep(() => waitUntil(DataLayerTarget.find(source)), register, timeout, maxRetry);
-          } else {
-            Logger.getInstance().error('waitUntil function type not supported with non window source');
-          }
-          break;
-        default:
-          Logger.getInstance().warn(Logger.format(LogMessage.UnsupportedType, typeof waitUntil));
+            break;
+          default:
+            Logger.getInstance().warn(Logger.format(LogMessage.UnsupportedType, typeof waitUntil));
+        }
       }
     } catch (err) {
       Logger.getInstance().warn(LogMessageType.RuleRegistrationError, { rule: id, source, reason: err.message });
