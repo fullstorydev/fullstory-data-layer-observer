@@ -13,7 +13,7 @@ import { expectNoCalls, expectParams } from './utils/mocha';
 const originalConsole = globalThis.console;
 const mockConsole = new Console();
 
-describe.only('domSource unit tests', () => {
+describe('domSource unit tests', () => {
   beforeEach(() => {
     Logger.getInstance().appender = new ConsoleAppender();
     (globalThis as any).console = mockConsole;
@@ -88,6 +88,241 @@ describe.only('domSource unit tests', () => {
     setTimeout(() => {
       expectNoCalls(mockConsole, 'error');
       const [log] = expectParams(mockConsole, 'log');
+      expect(log).to.be.deep.eq({ test: 'foo' });
+      done();
+    });
+  });
+
+  it('it should not fail when JSON is invalid', (done) => {
+    const dom = new JSDOM(
+      `<html>
+         <head>
+           <script type='application/ld+json'>{ "test: "foo" }</script>
+         </head>
+         <body>
+         </body>
+       </html>`,
+    );
+    (globalThis as any).window = dom.window;
+    (globalThis as any).document = dom.window.document;
+    const observer = new DataLayerObserver();
+    observer.registerRule({ domSource: '[type="application/ld+json"]', operators: [], destination: 'console.log' });
+    setTimeout(() => {
+      expectNoCalls(mockConsole, 'log');
+      expectNoCalls(mockConsole, 'error');
+      done();
+    });
+  });
+
+  it('it should deal with nested JSON', (done) => {
+    const dom = new JSDOM(
+      `<html>
+         <head>
+           <script type='application/ld+json'>
+             {
+                "name": "John Smith",
+                "age": 30,
+                "city": "New York",
+                "isStudent": false,
+                "hobbies": ["reading", "hiking", "coding"],
+                "address": {
+                  "street": "123 Main St",
+                  "zipCode": "10001"
+                },
+                "courses": null
+            }
+           </script>
+         </head>
+         <body>
+         </body>
+       </html>`,
+    );
+    (globalThis as any).window = dom.window;
+    (globalThis as any).document = dom.window.document;
+    const observer = new DataLayerObserver();
+    observer.registerRule({ domSource: '[type="application/ld+json"]', operators: [], destination: 'console.log' });
+    setTimeout(() => {
+      expectNoCalls(mockConsole, 'error');
+      const [log] = expectParams(mockConsole, 'log');
+      expect(log).to.be.deep.eq(
+        {
+          name: 'John Smith',
+          age: 30,
+          city: 'New York',
+          isStudent: false,
+          hobbies: ['reading', 'hiking', 'coding'],
+          address: {
+            street: '123 Main St',
+            zipCode: '10001',
+          },
+          courses: null,
+        },
+      );
+      done();
+    });
+  });
+
+  // no text content
+  it('it should produce nothing with no text content', (done) => {
+    const dom = new JSDOM(
+      `<html>
+         <head>
+           <script type='application/ld+json'></script>
+         </head>
+         <body>
+         </body>
+       </html>`,
+    );
+    (globalThis as any).window = dom.window;
+    (globalThis as any).document = dom.window.document;
+    const observer = new DataLayerObserver();
+    observer.registerRule({ domSource: '[type="application/ld+json"]', operators: [], destination: 'console.log' });
+    setTimeout(() => {
+      expectNoCalls(mockConsole, 'error');
+      expectNoCalls(mockConsole, 'log');
+      done();
+    });
+  });
+
+  it('it should work with array of JSON', (done) => {
+    const dom = new JSDOM(
+      `<html>
+         <head>
+           <script type='application/ld+json'>
+           [ 
+              { "test": "foo" },
+              { "test1": "foo1" },
+              { "test2": "foo2" }
+           ]   
+            </script>
+         </head>
+         <body>
+         </body>
+       </html>`,
+    );
+    (globalThis as any).window = dom.window;
+    (globalThis as any).document = dom.window.document;
+    const observer = new DataLayerObserver();
+    observer.registerRule({ domSource: '[type="application/ld+json"]', operators: [], destination: 'console.log' });
+    setTimeout(() => {
+      expectNoCalls(mockConsole, 'error');
+      let [log] = expectParams(mockConsole, 'log');
+      expect(log).to.be.deep.eq({ test2: 'foo2' });
+      [log] = expectParams(mockConsole, 'log');
+      expect(log).to.be.deep.eq({ test1: 'foo1' });
+      [log] = expectParams(mockConsole, 'log');
+      expect(log).to.be.deep.eq({ test: 'foo' });
+      done();
+    });
+  });
+
+  it('it should work when selector found inside body', (done) => {
+    const dom = new JSDOM(
+      `<html>
+         <body>
+            <div>
+               <div>
+                 <span type='application/ld+json'>{ "test": "foo" }</span>
+               </div>
+            </div>
+         </body>
+       </html>`,
+    );
+    (globalThis as any).window = dom.window;
+    (globalThis as any).document = dom.window.document;
+    const observer = new DataLayerObserver();
+    observer.registerRule({ domSource: '[type="application/ld+json"]', operators: [], destination: 'console.log' });
+    setTimeout(() => {
+      expectNoCalls(mockConsole, 'error');
+      const [log] = expectParams(mockConsole, 'log');
+      expect(log).to.be.deep.eq({ test: 'foo' });
+      done();
+    });
+  });
+
+  it('it should work when selector is found multiple times', (done) => {
+    const dom = new JSDOM(
+      `<html>
+         <head>
+           <script type='application/ld+json'>{ "test": "foo" }</script>
+         </head>
+         <body>
+           <span type='application/ld+json'>{ "test1": "foo1" }</span>
+         </body>
+       </html>`,
+    );
+    (globalThis as any).window = dom.window;
+    (globalThis as any).document = dom.window.document;
+    const observer = new DataLayerObserver();
+    observer.registerRule({ domSource: '[type="application/ld+json"]', operators: [], destination: 'console.log' });
+    setTimeout(() => {
+      expectNoCalls(mockConsole, 'error');
+      let [log] = expectParams(mockConsole, 'log');
+      expect(log).to.be.deep.eq({ test1: 'foo1' });
+      [log] = expectParams(mockConsole, 'log');
+      expect(log).to.be.deep.eq({ test: 'foo' });
+      done();
+    });
+  });
+
+  it('it should work when selector is found multiple times with arrays', (done) => {
+    const dom = new JSDOM(
+      `<html>
+         <head>
+           <script type='application/ld+json'>[
+             { "test": "foo" },
+             { "test1": "foo1" }
+             ]
+           </script>
+         </head>
+         <body>
+           <span type='application/ld+json'>[
+              { "test2": "foo2" },
+              { "test3": "foo3" }
+            ]
+            </span>
+         </body>
+       </html>`,
+    );
+    (globalThis as any).window = dom.window;
+    (globalThis as any).document = dom.window.document;
+    const observer = new DataLayerObserver();
+    observer.registerRule({ domSource: '[type="application/ld+json"]', operators: [], destination: 'console.log' });
+    setTimeout(() => {
+      expectNoCalls(mockConsole, 'error');
+      let [log] = expectParams(mockConsole, 'log');
+      expect(log).to.be.deep.eq({ test3: 'foo3' });
+      [log] = expectParams(mockConsole, 'log');
+      expect(log).to.be.deep.eq({ test2: 'foo2' });
+      [log] = expectParams(mockConsole, 'log');
+      expect(log).to.be.deep.eq({ test1: 'foo1' });
+      [log] = expectParams(mockConsole, 'log');
+      expect(log).to.be.deep.eq({ test: 'foo' });
+      done();
+    });
+  });
+
+  it('it should work when selector is found multiple times but some are bad JSON', (done) => {
+    const dom = new JSDOM(
+      `<html>
+         <head>
+           <script type='application/ld+json'>{ "test": "foo" }</script>
+         </head>
+         <body>
+           <span type='application/ld+json'>{ "test1": "foo1" }</span>
+           <div type='application/ld+json'>{ "test2: "foo2" }</div>
+         </body>
+       </html>`,
+    );
+    (globalThis as any).window = dom.window;
+    (globalThis as any).document = dom.window.document;
+    const observer = new DataLayerObserver();
+    observer.registerRule({ domSource: '[type="application/ld+json"]', operators: [], destination: 'console.log' });
+    setTimeout(() => {
+      expectNoCalls(mockConsole, 'error');
+      let [log] = expectParams(mockConsole, 'log');
+      expect(log).to.be.deep.eq({ test1: 'foo1' });
+      [log] = expectParams(mockConsole, 'log');
       expect(log).to.be.deep.eq({ test: 'foo' });
       done();
     });
