@@ -762,8 +762,8 @@ describe('DataLayerObserver unit tests', () => {
     const target = new DataLayerTarget(user, 'profileInfo', 'myUser');
     expect(target).to.not.be.undefined;
 
-    observer.registerTarget('digitalData.user.profile[0]', target, [{ name: 'query', select: '$[(profileID)]' }],
-      (...data: any[]) => { changes = data; }, undefined, true);
+    observer.registerTarget(target, [{ name: 'query', select: '$[(profileID)]' }], 'digitalData.user.profile[0]',
+      undefined, (...data: any[]) => { changes = data; }, undefined, true);
 
     // check the readOnLoad
     const [read] = changes;
