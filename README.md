@@ -141,11 +141,12 @@ The above sample contains two rules that respectively send all properties in the
 
 ## Rule Options
 
-Each rule provides a set of options for configuration.  Options with an asterisk are required.
+Each rule provides a set of options for configuration.  
 
 | Option        | Default     | Description                                                                                                                                         |
 |---------------|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| `source`*     | `undefined` | Data layer source object using selector syntax.                                                                                                     |
+| `source`      | `undefined` | Data layer source object using selector syntax.                                                                                                     |
+| `domSource`   | `undefined` | CSS selector for reading JSON from the DOM.
 | `destination` | `undefined` | Destination function using selector syntax.  Must have exactly one of `destination` or `fsApi`.                                                     |
 | `fsApi`       | `undefined` | Use a built in Fullstory function instead of a `destination`.                                                                                       |
 | `debounce`    | `250`       | Milliseconds that must pass before multiple, sequential changes to a data layer are handled (increase for highly active data layers)                |
@@ -174,6 +175,8 @@ Functions can be observed as well (e.g. `trackEvent()`).  When functions are cal
 
 As mentioned, `source` is an important aspect of a rule: it defines which data layer subject to observe or read an initial value from.  A `source` can be a JavaScript object with name value pairs (`digitalData.user`) or a function (`s.event`).
 
+There has to be only one of `source` or `domSource`, you cannot have both on a single rule, and at least one has to be present.
+
 The `source` property uses a custom selector syntax.  It’s most often seen as dot notation such as `digitalData.cart`, which can be read as, "Find the cart object inside the digitalData object that exists on the page."  Selector syntax is however much more expressive to allow a variety of common use cases.
 
 | Selector | Example | Description |
@@ -192,6 +195,26 @@ Selector syntax can be combined to create sophisticated queries to the data laye
 The properties in the object returned from source selection will be monitored for changes.  For example, using the selector `digitalData.cart` will observe *all* properties in the `digitalData.cart` object because no refinement of the data is done by the selector.  Alternatively, `digitalData.cart[(cartID,price)]` will only observe *only* `cartID` and `price` in `digitalData.cart`.  Similarly, `digitalData.cart.price[^(shipping)]` would observe all properties beginning with shipping.  Selectors allow you to be specific about which data to send to a `destination` or `fsApi` and only monitor changes on desired properties.
 
 > **Tip:** A selector returns the most current subject from the data layer at the lowest level. For example, `digitalData.cart.price[?(basePrice>=10)]` returns the `price` object - not `cart`. If you need `cart` returned, use `digitalData.cart` as the selector and the use the query operator.
+
+## domSelector
+
+In place of `source` you can use `domSource` with a CSS selector that will find elements in the current DOM, try to parse them as JSON, and then send that through the operators.  Rules with a `domSource` will ignore the `monitor` flag on the rule, and will force `readOnLoad` to be `true`, so will just attempt to query the CSS once when the rule is parsed.  Only valid JSON values in the text content of the DOM elements found through the CSS selector will be used.  Any invalid JSON will be ignored. If the selector is not found the rule will not fire.  If multiple DOM elements are found with the selector and/or the root object is an array, each one will be looped over and the rule will run for every value.  
+
+Here is an example of a domSelector:
+
+```javascript
+window['_dlo_rules'] = [
+  {
+    id: 'fs-uservars-user-all',
+    domSource: '[type="application/ld+json"]',
+    operators: [
+      { name: 'query', select: '$[(type,id)]' },
+    ],
+    fsApi: 'setPageProperties'
+  },
+];
+```
+
 
 ## Destination Selection
 
