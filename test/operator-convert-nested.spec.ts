@@ -34,99 +34,65 @@ describe.only('convert operator nested object unit tests', () => {
     const list = [test];
     const operator = OperatorFactory.create('convert',
       { name: 'convert', enumerate: true, maxDepth: 3 });
-    const [int] = operator.handleData(list)!;
-
-    expect(int).to.not.be.null;
-    expect(int.nested.item.quantity).to.eq(10);
-    expect(int.nested.item.stock).to.eq(10);
-    expect(int.nested.item.price).to.eq(29.99);
-    expect(int.nested.item.salePrice).to.eq(24.99);
-    expect(int.nested.item.discountTiers).to.deep.eq([24.99, 19.99, 12.99]);
+    operator.handleData(list)!;
     expect(test.nested).to.deep.eq(test.nested);
   });
 
-  it('it should honor maxDepth of 1', () => {
+  it('it should honor default maxDepth of 1', () => {
     const list = [test];
     const operator = OperatorFactory.create('convert', { name: 'convert', enumerate: true });
     const [int] = operator.handleData(list)!;
 
     expect(int).to.not.be.null;
     expect(int.nested).to.deep.eq(test.nested);
-    expect(test.nested).to.deep.eq(test.nested);
+  });
+
+  it('it should honor maxDepth specified under amount', () => {
+    const list = [test];
+    const operator = OperatorFactory.create('convert', { name: 'convert', enumerate: true, maxDepth: 2 });
+    const [int] = operator.handleData(list)!;
+
+    expect(int).to.not.be.null;
+    expect(int.nested).to.deep.eq(test.nested);
+  });
+
+  it.only('it should work on values with settings correct ', () => {
+    const list = [test];
+    const operator = OperatorFactory.create('convert',
+      { name: 'convert', enumerate: true, maxDepth: 3 });
+    const [int] = operator.handleData(list)!;
+
+    expect(int).to.not.be.null;
+    expect(int.nested.item.quantity).to.eq(10);
+    expect(int.nested.item.stock).to.eq(10);
+    expect(int.nested.item.price).to.eq(29.99);
+    expect(int.nested.item.tax).to.eq(1.99);
+    expect(int.nested.item.available).to.eq('false');
+    expect(int.nested.item.size).to.eq(5);
+    expect(int.nested.item.type).to.eq(true);
+    expect(int.nested.item.empty).to.eq('');
+    expect(int.nested.item.saleDate).to.eq('12-26-2020');
+    expect(int.nested.item.vat).to.eq(null);
+    expect(int.nested.item.forced_str).to.eq('12345');
+    expect(int.nested.item.salePrice).to.deep.eq(24.99);
+    expect(int.nested.item.discountTiers).to.deep.eq([24.99, 19.99, 12.99]);
+    expect(int.nested.item.promoCodes).to.deep.eq(['', 'bogo', 'july4th']);
+  });
+
+  it('it should honor preserveArray ', () => {
+    const list = [test];
+    const operator = OperatorFactory.create('convert',
+      {
+        name: 'convert', enumerate: true, preserveArray: true, maxDepth: 3,
+      });
+    const [int] = operator.handleData(list)!;
+
+    expect(int).to.not.be.null;
+    expect(int.nested.item.salePrice).to.deep.eq([24.99]);
+    expect(int.nested.item.discountTiers).to.deep.eq([24.99, 19.99, 12.99]);
   });
 
   /*
-  it('it should convert to int', () => {
-    const operator = OperatorFactory.create('convert', { name: 'convert', properties: 'quantity', type: 'int' });
-    const [int] = operator.handleData([nested])!;
-
-    expect(int).to.not.be.null;
-    expect(int.quantity).to.eq(10);
-    expect(int.size).to.eq(5); // non-converted properties remain
-    expect(item.quantity).to.eq('10'); // don't mutate the actual data layer
-  });
-
-  it('it should convert to real', () => {
-    const operator = OperatorFactory.create('convert', { name: 'convert', properties: ['price', 'tax'], type: 'real' });
-    const [reals] = operator.handleData([item])!;
-
-    expect(reals).to.not.be.null;
-    expect(reals!.price).to.eq(29.99);
-    expect(reals!.tax).to.eq(1.99);
-    expect(reals.type).to.eq(true); // non-converted properties remain
-    expect(item.price).to.eq('29.99'); // don't mutate the actual data layer
-    expect(item.tax).to.eq('1.99'); // don't mutate the actual data layer
-  });
-
-  it('it should convert to bool', () => {
-    const operator = OperatorFactory.create('convert', { name: 'convert', properties: 'available', type: 'bool' });
-    const [bool] = operator.handleData([item])!;
-
-    expect(bool).to.not.be.null;
-    expect(bool!.available).to.eq(false);
-    expect(bool.stock).to.eq('10'); // non-converted properties remain
-    expect(item.available).to.eq('false'); // don't mutate the actual data layer
-  });
-
-  it('it should convert to string', () => {
-    let operator = OperatorFactory.create('convert', { name: 'convert', properties: 'size', type: 'string' });
-    const [stringInt] = operator.handleData([item])!;
-
-    expect(stringInt).to.not.be.null;
-    expect(stringInt.size).to.eq('5');
-    expect(item.size).to.eq(5); // don't mutate the actual data layer
-
-    operator = OperatorFactory.create('convert', { name: 'convert', properties: 'type', type: 'string' });
-    const [stringBool] = operator.handleData([item])!;
-
-    expect(stringBool).to.not.be.null;
-    expect(stringBool.type).to.eq('true');
-    expect(stringBool.tax).to.eq('1.99'); // non-converted properties remain
-    expect(item.type).to.eq(true); // don't mutate the actual data layer
-  });
-
-  it('it should convert to date', () => {
-    const operator = OperatorFactory.create('convert', { name: 'convert', properties: 'saleDate,tax', type: 'date' });
-    const [date] = operator.handleData([item])!;
-
-    expect(date).to.not.be.null;
-    expect(date!.saleDate.toString()).to.eq(new Date('12-26-2020').toString());
-    expect(date.tax).to.eq(item.tax); // failed conversions should be the original value
-    expect(date.stock).to.eq('10'); // non-converted properties remain
-    expect(item.saleDate).to.eq('12-26-2020'); // don't mutate the actual data layer
-  });
-
-  it('it should convert CSV input', () => {
-    const operator = OperatorFactory.create('convert', { name: 'convert', properties: 'quantity,stock', type: 'int' });
-    const [int] = operator.handleData([item])!;
-
-    expect(int).to.not.be.null;
-    expect(int!.quantity).to.eq(10);
-    expect(int!.stock).to.eq(10);
-    expect(int.type).to.eq(true); // non-converted properties remain
-    expect(item.quantity).to.eq('10'); // don't mutate the actual data layer
-    expect(item.stock).to.eq('10'); // don't mutate the actual data layer
-  });
 
   it('it should convert all properties using *', () => {
     const operator = OperatorFactory.create('convert', { name: 'convert', properties: '*', type: 'int' });

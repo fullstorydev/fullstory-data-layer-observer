@@ -110,8 +110,9 @@ export class ConvertOperator implements Operator {
     const converted: { [key: string]: any } = { ...data[index] };
 
     // if we are doing a multiple level convert, take a different path
-    if (enumerate && (maxDepth > 1)) {
-      return this.deepConvert(data, index, ignore, ignoreSuffixed, maxDepth, preserveArray);
+    if (maxDepth > 1) {
+      return this.deepConvert(data, index, enumerate, properties, type, force, ignore, ignoreSuffixed,
+        maxDepth, preserveArray);
     }
 
     // if enumerate is set, try to coerce all strings into an equivalent numeric value
@@ -182,50 +183,79 @@ export class ConvertOperator implements Operator {
     return safeUpdate(data, index, converted);
   }
 
-  deepConvert(data:any, index:number, ignore:string[]|undefined, ignoreSuffixed:boolean, maxDepth:number,
-    preserveArray:boolean|undefined) {
+  deepConvert(data:any, index:number, enumerate:boolean|undefined, properties:string[]|undefined,
+    type:ConvertibleType|undefined, force: boolean|undefined, ignore:string[]|undefined, ignoreSuffixed:boolean,
+    maxDepth:number, preserveArray:boolean|undefined) {
     const deepConverted = structuredClone(data[index]);
-    this.deepConvertHelper(data[index], deepConverted, ignore, ignoreSuffixed, maxDepth, 1, preserveArray);
+    this.deepConvertHelper(data[index], deepConverted, enumerate, properties, type, force, ignore, ignoreSuffixed,
+      maxDepth, 1, preserveArray);
     if (!preserveArray) {
       this.preserveArrayHelper(deepConverted, maxDepth, 1);
     }
     return safeUpdate(data, index, deepConverted);
   }
 
-  deepConvertHelper(source:any, converted:any, ignore:string[]|undefined, ignoreSuffixed:boolean,
+  // eslint-disable-next-line max-len
+  deepConvertHelper(source:any, converted:any, enumerate: boolean|undefined, properties:string[]|undefined,
+    type:ConvertibleType|undefined, force: boolean|undefined, ignore:string[]|undefined, ignoreSuffixed:boolean,
     maxDepth:number, currentDepth:number, preserveArray:boolean|undefined) {
     if (currentDepth > maxDepth) {
       return;
     }
     Object.getOwnPropertyNames(source).forEach((property) => {
-      // make sure to skip ignored properties and already suffixed if needed
-      if (!((ignore && ignore.includes(property)) || (ignoreSuffixed && SuffixOperator.isAlreadySuffixed(property)))) {
-        if (typeof source[property] === 'string') {
+      const original = source[property];
+      const originalType = typeof original;
+      // eslint-disable-next-line operator-linebreak
+      const isConvertible =
+      // eslint-disable-next-line max-len
+         ((originalType !== 'object') || ((Array.isArray(original)) && (original.length > 0) && (typeof original[0] !== 'object')))
+         && !(ignore && (ignore.includes(property)))
+         && !(ignoreSuffixed && SuffixOperator.isAlreadySuffixed(property));
+      // console.debug(`${property} convertible? ${isConvertible} type? ${originalType}`);
+
+      if (isConvertible && type && properties && (properties.length > 0)
+         && ((properties[0] === '*') || (properties.includes(property)))
+         && ((original !== undefined && original !== null) || force)) {
+        // if the intended conversion is on a list, convert all members in the list
+        if (Array.isArray(original)) {
+          // eslint-disable-next-line no-param-reassign
+          converted[property] = []; // this prevents mutating the actual data layer
+          for (let i = 0; i < (original as any[]).length; i += 1) {
+            const item = (original as any[])[i];
+            converted[property].push(ConvertOperator.convert(type, item));
+          }
+          ConvertOperator.verifyConversion(type, property, converted, source);
+        } else {
+          // eslint-disable-next-line no-param-reassign
+          converted[property] = ConvertOperator.convert(type, original);
+          ConvertOperator.verifyConversion(type, property, converted, source);
+        }
+      } else if (isConvertible && enumerate) {
+        if (originalType === 'string') {
           // it seems best to leave an empty string as-is rather than have it converted to 0
-          if (source[property] !== '') {
+          if (original !== '') {
             // eslint-disable-next-line no-param-reassign
-            converted[property] = ConvertOperator.convert('real', source[property]);
+            converted[property] = ConvertOperator.convert('real', original);
             ConvertOperator.verifyConversion('real', property, converted, source);
           }
-        } else if (Array.isArray(source[property])) {
-          if (source[property].length > 0) {
-            (source[property] as Array<any>).forEach((item, index) => {
-              if (typeof item === 'string') {
-                if (item !== '') {
-                  // eslint-disable-next-line no-param-reassign
-                  converted[property][index] = ConvertOperator.convert('real', source[property][index]);
-                }
-              } else if (typeof item === 'object') {
-                this.deepConvertHelper(item, converted[property][index], ignore, ignoreSuffixed, maxDepth,
-                  currentDepth + 1, preserveArray);
-              }
-            });
-          }
-        } else if ((typeof source[property] === 'object')
-          && (source[property] !== null)
-          && (converted[property] !== null)) {
-          this.deepConvertHelper(source[property], converted[property], ignore, ignoreSuffixed, maxDepth,
-            currentDepth + 1, preserveArray);
+        } else if (Array.isArray(original) && (original.length > 0) && (typeof original[0] === 'string')) {
+          (original as Array<string>).forEach((item, index) => {
+            if (item !== '') {
+              // eslint-disable-next-line no-param-reassign
+              converted[property][index] = ConvertOperator.convert('real', item);
+            }
+          });
+          ConvertOperator.verifyConversion('real', property, converted, source);
+        }
+      } else if ((originalType === 'object') && (original !== null)) {
+        if ((Array.isArray(original) && (original.length > 0) && (typeof original[0] === 'object'))) {
+          (original as Array<any>).forEach((item, index) => {
+            this.deepConvertHelper(item, converted[property][index], enumerate, properties, type, force, ignore,
+              ignoreSuffixed, maxDepth, currentDepth + 1, preserveArray);
+          });
+        } else {
+          this.deepConvertHelper(original, converted[property], enumerate, properties, type, force, ignore,
+            ignoreSuffixed, maxDepth, currentDepth + 1, preserveArray);
         }
       }
     });
