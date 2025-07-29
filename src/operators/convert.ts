@@ -203,6 +203,7 @@ export class ConvertOperator implements Operator {
       return;
     }
     Object.getOwnPropertyNames(source).forEach((property) => {
+      let alreadyConverted = false;
       const original = source[property];
       const originalType = typeof original;
       // eslint-disable-next-line operator-linebreak
@@ -211,11 +212,11 @@ export class ConvertOperator implements Operator {
          ((originalType !== 'object') || ((Array.isArray(original)) && (original.length > 0) && (typeof original[0] !== 'object')))
          && !(ignore && (ignore.includes(property)))
          && !(ignoreSuffixed && SuffixOperator.isAlreadySuffixed(property));
-      // console.debug(`${property} convertible? ${isConvertible} type? ${originalType}`);
 
-      if (isConvertible && type && properties && (properties.length > 0)
+      // check for listed properties
+      if (isConvertible && type && !alreadyConverted && properties && (properties.length > 0)
          && ((properties[0] === '*') || (properties.includes(property)))
-         && ((original !== undefined && original !== null) || force)) {
+         && (((original !== undefined) && (original !== null)) || force)) {
         // if the intended conversion is on a list, convert all members in the list
         if (Array.isArray(original)) {
           // eslint-disable-next-line no-param-reassign
@@ -230,7 +231,11 @@ export class ConvertOperator implements Operator {
           converted[property] = ConvertOperator.convert(type, original);
           ConvertOperator.verifyConversion(type, property, converted, source);
         }
-      } else if (isConvertible && enumerate) {
+        alreadyConverted = true;
+      }
+
+      // check for enumeration
+      if (isConvertible && !alreadyConverted && enumerate) {
         if (originalType === 'string') {
           // it seems best to leave an empty string as-is rather than have it converted to 0
           if (original !== '') {
@@ -247,7 +252,11 @@ export class ConvertOperator implements Operator {
           });
           ConvertOperator.verifyConversion('real', property, converted, source);
         }
-      } else if ((originalType === 'object') && (original !== null)) {
+        alreadyConverted = true;
+      }
+
+      // now if it is an object, we need to recursively walk down it
+      if (!alreadyConverted && (originalType === 'object') && (original !== null)) {
         if ((Array.isArray(original) && (original.length > 0) && (typeof original[0] === 'object'))) {
           (original as Array<any>).forEach((item, index) => {
             this.deepConvertHelper(item, converted[property][index], enumerate, properties, type, force, ignore,
@@ -262,7 +271,7 @@ export class ConvertOperator implements Operator {
   }
 
   preserveArrayHelper(converted:any, maxDepth:number, currentDepth:number) {
-    if (currentDepth > maxDepth) {
+    if ((currentDepth > maxDepth) || (converted === null) || (converted === undefined)) {
       return;
     }
     Object.getOwnPropertyNames(converted).forEach((property) => {
