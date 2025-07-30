@@ -96,13 +96,13 @@ export function deepClone(obj: any): any {
     }
   }
 
-  const seen = new WeakSet();
+  const seen = new WeakMap();
   return JSON.parse(JSON.stringify(obj, (key, value) => {
     if (typeof value === 'object' && value !== null) {
       if (seen.has(value)) {
         return {}; // Replace circular reference with empty object
       }
-      seen.add(value);
+      seen.set(value, true);
     }
     return value;
   }));

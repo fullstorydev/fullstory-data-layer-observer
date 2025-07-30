@@ -483,4 +483,30 @@ describe('convert operator nested object unit tests', () => {
       expect(int.nested.anotherElement.deepNested[x - 1].noConvert).to.eq(`${x}`);
     }
   });
+
+  it('it should bypass circular references ', () => {
+    const cloned = deepClone(test);
+    cloned.circular = cloned.nested.item;
+    cloned.nested.item.circular = cloned.circular;
+    const operator = OperatorFactory.create('convert',
+      {
+        name: 'convert', enumerate: true, maxDepth: 4,
+      });
+    const [int] = operator.handleData([cloned])!;
+
+    expect(int).to.not.be.null;
+    expect(int.nested.item.quantity).to.eq(10);
+    expect(int.nested.item.stock).to.eq(10);
+    expect(int.nested.item.price).to.eq(29.99);
+    expect(int.nested.item.tax).to.eq(1.99);
+    expect(int.nested.item.available).to.eq('false');
+    expect(int.nested.item.size).to.eq(5);
+    expect(int.nested.item.type).to.eq(true);
+    expect(int.nested.item.empty).to.eq('');
+    expect(int.nested.item.saleDate).to.eq('12-26-2020');
+    expect(int.nested.item.vat).to.eq(null);
+    expect(int.nested.item.forced_str).to.eq('12345');
+    expect(int.nested.item.salePrice).to.deep.eq(24.99);
+    expect(int.nested.item.discountTiers).to.deep.eq([24.99, 19.99, 12.99]);
+  });
 });

@@ -203,6 +203,9 @@ export class ConvertOperator implements Operator {
     if (currentDepth > maxDepth) {
       return;
     }
+    if (source === null || source === undefined || converted === null || converted === undefined) {
+      return;
+    }
     Object.getOwnPropertyNames(source).forEach((property) => {
       let alreadyConverted = false;
       const original = source[property];
@@ -239,14 +242,16 @@ export class ConvertOperator implements Operator {
       if (isConvertible && !alreadyConverted && enumerate) {
         if (originalType === 'string') {
           // it seems best to leave an empty string as-is rather than have it converted to 0
-          if (original !== '') {
+          // eslint-disable-next-line no-prototype-builtins
+          if ((original !== '') && (converted.hasOwnProperty(property))) {
             // eslint-disable-next-line no-param-reassign
             converted[property] = ConvertOperator.convert('real', original);
             ConvertOperator.verifyConversion('real', property, converted, source);
           }
         } else if (Array.isArray(original) && (original.length > 0) && (typeof original[0] === 'string')) {
           (original as Array<string>).forEach((item, index) => {
-            if (item !== '') {
+            // eslint-disable-next-line no-prototype-builtins
+            if ((item !== '') && (converted.hasOwnProperty(property))) {
               // eslint-disable-next-line no-param-reassign
               converted[property][index] = ConvertOperator.convert('real', item);
             }
