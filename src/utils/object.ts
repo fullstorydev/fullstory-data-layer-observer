@@ -81,3 +81,29 @@ export function endsWith(target: string, searchString: string, position?: number
 
   return target.slice(Math.max(0, pos - searchString.length), pos) === searchString;
 }
+
+/**
+ * Deep clones an object.  Will use structuredClone if present, otherwise will fall back to a simple JSON serialize/deserialize
+ * The fallback method will prune circular references for the 2nd time an object is seen.
+ * @param obj
+ */
+export function deepClone(obj: any): any {
+  if (typeof structuredClone === 'function') {
+    try {
+      return structuredClone(obj);
+    } catch {
+      // Fall back to JSON-based clone with circular reference handling
+    }
+  }
+
+  const seen = new WeakSet();
+  return JSON.parse(JSON.stringify(obj, (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return {}; // Replace circular reference with empty object
+      }
+      seen.add(value);
+    }
+    return value;
+  }));
+}

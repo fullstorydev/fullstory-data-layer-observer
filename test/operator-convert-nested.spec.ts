@@ -2,8 +2,7 @@ import { expect } from 'chai';
 import 'mocha';
 
 import { OperatorFactory } from '../src/factory';
-// import { ConvertOperator } from '../src/operators';
-// import { expectInvalid, expectValid } from './utils/mocha';
+import { deepClone } from '../src/utils/object';
 
 const test = {
   nested: {
@@ -31,36 +30,36 @@ const test = {
 
 describe('convert operator nested object unit tests', () => {
   it('it should not change the original object', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert',
       { name: 'convert', enumerate: true, maxDepth: 3 });
-    operator.handleData([deepClone])!;
-    expect(deepClone).to.deep.eq(test);
+    operator.handleData([cloned])!;
+    expect(cloned).to.deep.eq(test);
   });
 
   it('it should honor default maxDepth of 1', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert', { name: 'convert', enumerate: true });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
     expect(int.nested).to.deep.eq(test.nested);
   });
 
   it('it should honor maxDepth specified under amount', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert', { name: 'convert', enumerate: true, maxDepth: 2 });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
     expect(int.nested).to.deep.eq(test.nested);
   });
 
   it('it should work on values with settings correct ', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert',
       { name: 'convert', enumerate: true, maxDepth: 3 });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
     expect(int.nested.item.quantity).to.eq(10);
@@ -80,10 +79,10 @@ describe('convert operator nested object unit tests', () => {
   });
 
   it('it should work even with maxDepth set too large ', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert',
       { name: 'convert', enumerate: true, maxDepth: 10 });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
     expect(int.nested.item.quantity).to.eq(10);
@@ -103,12 +102,12 @@ describe('convert operator nested object unit tests', () => {
   });
 
   it('it should honor preserveArray ', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert',
       {
         name: 'convert', enumerate: true, preserveArray: true, maxDepth: 3,
       });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
     expect(int.nested.item.salePrice).to.deep.eq([24.99]);
@@ -116,95 +115,95 @@ describe('convert operator nested object unit tests', () => {
   });
 
   it('it should convert to int', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert',
       {
         name: 'convert', properties: 'quantity', type: 'int', maxDepth: 3, preserveArray: true,
       });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
     expect(int.nested.item.quantity).to.eq(10);
     // the rest should be identical
-    delete deepClone.nested.item.quantity;
+    delete cloned.nested.item.quantity;
     delete int.nested.item.quantity;
-    expect(deepClone).to.deep.eq(int);
+    expect(cloned).to.deep.eq(int);
   });
 
   it('it should convert to real', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert',
       {
         name: 'convert', properties: ['price', 'tax'], type: 'real', maxDepth: 3, preserveArray: true,
       });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
     expect(int.nested.item.price).to.eq(29.99);
     expect(int.nested.item.tax).to.eq(1.99);
     // the rest should be identical
-    delete deepClone.nested.item.price;
-    delete deepClone.nested.item.tax;
+    delete cloned.nested.item.price;
+    delete cloned.nested.item.tax;
     delete int.nested.item.price;
     delete int.nested.item.tax;
-    expect(deepClone).to.deep.eq(int);
+    expect(cloned).to.deep.eq(int);
   });
 
   it('it should convert to bool', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert',
       {
         name: 'convert', properties: 'available', type: 'bool', maxDepth: 3, preserveArray: true,
       });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
     expect(int.nested.item.available).to.eq(false);
     // the rest should be identical
-    delete deepClone.nested.item.available;
+    delete cloned.nested.item.available;
     delete int.nested.item.available;
-    expect(deepClone).to.deep.eq(int);
+    expect(cloned).to.deep.eq(int);
   });
 
   it('it should convert to string', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert',
       {
         name: 'convert', properties: 'size', type: 'string', maxDepth: 3, preserveArray: true,
       });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
     expect(int.nested.item.size).to.eq('5');
     // the rest should be identical
-    delete deepClone.nested.item.size;
+    delete cloned.nested.item.size;
     delete int.nested.item.size;
-    expect(deepClone).to.deep.eq(int);
+    expect(cloned).to.deep.eq(int);
   });
 
   it('it should convert to date', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert',
       {
         name: 'convert', properties: 'saleDate,tax', type: 'date', maxDepth: 3, preserveArray: true,
       });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
     expect(int.nested.item.saleDate.getTime()).to.eq(new Date('12-26-2020').getTime());
     // the rest should be identical, skipping tax as it is not a date
-    delete deepClone.nested.item.saleDate;
+    delete cloned.nested.item.saleDate;
     delete int.nested.item.saleDate;
-    expect(deepClone).to.deep.eq(int);
+    expect(cloned).to.deep.eq(int);
   });
 
   it('it should convert all properties using *', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert',
       {
         name: 'convert', properties: '*', type: 'int', maxDepth: 3, preserveArray: true,
       });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
     expect(int.nested.item.quantity).to.eq(10);
@@ -215,13 +214,13 @@ describe('convert operator nested object unit tests', () => {
     expect(int.nested.item.salePrice).to.deep.eq([24.99]);
     expect(int.nested.item.discountTiers).to.deep.eq([24.99, 19.99, 12.99]);
     // the rest should be identical, skipping tax as it is not a date
-    delete deepClone.nested.item.quantity;
-    delete deepClone.nested.item.stock;
-    delete deepClone.nested.item.price;
-    delete deepClone.nested.item.salePrice;
-    delete deepClone.nested.item.tax;
-    delete deepClone.nested.item.discountTiers;
-    delete deepClone.nested.item.empty;
+    delete cloned.nested.item.quantity;
+    delete cloned.nested.item.stock;
+    delete cloned.nested.item.price;
+    delete cloned.nested.item.salePrice;
+    delete cloned.nested.item.tax;
+    delete cloned.nested.item.discountTiers;
+    delete cloned.nested.item.empty;
     delete int.nested.item.quantity;
     delete int.nested.item.stock;
     delete int.nested.item.price;
@@ -229,28 +228,28 @@ describe('convert operator nested object unit tests', () => {
     delete int.nested.item.tax;
     delete int.nested.item.discountTiers;
     delete int.nested.item.empty;
-    expect(deepClone).to.deep.eq(int);
+    expect(cloned).to.deep.eq(int);
   });
 
   it('it should not convert unsupported types', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert',
       {
         name: 'convert', properties: 'size', type: 'array', maxDepth: 3, preserveArray: true,
       });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
-    expect(deepClone).to.deep.eq(int);
+    expect(cloned).to.deep.eq(int);
   });
 
   it('it should convert an object at a specific index', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert',
       {
         name: 'convert', index: 1, properties: 'quantity', type: 'int', maxDepth: 3, preserveArray: true,
       });
-    const [first, int, third] = operator.handleData(['Test', deepClone, 'Another Test'])!;
+    const [first, int, third] = operator.handleData(['Test', cloned, 'Another Test'])!;
 
     expect(first).to.not.be.null;
     expect(int).to.not.be.null;
@@ -260,35 +259,35 @@ describe('convert operator nested object unit tests', () => {
     expect(third).to.eq('Another Test');
 
     // the rest should be identical
-    delete deepClone.nested.item.quantity;
+    delete cloned.nested.item.quantity;
     delete int.nested.item.quantity;
-    expect(deepClone).to.deep.eq(int);
+    expect(cloned).to.deep.eq(int);
   });
 
   it('it should convert a list to a list of a single converted value', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert',
       {
         name: 'convert', properties: 'salePrice', type: 'real', maxDepth: 3, preserveArray: true,
       });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
     expect(int.nested.item.salePrice).to.deep.eq([24.99]);
 
     // the rest should be identical
-    delete deepClone.nested.item.salePrice;
+    delete cloned.nested.item.salePrice;
     delete int.nested.item.salePrice;
-    expect(deepClone).to.deep.eq(int);
+    expect(cloned).to.deep.eq(int);
   });
 
   it('it should skip a single ignored property ', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert',
       {
         name: 'convert', enumerate: true, ignore: 'price', maxDepth: 3,
       });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
     expect(int.nested.item.quantity).to.eq(10);
@@ -308,12 +307,12 @@ describe('convert operator nested object unit tests', () => {
   });
 
   it('it should skip  multiple ignored properties with an array ', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert',
       {
         name: 'convert', enumerate: true, ignore: ['stock', 'quantity'], maxDepth: 3,
       });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
     expect(int.nested.item.quantity).to.eq('10');
@@ -333,12 +332,12 @@ describe('convert operator nested object unit tests', () => {
   });
 
   it('it should skip multiple ignored properties with a comma ', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert',
       {
         name: 'convert', enumerate: true, ignore: 'tax,price', maxDepth: 3,
       });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
     expect(int.nested.item.quantity).to.eq(10);
@@ -358,12 +357,12 @@ describe('convert operator nested object unit tests', () => {
   });
 
   it('it should skip non matching ignore properties ', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert',
       {
         name: 'convert', enumerate: true, ignore: 'fake,tax,price', maxDepth: 3,
       });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
     expect(int.nested.item.quantity).to.eq(10);
@@ -383,12 +382,12 @@ describe('convert operator nested object unit tests', () => {
   });
 
   it('it should convert suffixed properties ', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert',
       {
         name: 'convert', enumerate: true, ignoreSuffixed: false, maxDepth: 3,
       });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
     expect(int.nested.item.quantity).to.eq(10);
@@ -408,12 +407,12 @@ describe('convert operator nested object unit tests', () => {
   });
 
   it('it should convert specific properties as well as enumerate ', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     const operator = OperatorFactory.create('convert',
       {
         name: 'convert', enumerate: true, properties: 'available', type: 'bool', maxDepth: 3,
       });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
     expect(int.nested.item.quantity).to.eq(10);
@@ -433,13 +432,13 @@ describe('convert operator nested object unit tests', () => {
   });
 
   it('it should work on array of objects with settings correct ', () => {
-    const deepClone = {
-      nested: [structuredClone(test.nested), structuredClone(test.nested), structuredClone(test.nested)],
+    const cloned = {
+      nested: [deepClone(test.nested), deepClone(test.nested), deepClone(test.nested)],
     };
 
     const operator = OperatorFactory.create('convert',
       { name: 'convert', enumerate: true, maxDepth: 3 });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
 
@@ -463,9 +462,9 @@ describe('convert operator nested object unit tests', () => {
   });
 
   it('it should work on a deeper array of objects with specific properties ', () => {
-    const deepClone = structuredClone(test);
+    const cloned = deepClone(test);
     // @ts-ignore
-    deepClone.nested.anotherElement.deepNested = [
+    cloned.nested.anotherElement.deepNested = [
       { deepTest: '1', noConvert: '1' },
       { deepTest: '2', noConvert: '2' },
       { deepTest: '3', noConvert: '3' },
@@ -475,7 +474,7 @@ describe('convert operator nested object unit tests', () => {
       {
         name: 'convert', properties: 'deepTest', type: 'int', maxDepth: 4,
       });
-    const [int] = operator.handleData([deepClone])!;
+    const [int] = operator.handleData([cloned])!;
 
     expect(int).to.not.be.null;
     // eslint-disable-next-line no-plusplus

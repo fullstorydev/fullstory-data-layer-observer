@@ -3,6 +3,7 @@ import {
 } from '../operator';
 import { Logger, LogMessageType } from '../utils/logger';
 import { SuffixOperator } from './suffix';
+import { deepClone } from '../utils/object';
 
 type ConvertibleType = 'bool' | 'date' | 'int' | 'real' | 'string';
 
@@ -186,7 +187,7 @@ export class ConvertOperator implements Operator {
   deepConvert(data:any, index:number, enumerate:boolean|undefined, properties:string[]|undefined,
     type:ConvertibleType|undefined, force: boolean|undefined, ignore:string[]|undefined, ignoreSuffixed:boolean,
     maxDepth:number, preserveArray:boolean|undefined) {
-    const deepConverted = structuredClone(data[index]);
+    const deepConverted = deepClone(data[index]);
     this.deepConvertHelper(data[index], deepConverted, enumerate, properties, type, force, ignore, ignoreSuffixed,
       maxDepth, 1, preserveArray);
     if (!preserveArray) {
