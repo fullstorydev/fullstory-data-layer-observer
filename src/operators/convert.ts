@@ -3,6 +3,7 @@ import {
 } from '../operator';
 import { Logger, LogMessageType } from '../utils/logger';
 import { SuffixOperator } from './suffix';
+import { deepClone } from '../utils/object';
 
 type ConvertibleType = 'bool' | 'date' | 'int' | 'real' | 'string';
 
@@ -35,6 +36,7 @@ export class ConvertOperator implements Operator {
     type: { required: false, type: ['string'] },
     ignore: { required: false, type: ['string,object'] }, // NOTE typeof array is object
     ignoreSuffixed: { required: false, type: ['boolean'] },
+    maxDepth: { required: false, type: ['number'] },
   };
 
   readonly index: number;
@@ -95,7 +97,8 @@ export class ConvertOperator implements Operator {
 
     let { properties, ignore } = this.options;
     const {
-      enumerate, force, preserveArray, type, ignoreSuffixed = true,
+      enumerate, force, preserveArray, type,
+      ignoreSuffixed = true, maxDepth = 1,
     } = this.options;
 
     if (typeof properties === 'string') {
@@ -105,10 +108,13 @@ export class ConvertOperator implements Operator {
       ignore = ignore.split(',').map((property) => property.trim()); // auto-correct if the CSV has spaces
     }
 
-    // TODO (van) we don't currently rename properties in child objects, but if we eventually do
-    // a deep copy of the data layer object will need to be done to ensure we don't change the object
-    // in the data layer
     const converted: { [key: string]: any } = { ...data[index] };
+
+    // if we are doing a multiple level convert, take a different path
+    if (maxDepth > 1) {
+      return this.deepConvert(data, index, enumerate, properties, type, force, ignore, ignoreSuffixed,
+        maxDepth, preserveArray);
+    }
 
     // if enumerate is set, try to coerce all strings into an equivalent numeric value
     if (enumerate) {
@@ -176,6 +182,120 @@ export class ConvertOperator implements Operator {
     // a copy of the incoming data layer needs to be returned
     // if you modify/update the `data` parameter directly, you may modify the data layer!
     return safeUpdate(data, index, converted);
+  }
+
+  deepConvert(data:any, index:number, enumerate:boolean|undefined, properties:string[]|undefined,
+    type:ConvertibleType|undefined, force: boolean|undefined, ignore:string[]|undefined, ignoreSuffixed:boolean,
+    maxDepth:number, preserveArray:boolean|undefined) {
+    const deepConverted = deepClone(data[index]);
+    this.deepConvertHelper(data[index], deepConverted, enumerate, properties, type, force, ignore, ignoreSuffixed,
+      maxDepth, 1, preserveArray);
+    if (!preserveArray) {
+      this.preserveArrayHelper(deepConverted, maxDepth, 1);
+    }
+    return safeUpdate(data, index, deepConverted);
+  }
+
+  // eslint-disable-next-line max-len
+  deepConvertHelper(source:any, converted:any, enumerate: boolean|undefined, properties:string[]|undefined,
+    type:ConvertibleType|undefined, force: boolean|undefined, ignore:string[]|undefined, ignoreSuffixed:boolean,
+    maxDepth:number, currentDepth:number, preserveArray:boolean|undefined) {
+    if (currentDepth > maxDepth) {
+      return;
+    }
+    if (source === null || source === undefined || converted === null || converted === undefined) {
+      return;
+    }
+    Object.getOwnPropertyNames(source).forEach((property) => {
+      let alreadyConverted = false;
+      const original = source[property];
+      const originalType = typeof original;
+      // eslint-disable-next-line operator-linebreak
+      const isConvertible =
+      // eslint-disable-next-line max-len
+         ((originalType !== 'object') || ((Array.isArray(original)) && (original.length > 0) && (typeof original[0] !== 'object')))
+         && !(ignore && (ignore.includes(property)))
+         && !(ignoreSuffixed && SuffixOperator.isAlreadySuffixed(property));
+
+      // check for listed properties
+      if (isConvertible && type && !alreadyConverted && properties && (properties.length > 0)
+         && ((properties[0] === '*') || (properties.includes(property)))
+         && (((original !== undefined) && (original !== null)) || force)) {
+        // if the intended conversion is on a list, convert all members in the list
+        if (Array.isArray(original)) {
+          // eslint-disable-next-line no-param-reassign
+          converted[property] = []; // this prevents mutating the actual data layer
+          for (let i = 0; i < (original as any[]).length; i += 1) {
+            const item = (original as any[])[i];
+            converted[property].push(ConvertOperator.convert(type, item));
+          }
+          ConvertOperator.verifyConversion(type, property, converted, source);
+        } else {
+          // eslint-disable-next-line no-param-reassign
+          converted[property] = ConvertOperator.convert(type, original);
+          ConvertOperator.verifyConversion(type, property, converted, source);
+        }
+        alreadyConverted = true;
+      }
+
+      // check for enumeration
+      if (isConvertible && !alreadyConverted && enumerate) {
+        if (originalType === 'string') {
+          // it seems best to leave an empty string as-is rather than have it converted to 0
+          // eslint-disable-next-line no-prototype-builtins
+          if ((original !== '') && (converted.hasOwnProperty(property))) {
+            // eslint-disable-next-line no-param-reassign
+            converted[property] = ConvertOperator.convert('real', original);
+            ConvertOperator.verifyConversion('real', property, converted, source);
+          }
+        } else if (Array.isArray(original) && (original.length > 0) && (typeof original[0] === 'string')) {
+          (original as Array<string>).forEach((item, index) => {
+            // eslint-disable-next-line no-prototype-builtins
+            if ((item !== '') && (converted.hasOwnProperty(property))) {
+              // eslint-disable-next-line no-param-reassign
+              converted[property][index] = ConvertOperator.convert('real', item);
+            }
+          });
+          ConvertOperator.verifyConversion('real', property, converted, source);
+        }
+        alreadyConverted = true;
+      }
+
+      // now if it is an object, we need to recursively walk down it
+      if (!alreadyConverted && (originalType === 'object') && (original !== null)) {
+        if ((Array.isArray(original) && (original.length > 0) && (typeof original[0] === 'object'))) {
+          (original as Array<any>).forEach((item, index) => {
+            this.deepConvertHelper(item, converted[property][index], enumerate, properties, type, force, ignore,
+              ignoreSuffixed, maxDepth, currentDepth + 1, preserveArray);
+          });
+        } else {
+          this.deepConvertHelper(original, converted[property], enumerate, properties, type, force, ignore,
+            ignoreSuffixed, maxDepth, currentDepth + 1, preserveArray);
+        }
+      }
+    });
+  }
+
+  preserveArrayHelper(converted:any, maxDepth:number, currentDepth:number) {
+    if ((currentDepth > maxDepth) || (converted === null) || (converted === undefined)) {
+      return;
+    }
+    Object.getOwnPropertyNames(converted).forEach((property) => {
+      if (Array.isArray(converted[property])) {
+        if (converted[property].length === 1) {
+          const [singleValue] = converted[property];
+          // eslint-disable-next-line no-param-reassign
+          converted[property] = singleValue;
+          this.preserveArrayHelper(converted[property], maxDepth, currentDepth + 1);
+        } else {
+          (converted[property] as Array<any>).forEach((item) => {
+            this.preserveArrayHelper(item, maxDepth, currentDepth + 1);
+          });
+        }
+      } else if (typeof converted[property] === 'object') {
+        this.preserveArrayHelper(converted[property], maxDepth, currentDepth + 1);
+      }
+    });
   }
 
   validate() {

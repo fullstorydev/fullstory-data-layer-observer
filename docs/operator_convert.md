@@ -6,18 +6,19 @@ Convert is most useful when paired with `FS.event` for cart and checkout events 
 
 ## Options
 
-Options with an asterisk are required. Note that `enumerate` can be used by itself or with `properties`.
+Note that `enumerate` can be used by itself or with `properties`.
 
 | Option           | Type                   | Default     | Description                                                                                                                                                                                                   |
 |------------------|------------------------|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `enumerate`*     | `boolean`              | `false`     | Automatically converts all string values into their numeric equivalent.                                                                                                                                       |
+| `enumerate`      | `boolean`              | `false`     | Automatically converts all string values into their numeric equivalent.                                                                                                                                       |
 | `ignore`         | `string` or `string[]` | `undefined` | Can be paired with `enumerate` option to ignore one or more properties when performing the `enumerate`.                                                                                                       |
 | `ignoreSuffixed` | `boolean` | `true`      | Can be paired with `enumerate` option to ignore any properties with [known type suffixes](https://help.fullstory.com/hc/en-us/articles/360020623234#property-name-requirements) when performing the `enumerate` |
-| `force`         | `boolean` | `false`     | If the property is undefined or has value `null`, forcibly add the property with value `0`, `0.0`,`false` or empty string.                                                                                    |
-| `index`         | `number` | `0`         | Position of the object to convert in the operator input list.                                                                                                                                                 |
-| `preserveArray` | `boolean` | `false`     | If the conversion value is a list, keep the array type even if the array has a single value.                                                                                                                  |
-| `properties`*   | `string` or `string[]` | `undefined` | List of properties to convert.                                                                                                                                                                                |
-| `type`*         | `string` | `undefined` | The desired type to convert properties to.                                                                                                                                                                    |
+| `force`          | `boolean` | `false`     | If the property is undefined or has value `null`, forcibly add the property with value `0`, `0.0`,`false` or empty string.                                                                                    |
+| `index`          | `number` | `0`         | Position of the object to convert in the operator input list.                                                                                                                                                 |
+| `preserveArray`  | `boolean` | `false`     | If the conversion value is a list, keep the array type even if the array has a single value.                                                                                                                  |
+| `properties`     | `string` or `string[]` | `undefined` | List of properties to convert.                                                                                                                                                                                |
+| `type`           | `string` | `undefined` | The desired type to convert properties to.                                                                                                                                                                    |
+| `maxDepth`       | `string` | `1`          | The max depth to look for properties.  If maxDepth is > 1, then the `properties`, `ignore`, and `ignoreSuffixed` will only apply to leaf properties, not to objects themselves.  
 
 > **Tip:** Set the `properties` option to the string `*` to convert *all* properties in an object to a desired type.
 
@@ -243,6 +244,47 @@ Options with an asterisk are required. Note that `enumerate` can be used by itse
   basePrice: 15.55,
   priceWithTax: 16.95,
   cartTotal: 21.95,
+ }
+]
+```
+## Convert "numeric" strings with a nested object 
+
+### Rule
+
+```javascript
+{
+ source: 'digitalData[(cart)]',
+ operators: [
+   { name: 'convert', enumerate: true, properties: 'available', type: 'bool', maxDepth: 2 },
+   { name: 'insert', value: 'Product Viewed' },
+ ],
+ destination: 'FS.event'
+}
+```
+
+### Input
+
+```javascript
+[
+ cart: {
+  available: 'false',
+  basePrice: '15.55',
+  priceWithTax: '16.95',
+  cartTotal: '21.95',
+ }
+]
+```
+
+### Output
+
+```javascript
+[
+ 'Product Viewed',
+ {
+   cart.available: false,
+   cart.basePrice: 15.55,
+   cart.priceWithTax: 16.95,
+   cart.cartTotal: 21.95,
  }
 ]
 ```
