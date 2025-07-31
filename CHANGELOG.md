@@ -10,6 +10,9 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 4.1.2
+- Adds support for `maxDepth` option to the `convert` operator.
+
 ### 4.1.1
 - Adds support for `FS.dataLayer` object on the Fullstory Browser API
 
