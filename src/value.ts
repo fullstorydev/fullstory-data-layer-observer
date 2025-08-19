@@ -1,6 +1,6 @@
 /**
  * Higher level interface for something that can provide a value from the DataLayer.  We now have multiple ways
- * of producing values (window object property, json from the DOM) so this represents what is needed by the sytem
+ * of producing values (window object property, json from the DOM) so this represents what is needed by the system
  * from a higher level.
  */
 export default interface DataLayerValue {
