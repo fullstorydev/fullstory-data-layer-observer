@@ -530,6 +530,16 @@ export class DataLayerObserver {
             try {
               if (element.textContent) {
                 const simpleValue = new SimpleDataLayerValue(domSource, JSON.parse(element.textContent));
+                if (!readOnLoad) {
+                  Logger.getInstance().warn(
+                    'readOnLoad set to false, but being ignored as domSource requires it to be true',
+                  );
+                }
+                if (monitor) {
+                  Logger.getInstance().warn(
+                    'monitor set to true, but being ignored as domSource requires it to be false',
+                  );
+                }
                 // for domSource, readOnLoad is true, and monitor is false
                 this.registerTarget(simpleValue, operators, undefined, domSource, destination, fsApi, true,
                   false, debug, debounce, version);
