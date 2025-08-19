@@ -198,7 +198,7 @@ The properties in the object returned from source selection will be monitored fo
 
 ## domSelector
 
-In place of `source` you can use `domSource` with a CSS selector that will find elements in the current DOM, try to parse them as JSON, and then send that through the operators.  Rules with a `domSource` will ignore the `monitor` flag on the rule, and will force `readOnLoad` to be `true`, so will just attempt to query the CSS once `DOMContentLoaded` has fired.  Only valid JSON values in the text content of the DOM elements found through the CSS selector will be used.  Any invalid JSON will be ignored. If the selector is not found the rule will not fire.  If multiple DOM elements are found with the selector and/or the root object is an array, each one will be looped over and the rule will run for every value.  
+In place of `source` you can use `domSource` with a CSS selector that will find elements in the current DOM, try to parse them as JSON, and then send that through the operators.  Rules with a `domSource` will ignore the `monitor` flag on the rule, and will force `readOnLoad` to be `true`, so this will attempt to query the CSS after `DOMContentLoaded` has fired.  Only valid JSON values in the text content of the DOM elements found through the CSS selector will be used.  Any invalid JSON will be ignored. If the selector is not found the rule will not fire.  If multiple DOM elements are found with the selector and/or the root object is an array, each one will be looped over and the rule will run for every value.  
 
 Here is an example of a domSelector:
 
