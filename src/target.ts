@@ -47,7 +47,9 @@ export default class DataLayerTarget implements DataLayerValue {
    */
   constructor(public subject: Object, public property: string, public path: string,
     public selector = '') {
-    if (typeof subject !== 'object') {
+    // NB special case added to support new FS.dataLayer observation
+    // eslint-disable-next-line no-underscore-dangle
+    if (typeof subject !== 'object' && subject !== (window as any)[(window as any)._fs_namespace]) {
       throw new Error(LogMessage.TargetSubjectObject);
     }
 
