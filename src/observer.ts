@@ -16,6 +16,8 @@ import {
 import DataLayerTarget from './target';
 import MonitorFactory from './monitor-factory';
 import { errorType, Telemetry, telemetryType } from './utils/telemetry';
+import DataLayerValue from './value';
+import SimpleDataLayerValue from './simpleValue';
 
 /**
  * DataLayerConfig provides global settings for a DataLayerObserver.
@@ -65,7 +67,8 @@ export interface DataLayerConfig {
 export interface DataLayerRule {
   debounce?: number;
   debug?: boolean;
-  source: string;
+  source?: string;
+  domSource?: string;
   operators?: OperatorOptions[];
   destination?: string | Function;
   readOnLoad?: boolean;
@@ -98,7 +101,7 @@ export class DataLayerObserver {
 
   listeners: { [path: string]: EventListener[] } = {};
 
-  static DefaultWaitUntil = (target: DataLayerTarget) => {
+  static DefaultWaitUntil = (target: DataLayerValue) => {
     const { value } = target;
 
     // perform supported data layers check
@@ -162,7 +165,7 @@ export class DataLayerObserver {
    * @param debug when true enables debugging of operator transformations
    * @param debounce number of milliseconds to debounce property assignments before handling the event
    */
-  private addHandler(source: string, target: DataLayerTarget, debug = false,
+  private addHandler(source: string, target: DataLayerValue, debug = false,
     debounce = DataHandler.DefaultDebounceTime): DataHandler {
     const handler = new DataHandler(source, target, debug, debounce);
     this.handlers.push(handler);
@@ -308,6 +311,7 @@ export class DataLayerObserver {
    * being inspected, adding a DataHandler with any Operators, registering a source and
    * destination, and monitoring for changes or function calls.
    * @param source from the rule monitoring the data layer
+   * @param domSource from the rule monitoring the data layer
    * @param target from the data layer
    * @param options list of OperatorOptions to transform data before a destination
    * @param read when true reads data layer target and emit the initial value
@@ -320,9 +324,10 @@ export class DataLayerObserver {
    * @throws error if an error occurs during handler creation
    */
   registerTarget(
-    source: string,
-    target: DataLayerTarget,
+    target: DataLayerValue,
     options: OperatorOptions[],
+    source: string | undefined = undefined,
+    domSource: string | undefined = undefined,
     destination: string | Function | undefined = undefined,
     fsApi: FS_API_CONSTANTS | undefined = undefined,
     read = false,
@@ -337,23 +342,23 @@ export class DataLayerObserver {
     /**
      * When the target is an Array, we create separate targets for the `push` and `unshift` methods.
      * Some older browsers may not have these methods, so check before trying to shim.
+     * domSource elements cannot be monitored so those will be ignored
      */
     if (monitor && Array.isArray(targetValue)) {
       if (targetValue.push && targetValue.unshift) {
-        this.registerTarget(source, DataLayerTarget.find(`${target.path}.unshift`), options, destination, fsApi,
-          false, true, debug, debounce, version);
+        this.registerTarget(DataLayerTarget.find(`${target.path}.unshift`), options, source, undefined,
+          destination, fsApi, false, true, debug, debounce, version);
         workingTarget = DataLayerTarget.find(`${target.path}.push`);
       } else {
         Logger.getInstance().warn(LogMessageType.MonitorCreateError, {
           path: workingTarget.path,
-          property: workingTarget.property,
-          selector: workingTarget.selector,
           reason: 'Browser does not support push and unshift',
         });
       }
     }
 
-    const handler = this.addHandler(source, workingTarget, !!debug, debounce);
+    const sourceName = source ?? domSource;
+    const handler = this.addHandler(sourceName!, workingTarget, !!debug, debounce);
     this.addOperators(handler, options, destination, fsApi, version);
 
     if (read) {
@@ -366,8 +371,6 @@ export class DataLayerObserver {
             Logger.getInstance().error(LogMessageType.ObserverReadError,
               {
                 path: workingTarget.path,
-                property: workingTarget.property,
-                selector: workingTarget.selector,
                 reason: err.message,
               });
             Telemetry.error(errorType.observerReadError);
@@ -380,8 +383,6 @@ export class DataLayerObserver {
           Logger.getInstance().error(LogMessageType.ObserverReadError,
             {
               path: workingTarget.path,
-              property: workingTarget.property,
-              selector: workingTarget.selector,
               reason: err.message,
             });
           Telemetry.error(errorType.observerReadError);
@@ -392,13 +393,16 @@ export class DataLayerObserver {
     // NOTE functions are always monitored
     if (monitor || workingTarget.type === 'function') {
       try {
-        this.addMonitor(source, workingTarget);
+        if (!(workingTarget instanceof DataLayerTarget)) {
+          Logger.getInstance().error('Working target is not DataLayerTarget and should be',
+            { path: workingTarget.path });
+        } else {
+          this.addMonitor(source!, workingTarget as DataLayerTarget);
+        }
       } catch (err) {
         Logger.getInstance().warn(LogMessageType.MonitorCreateError,
           {
             path: workingTarget.path,
-            property: workingTarget.property,
-            selector: workingTarget.selector,
             reason: err.message,
           });
       }
@@ -457,6 +461,7 @@ export class DataLayerObserver {
       debounce,
       debug,
       source,
+      domSource,
       operators = [],
       destination,
       fsApi,
@@ -470,9 +475,16 @@ export class DataLayerObserver {
     // rule properties override global ones
     const readOnLoad = ruleReadOnLoad === undefined ? globalReadOnLoad : ruleReadOnLoad;
 
-    if (!source) {
+    if (!source && !domSource) {
       Logger.getInstance().error(LogMessageType.RuleInvalid,
-        { rule: id, source, reason: 'Missing source' });
+        { reason: LogMessage.MissingSource });
+      Telemetry.error(errorType.invalidRuleError);
+      return;
+    }
+
+    if (source && domSource) {
+      Logger.getInstance().error(LogMessageType.RuleInvalid,
+        { reason: LogMessage.DuplicateSource });
       Telemetry.error(errorType.invalidRuleError);
       return;
     }
@@ -508,27 +520,70 @@ export class DataLayerObserver {
 
     try {
       const register = () => {
-        const target = DataLayerTarget.find(source);
-        this.registerTarget(source, target, operators, destination, fsApi, readOnLoad, monitor, debug,
-          debounce, version);
+        if (source) {
+          const target = DataLayerTarget.find(source);
+          this.registerTarget(target, operators, source, undefined, destination, fsApi, readOnLoad, monitor, debug,
+            debounce, version);
+        } else if (domSource) {
+          const list = document.querySelectorAll(domSource);
+          list.forEach((element) => {
+            try {
+              if (element.textContent) {
+                const simpleValue = new SimpleDataLayerValue(domSource, JSON.parse(element.textContent));
+                if (!readOnLoad) {
+                  Logger.getInstance().warn(
+                    'readOnLoad set to false, but being ignored as domSource requires it to be true',
+                  );
+                }
+                if (monitor) {
+                  Logger.getInstance().warn(
+                    'monitor set to true, but being ignored as domSource requires it to be false',
+                  );
+                }
+                // for domSource, readOnLoad is true, and monitor is false
+                this.registerTarget(simpleValue, operators, undefined, domSource, destination, fsApi, true,
+                  false, debug, debounce, version);
+              } else {
+                Logger.getInstance().warn(`Found element for ${domSource} but had no text content`);
+              }
+            } catch (err) {
+              Logger.getInstance().warn(LogMessageType.RuleRegistrationError,
+                { rule: id, source, reason: err.message });
+            }
+          });
+        } else {
+          Logger.getInstance().warn('Unexpected path of code in registeringTarget');
+        }
       };
       const timeout = () => Logger.getInstance().warn(LogMessageType.RuleRegistrationError, {
         rule: id, source, reason: 'Max Retries Attempted',
       });
       const { maxRetry = 5 } = rule;
 
-      switch (typeof waitUntil) {
-        case 'number':
-          // NOTE this delay is scheduled *after* the data layer is found to be defined on the page (not after page load)
-          setTimeout(() => {
+      // if domSource then wait for dom content loaded, otherwise use normal waitUntil
+      if (domSource) {
+        if (document.readyState !== 'loading') {
+          register();
+        } else {
+          // DOM is not ready, add the event listener
+          document.addEventListener('DOMContentLoaded', () => {
             register();
-          }, waitUntil > -1 ? waitUntil : 0); // negative values will schedule immediately
-          break;
-        case 'function':
-          this.sleep(() => waitUntil(DataLayerTarget.find(source)), register, timeout, maxRetry);
-          break;
-        default:
-          Logger.getInstance().warn(Logger.format(LogMessage.UnsupportedType, typeof waitUntil));
+          });
+        }
+      } else if (source) {
+        switch (typeof waitUntil) {
+          case 'number':
+            // NOTE this delay is scheduled *after* the data layer is found to be defined on the page (not after page load)
+            setTimeout(() => {
+              register();
+            }, waitUntil > -1 ? waitUntil : 0); // negative values will schedule immediately
+            break;
+          case 'function':
+            this.sleep(() => waitUntil(DataLayerTarget.find(source)), register, timeout, maxRetry);
+            break;
+          default:
+            Logger.getInstance().warn(Logger.format(LogMessage.UnsupportedType, typeof waitUntil));
+        }
       }
     } catch (err) {
       Logger.getInstance().warn(LogMessageType.RuleRegistrationError, { rule: id, source, reason: err.message });

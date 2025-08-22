@@ -1,6 +1,7 @@
 import { parsePath, ElementKind, select } from './selector';
 import { Logger, LogMessage } from './utils/logger';
 import { getGlobal } from './utils/object';
+import DataLayerValue from './value';
 
 /**
  * To observe a data layer, additional metadata about the data layer must be known. DataLayerTarget retain metadata
@@ -16,7 +17,7 @@ import { getGlobal } from './utils/object';
  * object from the data layer. DataLayerTarget will retain information about the underlying data layer reference as well
  * as allowing selector queries to be run.
  */
-export default class DataLayerTarget {
+export default class DataLayerTarget implements DataLayerValue {
   /**
    * Returns the path to the subject. Note that this path is derived from the `path` member and may not be applicable
    * if the target is manually constructed by passing a reference.
