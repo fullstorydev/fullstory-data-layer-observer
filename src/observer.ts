@@ -231,30 +231,34 @@ export class DataLayerObserver {
         beforeOptions.forEach((operator) => handler.push(this.getOperator(operator)));
       }
 
-      // preview mode uses destination, so if previewMode get rid of fsApi
-      if (previewMode && fsApi) {
-        // eslint-disable-next-line no-param-reassign
-        destination = fsApi;
-        // eslint-disable-next-line no-param-reassign
-        fsApi = undefined;
-      }
-
       if (fsApi) {
-        switch (fsApi) {
-          case FS_API_CONSTANTS.SET_IDENTITY:
-            handler.push(new SetIdentityOperator({ name: FS_API_CONSTANTS.SET_IDENTITY }));
-            break;
-          case FS_API_CONSTANTS.SET_PAGE_PROPERTIES:
-            handler.push(new SetPagePropertiesOperator({ name: FS_API_CONSTANTS.SET_PAGE_PROPERTIES }));
-            break;
-          case FS_API_CONSTANTS.SET_USER_PROPERTIES:
-            handler.push(new SetUserPropertiesOperator({ name: FS_API_CONSTANTS.SET_USER_PROPERTIES }));
-            break;
-          case FS_API_CONSTANTS.TRACK_EVENT:
-            handler.push(new TrackEventOperator({ name: FS_API_CONSTANTS.TRACK_EVENT }));
-            break;
-          default:
-            Logger.getInstance().error(`Unexpected coding error: Unknown fsApi value ${fsApi}`);
+        // In preview mode, redirect fsApi calls to preview destination instead of executing real API calls
+        if (previewMode) {
+          const func = previewDestination;
+          // if the version is greater than 1 it should ignore beforeDestination but still add dlo output
+          if (version > 1) {
+            handler.push(new InsertOperator({
+              name: 'insert', position: -1, value: 'dlo',
+            }));
+          }
+          handler.push(new FunctionOperator({ name: 'function', func }));
+        } else {
+          switch (fsApi) {
+            case FS_API_CONSTANTS.SET_IDENTITY:
+              handler.push(new SetIdentityOperator({ name: FS_API_CONSTANTS.SET_IDENTITY }));
+              break;
+            case FS_API_CONSTANTS.SET_PAGE_PROPERTIES:
+              handler.push(new SetPagePropertiesOperator({ name: FS_API_CONSTANTS.SET_PAGE_PROPERTIES }));
+              break;
+            case FS_API_CONSTANTS.SET_USER_PROPERTIES:
+              handler.push(new SetUserPropertiesOperator({ name: FS_API_CONSTANTS.SET_USER_PROPERTIES }));
+              break;
+            case FS_API_CONSTANTS.TRACK_EVENT:
+              handler.push(new TrackEventOperator({ name: FS_API_CONSTANTS.TRACK_EVENT }));
+              break;
+            default:
+              Logger.getInstance().error(`Unexpected coding error: Unknown fsApi value ${fsApi}`);
+          }
         }
       } else if (destination) {
         const func = previewMode ? previewDestination : destination;
