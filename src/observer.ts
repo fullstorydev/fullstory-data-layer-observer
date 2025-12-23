@@ -231,6 +231,14 @@ export class DataLayerObserver {
         beforeOptions.forEach((operator) => handler.push(this.getOperator(operator)));
       }
 
+      // preview mode uses destination, so if previewMode get rid of fsApi
+      if (previewMode && fsApi) {
+        // eslint-disable-next-line no-param-reassign
+        destination = fsApi;
+        // eslint-disable-next-line no-param-reassign
+        fsApi = undefined;
+      }
+
       if (fsApi) {
         switch (fsApi) {
           case FS_API_CONSTANTS.SET_IDENTITY:
