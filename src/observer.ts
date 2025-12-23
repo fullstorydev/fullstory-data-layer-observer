@@ -231,15 +231,7 @@ export class DataLayerObserver {
         beforeOptions.forEach((operator) => handler.push(this.getOperator(operator)));
       }
 
-      // preview mode uses destination, so if previewMode get rid of fsApi
-      if (previewMode && fsApi) {
-        // eslint-disable-next-line no-param-reassign
-        destination = fsApi;
-        // eslint-disable-next-line no-param-reassign
-        fsApi = undefined;
-      }
-
-      if (fsApi) {
+      if (fsApi && !previewMode) {
         switch (fsApi) {
           case FS_API_CONSTANTS.SET_IDENTITY:
             handler.push(new SetIdentityOperator({ name: FS_API_CONSTANTS.SET_IDENTITY }));
@@ -256,7 +248,7 @@ export class DataLayerObserver {
           default:
             Logger.getInstance().error(`Unexpected coding error: Unknown fsApi value ${fsApi}`);
         }
-      } else if (destination) {
+      } else if (destination || previewMode) {
         const func = previewMode ? previewDestination : destination;
         // if the version is greater than 1 it should ignore beforeDestination but still add dlo output
         if (version > 1) {
@@ -264,7 +256,8 @@ export class DataLayerObserver {
             name: 'insert', position: -1, value: 'dlo',
           }));
         }
-        handler.push(new FunctionOperator({ name: 'function', func }));
+        // we know func is defined as previewDestination is used with preview mode
+        handler.push(new FunctionOperator({ name: 'function', func: func! }));
       } else {
         Logger.getInstance().error('Unexpected coding error: Missing fsApi or destination');
       }
