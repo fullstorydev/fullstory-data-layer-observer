@@ -16,7 +16,7 @@ import { LogEvent, LogLevel, Logger } from '../src/utils/logger';
 import DataHandler from '../src/handler';
 import { MockClass } from './mocks/mock';
 import MonitorFactory from '../src/monitor-factory';
-import { DataLayerObserver } from '../src/observer';
+import { DataLayerObserver, FS_API_CONSTANTS } from '../src/observer';
 import DataLayerTarget from '../src/target';
 
 class EchoOperator implements Operator {
@@ -268,6 +268,31 @@ describe('DataLayerObserver unit tests', () => {
           source: 'digitalData.user.profile[0].profileInfo',
           operators: [],
           destination: 'FS.setUserVars',
+          monitor: false,
+        },
+      ],
+    });
+
+    const [profileInfo] = expectParams(globalMock.console, 'log');
+    expect(profileInfo).to.eq(globalMock.digitalData.user.profile[0].profileInfo);
+
+    expectNoCalls(globalMock.FS, 'setUserVars');
+
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
+  it('previewMode works with fsApi', () => {
+    expectNoCalls(globalMock.console, 'log');
+    expectNoCalls(globalMock.FS, 'setUserVars');
+
+    const observer = ExpectObserver.getInstance().create({
+      previewMode: true,
+      readOnLoad: true,
+      rules: [
+        {
+          source: 'digitalData.user.profile[0].profileInfo',
+          operators: [],
+          fsApi: FS_API_CONSTANTS.TRACK_EVENT,
           monitor: false,
         },
       ],
