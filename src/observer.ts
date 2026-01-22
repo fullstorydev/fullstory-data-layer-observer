@@ -18,6 +18,7 @@ import MonitorFactory from './monitor-factory';
 import { errorType, Telemetry, telemetryType } from './utils/telemetry';
 import DataLayerValue from './value';
 import SimpleDataLayerValue from './simpleValue';
+import { getAvailableCookies } from './utils/cookie';
 
 /**
  * DataLayerConfig provides global settings for a DataLayerObserver.
@@ -49,9 +50,13 @@ export interface DataLayerConfig {
 /**
  * DataLayerRule configures the behavior for a specific data layer target.
  *
- * Required
+ * One of source, domSource or cookieSource
  *  source: data layer target using selector syntax
+ *  domSource: CSS selector used to pull the text content from a DOM object
+ *  cookieSource: Name(s) of cookies to pull in as key=value pairs
+ * One of destination or fsApi
  *  destination: destination function using selector syntax or native function
+ *  fsApi: Specific operations that are built in to call Fullstory APIs
  * Optional
  *  id: optional identifier for the rule
  *  debounce: number of milliseconds to debounce property assignments before handling the event
@@ -69,6 +74,7 @@ export interface DataLayerRule {
   debug?: boolean;
   source?: string;
   domSource?: string;
+  cookieSource?: Array<string>;
   operators?: OperatorOptions[];
   destination?: string | Function;
   readOnLoad?: boolean;
@@ -313,6 +319,7 @@ export class DataLayerObserver {
    * destination, and monitoring for changes or function calls.
    * @param source from the rule monitoring the data layer
    * @param domSource from the rule monitoring the data layer
+   * @param cookieSource from the rule monitoring the data layer
    * @param target from the data layer
    * @param options list of OperatorOptions to transform data before a destination
    * @param read when true reads data layer target and emit the initial value
@@ -329,6 +336,7 @@ export class DataLayerObserver {
     options: OperatorOptions[],
     source: string | undefined = undefined,
     domSource: string | undefined = undefined,
+    cookieSource: Array<string> | undefined = undefined,
     destination: string | Function | undefined = undefined,
     fsApi: FS_API_CONSTANTS | undefined = undefined,
     read = false,
@@ -343,12 +351,12 @@ export class DataLayerObserver {
     /**
      * When the target is an Array, we create separate targets for the `push` and `unshift` methods.
      * Some older browsers may not have these methods, so check before trying to shim.
-     * domSource elements cannot be monitored so those will be ignored
+     * domSource and cookieSource elements cannot be monitored so those will be ignored
      */
     if (monitor && Array.isArray(targetValue)) {
       if (targetValue.push && targetValue.unshift) {
         this.registerTarget(DataLayerTarget.find(`${target.path}.unshift`), options, source, undefined,
-          destination, fsApi, false, true, debug, debounce, version);
+          undefined, destination, fsApi, false, true, debug, debounce, version);
         workingTarget = DataLayerTarget.find(`${target.path}.push`);
       } else {
         Logger.getInstance().warn(LogMessageType.MonitorCreateError, {
@@ -358,7 +366,10 @@ export class DataLayerObserver {
       }
     }
 
-    const sourceName = source ?? domSource;
+    let sourceName = source || domSource;
+    if (!sourceName && (cookieSource && (cookieSource.length > 0))) {
+      [sourceName] = cookieSource;
+    }
     const handler = this.addHandler(sourceName!, workingTarget, !!debug, debounce);
     this.addOperators(handler, options, destination, fsApi, version);
 
@@ -463,6 +474,7 @@ export class DataLayerObserver {
       debug,
       source,
       domSource,
+      cookieSource,
       operators = [],
       destination,
       fsApi,
@@ -476,14 +488,17 @@ export class DataLayerObserver {
     // rule properties override global ones
     const readOnLoad = ruleReadOnLoad === undefined ? globalReadOnLoad : ruleReadOnLoad;
 
-    if (!source && !domSource) {
+    // filter to what sources are set
+    const activeSourceCount = [source, domSource, cookieSource].filter(Boolean).length;
+
+    if (activeSourceCount === 0) {
       Logger.getInstance().error(LogMessageType.RuleInvalid,
         { reason: LogMessage.MissingSource });
       Telemetry.error(errorType.invalidRuleError);
       return;
     }
 
-    if (source && domSource) {
+    if (activeSourceCount > 1) {
       Logger.getInstance().error(LogMessageType.RuleInvalid,
         { reason: LogMessage.DuplicateSource });
       Telemetry.error(errorType.invalidRuleError);
@@ -523,8 +538,8 @@ export class DataLayerObserver {
       const register = () => {
         if (source) {
           const target = DataLayerTarget.find(source);
-          this.registerTarget(target, operators, source, undefined, destination, fsApi, readOnLoad, monitor, debug,
-            debounce, version);
+          this.registerTarget(target, operators, source, undefined, undefined,
+            destination, fsApi, readOnLoad, monitor, debug, debounce, version);
         } else if (domSource) {
           const list = document.querySelectorAll(domSource);
           list.forEach((element) => {
@@ -542,7 +557,7 @@ export class DataLayerObserver {
                   );
                 }
                 // for domSource, readOnLoad is true, and monitor is false
-                this.registerTarget(simpleValue, operators, undefined, domSource, destination, fsApi, true,
+                this.registerTarget(simpleValue, operators, undefined, domSource, undefined, destination, fsApi, true,
                   false, debug, debounce, version);
               } else {
                 Logger.getInstance().warn(`Found element for ${domSource} but had no text content`);
@@ -552,6 +567,36 @@ export class DataLayerObserver {
                 { rule: id, source, reason: err.message });
             }
           });
+        } else if (cookieSource) {
+          try {
+            if (cookieSource.length < 0) {
+              Logger.getInstance().warn('Cookie source was set but no cookie values present');
+            } else {
+              if (!readOnLoad) {
+                Logger.getInstance().warn(
+                  'readOnLoad set to false, but being ignored as cookieSource requires it to be true',
+                );
+              }
+              if (monitor) {
+                Logger.getInstance().warn(
+                  'monitor set to true, but being ignored as cookieSource requires it to be false',
+                );
+              }
+              const cookieMap = getAvailableCookies();
+              const actualData:any = {};
+              cookieSource.forEach((cookieName) => {
+                if (cookieMap.has(cookieName)) {
+                  actualData[cookieName] = cookieMap.get(cookieName);
+                }
+              });
+              const simpleValue = new SimpleDataLayerValue(cookieSource[0], actualData);
+              this.registerTarget(simpleValue, operators, undefined, undefined, cookieSource, destination, fsApi, true,
+                false, debug, debounce, version);
+            }
+          } catch (err) {
+            Logger.getInstance().warn(LogMessageType.RuleRegistrationError,
+              { rule: id, source, reason: err.message });
+          }
         } else {
           Logger.getInstance().warn('Unexpected path of code in registeringTarget');
         }
@@ -561,8 +606,8 @@ export class DataLayerObserver {
       });
       const { maxRetry = 5 } = rule;
 
-      // if domSource then wait for dom content loaded, otherwise use normal waitUntil
-      if (domSource) {
+      // if domSource or cookieSource then wait for dom content loaded, otherwise use normal waitUntil
+      if (domSource || cookieSource) {
         if (document.readyState !== 'loading') {
           register();
         } else {
