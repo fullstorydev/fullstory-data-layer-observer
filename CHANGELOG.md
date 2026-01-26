@@ -10,6 +10,9 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 4.1.4
+- Adds support for `cookieSource` selector to read from the cookies.
+
 ### 4.1.3
 - Adds support for `domSource` selector to read JSON from the DOM.
 
