@@ -5,7 +5,6 @@ import FullStory from '../mocks/fullstory-recording';
 import { MockClass, Call } from '../mocks/mock';
 import { DataLayerDetail } from '../../src/event';
 import { DataLayerObserver, DataLayerConfig, DataLayerRule } from '../../src/observer';
-import MonitorFactory from '../../src/monitor-factory';
 import { BuiltinOptions, OperatorFactory } from '../../src/factory';
 
 /**
@@ -225,10 +224,7 @@ export class ExpectObserver {
    * @param observer to be cleaned up.
    */
   private destroy(observer: DataLayerObserver) {
-    observer.handlers.forEach((handler) => {
-      MonitorFactory.getInstance().remove(handler.target.path, true);
-      handler.stop();
-    });
+    observer.destroy();
 
     const i = this.observers.indexOf(observer);
     if (i > -1) {

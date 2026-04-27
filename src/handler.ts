@@ -274,6 +274,10 @@ export default class DataHandler {
    * Stops listening for data layer changes or function calls.
    */
   stop() {
+    if (typeof this.timeoutId === 'number') {
+      window.clearTimeout(this.timeoutId);
+      this.timeoutId = null;
+    }
     window.removeEventListener(createEventType(this.source, this.target.path), this.listener as EventListener);
     this.listener = null;
   }

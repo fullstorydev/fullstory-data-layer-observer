@@ -30,6 +30,14 @@ class MockTelemetryProvider extends MockClass {
   count(): void {}
 }
 
+/** Clears recorded calls so expectations can ignore embed init telemetry (rule collection + init spans). */
+function clearMockQueue(mock: MockClass, methodName: string) {
+  const queue = mock.callQueues[methodName];
+  if (queue) {
+    queue.splice(0, queue.length);
+  }
+}
+
 describe('DefaultTelemetryProvider', () => {
   const originalConsole = globalThis.console;
   const originalWindow = globalThis.window;
@@ -452,6 +460,13 @@ describe('Telemetry initialization from window', () => {
     mockConsole = new Console();
     (globalThis as any).console = mockConsole;
 
+    if (win._dlo_observer && typeof win._dlo_observer.destroy === 'function') {
+      win._dlo_observer.destroy();
+    }
+    delete win._dlo_observer;
+    delete win._fs_namespace;
+    delete win.FS;
+
     // Clear any rules that may have been configured in other tests
     Object.keys(win)
       .filter((key) => key.startsWith('_dlo_rules'))
@@ -467,6 +482,12 @@ describe('Telemetry initialization from window', () => {
   });
 
   afterEach(() => {
+    if (win._dlo_observer && typeof win._dlo_observer.destroy === 'function') {
+      win._dlo_observer.destroy();
+    }
+    delete win._dlo_observer;
+    delete win._fs_namespace;
+    delete win.FS;
     (globalThis as any).console = originalConsole;
     win._dlo_telemetryProvider = undefined;
     win._dlo_telemetryExporter = undefined;
@@ -493,8 +514,8 @@ describe('Telemetry initialization from window', () => {
     win._dlo_telemetryExporter = mockExporter;
     initializeFromWindow();
 
-    expectNoCalls(mockExporter, 'sendSpan');
-    expectNoCalls(mockExporter, 'sendCount');
+    clearMockQueue(mockExporter, 'sendSpan');
+    clearMockQueue(mockExporter, 'sendCount');
 
     const span = Telemetry.startSpan('test span');
     Telemetry.count('test count', 1);
@@ -508,7 +529,7 @@ describe('Telemetry initialization from window', () => {
     win._dlo_telemetryExporter = 'console';
     initializeFromWindow();
 
-    expectNoCalls(mockConsole, 'debug');
+    clearMockQueue(mockConsole, 'debug');
 
     const span = Telemetry.startSpan('test span');
     Telemetry.count('test count', 1);
@@ -523,6 +544,9 @@ describe('Telemetry initialization from window', () => {
     win._dlo_telemetryProvider = mockProvider;
     win._dlo_telemetryExporter = mockExporter;
     initializeFromWindow();
+
+    clearMockQueue(mockProvider, 'endSpan');
+    clearMockQueue(mockProvider, 'count');
 
     // endSpan is defined on MockTelemetryProvider to track span.end() calls
     expectNoCalls(mockProvider, 'endSpan');

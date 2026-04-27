@@ -539,36 +539,39 @@ describe('DataLayerObserver unit tests', () => {
 
     globalMock.digitalData.cart.cartID = 'cart-5678';
 
-    // check the assignment
+    const debounceWait = DataHandler.DefaultDebounceTime * 1.5;
+
+    // check the cartID assignment, then change price and assert again (chained so cleanup never runs
+    // before debounced handlers; parallel timeouts with the same delay race under newer Node timers)
     setTimeout(() => {
       const [reassigned] = changes;
       expect(reassigned.cartID).to.eq('cart-5678');
       expect((reassigned as Cart).item).to.be.undefined; // ensure selector picked
-    }, DataHandler.DefaultDebounceTime * 1.5);
 
-    const updatedPrice: TotalCartPrice = {
-      basePrice: 15.55,
-      voucherCode: '',
-      voucherDiscount: 0,
-      currency: 'USD',
-      taxRate: 0.09,
-      shipping: 5.0,
-      shippingMethod: 'LTL',
-      priceWithTax: 16.95,
-      cartTotal: 21.95,
-    };
+      const updatedPrice: TotalCartPrice = {
+        basePrice: 15.55,
+        voucherCode: '',
+        voucherDiscount: 0,
+        currency: 'USD',
+        taxRate: 0.09,
+        shipping: 5.0,
+        shippingMethod: 'LTL',
+        priceWithTax: 16.95,
+        cartTotal: 21.95,
+      };
 
-    globalMock.digitalData.cart.price = updatedPrice;
+      globalMock.digitalData.cart.price = updatedPrice;
 
-    setTimeout(() => {
-      const [shippingChange] = changes;
-      expect(shippingChange.cartID).to.eq('cart-5678');
-      expect((shippingChange as Cart).price).to.eq(updatedPrice);
-      expect((shippingChange as Cart).item).to.be.undefined; // ensure selector picked
+      setTimeout(() => {
+        const [shippingChange] = changes;
+        expect(shippingChange.cartID).to.eq('cart-5678');
+        expect((shippingChange as Cart).price).to.eq(updatedPrice);
+        expect((shippingChange as Cart).item).to.be.undefined; // ensure selector picked
 
-      ExpectObserver.getInstance().cleanup(observer);
-      done();
-    }, DataHandler.DefaultDebounceTime * 1.5);
+        ExpectObserver.getInstance().cleanup(observer);
+        done();
+      }, debounceWait);
+    }, debounceWait);
   });
 
   it('debounce window can be adjusted to trigger the data handler', (done) => {
@@ -665,7 +668,7 @@ describe('DataLayerObserver unit tests', () => {
     ExpectObserver.getInstance().cleanup(observer);
   });
 
-  it('removing monitors should prevent property changes from firing', () => {
+  it('removing monitors should prevent property changes from firing', (done) => {
     let changes: any[] = [];
 
     const observer = ExpectObserver.getInstance().create({
@@ -687,24 +690,24 @@ describe('DataLayerObserver unit tests', () => {
 
     globalMock.digitalData.cart.cartID = 'cart-5678';
 
-    // check the assignment
+    const debounceWait = DataHandler.DefaultDebounceTime * 1.5;
+
     setTimeout(() => {
       const [reassigned] = changes;
       expect(reassigned.cartID).to.eq('cart-5678');
-    }, DataHandler.DefaultDebounceTime * 1.5);
 
-    // remove monitors and re-check
-    MonitorFactory.getInstance().remove('digitalData.cart.cartID');
+      MonitorFactory.getInstance().remove('digitalData.cart.cartID');
 
-    globalMock.digitalData.cart.cartID = 'cart-0000';
+      globalMock.digitalData.cart.cartID = 'cart-0000';
 
-    // check that no event occurred
-    setTimeout(() => {
-      const [reassigned] = changes;
-      expect(reassigned.cartID).to.eq('cart-5678');
-    }, DataHandler.DefaultDebounceTime * 1.5);
+      setTimeout(() => {
+        const [still] = changes;
+        expect(still.cartID).to.eq('cart-5678');
 
-    ExpectObserver.getInstance().cleanup(observer);
+        ExpectObserver.getInstance().cleanup(observer);
+        done();
+      }, debounceWait);
+    }, debounceWait);
   });
 
   it('function calls should trigger the data handler', () => {
@@ -796,16 +799,15 @@ describe('DataLayerObserver unit tests', () => {
 
     user.profileInfo.profileID = 'atl-404678';
 
-    // check the assignment
+    // check the assignment (cleanup after async work so debounce is not cleared early)
     setTimeout(() => {
       const [reassigned] = changes;
       expect(reassigned.profileID).to.eq('atl-404678');
       expect(reassigned.userName).to.be.undefined; // ensure selector picked
 
+      ExpectObserver.getInstance().cleanup(observer);
       done();
     }, DataHandler.DefaultDebounceTime * 1.5);
-
-    ExpectObserver.getInstance().cleanup(observer);
   });
 
   it('it should reschedule registration for a completely missing data layer', (done) => {
@@ -982,5 +984,82 @@ describe('DataLayerObserver unit tests', () => {
 
       done();
     }, 1000);
+  });
+
+  it('destroy removes monitors so later property changes are ignored', (done) => {
+    (globalThis as any).foo = { bar: 1 };
+    const observer = ExpectObserver.getInstance().create({
+      readOnLoad: false,
+      rules: [{
+        source: 'foo',
+        monitor: true,
+        debounce: 0,
+        operators: [{ name: 'query', select: '$.bar' }],
+        destination: 'console.log',
+      }],
+    });
+
+    (globalThis as any).foo.bar = 2;
+    setTimeout(() => {
+      expectParams(globalMock.console, 'log');
+      observer.destroy();
+      (globalThis as any).foo.bar = 3;
+      setTimeout(() => {
+        expectNoCalls(globalMock.console, 'log');
+        delete (globalThis as any).foo;
+        ExpectObserver.getInstance().cleanup(observer);
+        done();
+      }, 50);
+    }, 50);
+  });
+
+  it('does not register a rule with numeric waitUntil after destroy', (done) => {
+    expectNoCalls(globalMock.console, 'log');
+
+    const observer = ExpectObserver.getInstance().create({
+      readOnLoad: false,
+      rules: [{
+        source: 'digitalData.page.pageInfo',
+        operators: [],
+        destination: 'console.log',
+        monitor: false,
+        waitUntil: 300,
+      }],
+    });
+
+    expect(observer.handlers.length).to.eq(0);
+    observer.destroy();
+
+    setTimeout(() => {
+      expect(observer.handlers.length).to.eq(0);
+      expectNoCalls(globalMock.console, 'log');
+      ExpectObserver.getInstance().cleanup(observer);
+      done();
+    }, 400);
+  });
+
+  it('registerRule is a no-op after destroy', () => {
+    const observer = ExpectObserver.getInstance().default();
+    observer.destroy();
+    observer.registerRule({
+      source: 'digitalData.page.pageInfo',
+      operators: [],
+      destination: 'console.log',
+      monitor: false,
+    });
+    expect(observer.handlers.length).to.eq(0);
+    ExpectObserver.getInstance().cleanup(observer);
+  });
+
+  it('registerTarget throws after destroy', () => {
+    const observer = ExpectObserver.getInstance().default();
+    const user = deepcopy(basicDigitalData.user.profile[0]);
+    const target = new DataLayerTarget(user, 'profileInfo', 'myUser');
+    observer.destroy();
+    expect(() => {
+      observer.registerTarget(target, [{ name: 'query', select: '$[(profileID)]' }], 'digitalData.user.profile[0]',
+        undefined, undefined, () => {}, undefined, true);
+    }).to.throw('DataLayerObserver has been destroyed');
+    ExpectObserver.getInstance().cleanup(observer);
   });
 });

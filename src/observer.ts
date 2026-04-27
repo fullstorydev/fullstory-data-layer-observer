@@ -103,6 +103,9 @@ export enum FS_API_CONSTANTS {
 export class DataLayerObserver {
   private customOperators: { [key: string]: Operator } = {};
 
+  /** When true, deferred rule registration and new registrations are ignored (see {@link DataLayerObserver.destroy}). */
+  private destroyed = false;
+
   handlers: DataHandler[] = [];
 
   listeners: { [path: string]: EventListener[] } = {};
@@ -345,6 +348,10 @@ export class DataLayerObserver {
     debounce = DataHandler.DefaultDebounceTime,
     version:number = 1,
   ): DataHandler {
+    if (this.destroyed) {
+      throw new Error('DataLayerObserver has been destroyed');
+    }
+
     let workingTarget = target;
     const targetValue = workingTarget.value;
 
@@ -440,13 +447,19 @@ export class DataLayerObserver {
     attempt = 1,
     wait = 250,
   ) {
+    if (this.destroyed) {
+      return;
+    }
+
     if (attempt > maxRetry) {
       timeout();
       return;
     }
 
     if (shouldWake()) {
-      awake();
+      if (!this.destroyed) {
+        awake();
+      }
       return;
     }
 
@@ -454,6 +467,9 @@ export class DataLayerObserver {
     // NOTE, use `attempt - 1` because the first attempt should be equal to `Math.pow(2, 0)`
     const delay = (2 ** (attempt - 1) * wait) + Math.random();
     setTimeout(() => {
+      if (this.destroyed) {
+        return;
+      }
       this.sleep(shouldWake, awake, timeout, maxRetry, attempt + 1, wait);
     }, delay);
   }
@@ -466,6 +482,10 @@ export class DataLayerObserver {
    * @throws error if the rule has missing data or an error occurs during processing
    */
   registerRule(rule: DataLayerRule) {
+    if (this.destroyed) {
+      return;
+    }
+
     const { readOnLoad: globalReadOnLoad } = this.config;
 
     const {
@@ -536,6 +556,9 @@ export class DataLayerObserver {
 
     try {
       const register = () => {
+        if (this.destroyed) {
+          return;
+        }
         if (source) {
           const target = DataLayerTarget.find(source);
           this.registerTarget(target, operators, source, undefined, undefined,
@@ -601,9 +624,14 @@ export class DataLayerObserver {
           Logger.getInstance().warn('Unexpected path of code in registeringTarget');
         }
       };
-      const timeout = () => Logger.getInstance().warn(LogMessageType.RuleRegistrationError, {
-        rule: id, source, reason: 'Max Retries Attempted',
-      });
+      const timeout = () => {
+        if (this.destroyed) {
+          return;
+        }
+        Logger.getInstance().warn(LogMessageType.RuleRegistrationError, {
+          rule: id, source, reason: 'Max Retries Attempted',
+        });
+      };
       const { maxRetry = 5 } = rule;
 
       // if domSource or cookieSource then wait for dom content loaded, otherwise use normal waitUntil
@@ -614,14 +642,16 @@ export class DataLayerObserver {
           // DOM is not ready, add the event listener
           document.addEventListener('DOMContentLoaded', () => {
             register();
-          });
+          }, { once: true });
         }
       } else if (source) {
         switch (typeof waitUntil) {
           case 'number':
             // NOTE this delay is scheduled *after* the data layer is found to be defined on the page (not after page load)
             setTimeout(() => {
-              register();
+              if (!this.destroyed) {
+                register();
+              }
             }, waitUntil > -1 ? waitUntil : 0); // negative values will schedule immediately
             break;
           case 'function':
@@ -642,6 +672,10 @@ export class DataLayerObserver {
    * @throws an error if an existing name is used
    */
   registerOperator(name: string, operator: Operator) {
+    if (this.destroyed) {
+      return;
+    }
+
     if (OperatorFactory.hasOperator(name) || this.customOperators[name]) {
       throw new Error(Logger.format(LogMessage.DuplicateValue, name));
     }
@@ -659,6 +693,24 @@ export class DataLayerObserver {
     const i = this.handlers.indexOf(handler);
     if (i > -1) {
       this.handlers.splice(i, 1);
+    }
+  }
+
+  /**
+   * Stops all handlers, removes monitors for their targets, and clears this observer.
+   * After this call, deferred rule registration (waitUntil timers, sleep retries, DOMContentLoaded)
+   * and {@link DataLayerObserver.registerRule} / {@link DataLayerObserver.registerOperator} are ignored;
+   * {@link DataLayerObserver.registerTarget} throws.
+   * Does not unregister custom operators on the class instance.
+   */
+  destroy(): void {
+    this.destroyed = true;
+
+    while (this.handlers.length > 0) {
+      const handler = this.handlers[0];
+      MonitorFactory.getInstance().remove(handler.target.path, true);
+      handler.stop();
+      this.handlers.splice(0, 1);
     }
   }
 }

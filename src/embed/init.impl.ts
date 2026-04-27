@@ -1,7 +1,7 @@
-/* eslint-disable no-underscore-dangle, camelcase */
+/* eslint-disable no-underscore-dangle, camelcase, no-param-reassign */
 import { Logger, LogMessageType } from '../utils/logger';
 import { startsWith } from '../utils/object';
-import { DataLayerObserver } from '../observer';
+import { DataLayerConfig, DataLayerObserver } from '../observer';
 import {
   defaultDloAttributes, errorType, Telemetry, telemetryType,
 } from '../utils/telemetry';
@@ -17,7 +17,7 @@ window['_dlo_appender'] = null;
 // Default is null
 window['_dlo_logLevel'] = 1;
 
-// A custom telemetry provider; a default provider is used if not specified
+// A custom telemetry provider; a default provider is used if one is not specified
 // Default is null
 window['_dlo_telemetryProvider'] = null;
 
@@ -94,6 +94,74 @@ function _dlo_collectRules(): any[] {
   }
 }
 
+function readDloConfigFromWindow(win: { [key: string]: any }, rules: any[]): DataLayerConfig {
+  return {
+    appender: win._dlo_appender || undefined,
+    beforeDestination: win._dlo_beforeDestination || undefined,
+    logLevel: win._dlo_logLevel,
+    previewMode: win._dlo_previewMode === true,
+    previewDestination: win._dlo_previewDestination || undefined,
+    readOnLoad: win._dlo_readOnLoad === true,
+    validateRules: win._dlo_validateRules === true,
+    urlValidator: win._dlo_urlValidator || undefined,
+    rules,
+  };
+}
+
+/**
+ * Subscribes to FullStory capture lifecycle via FS('observe', …).
+ * When capture shuts down, the active observer is destroyed; when capture starts again
+ * (after a prior shutdown), a new observer is created from current window._dlo_* config.
+ */
+export function attachDloFullStoryLifecycle(win: { [key: string]: any }): void {
+  const ns = win._fs_namespace;
+  const fs = (typeof ns === 'string' && ns) ? win[ns] : undefined;
+  if (typeof fs !== 'function') {
+    return;
+  }
+
+  let hadFsShutdown = false;
+
+  fs('observe', {
+    type: 'shutdown',
+    callback: () => {
+      hadFsShutdown = true;
+      try {
+        const obs = win._dlo_observer as DataLayerObserver | undefined;
+        if (obs) {
+          obs.destroy();
+          win._dlo_observer = undefined;
+        }
+      } catch (destroyErr) {
+        Logger.getInstance().error(LogMessageType.ObserverInitializationError,
+          { reason: `Error during FullStory shutdown cleanup: ${destroyErr}` });
+      }
+    },
+  });
+
+  fs('observe', {
+    type: 'start',
+    callback: () => {
+      if (!hadFsShutdown) {
+        return;
+      }
+      try {
+        const rules = _dlo_collectRules();
+        if (rules.length === 0) {
+          Logger.getInstance().warn(LogMessageType.ObserverRulesNone);
+        }
+        const restartSpan = Telemetry.startSpan(telemetryType.initializationSpan);
+        win._dlo_observer = new DataLayerObserver(readDloConfigFromWindow(win, rules));
+        restartSpan.end();
+        hadFsShutdown = false;
+      } catch (err) {
+        Logger.getInstance().error(LogMessageType.ObserverInitializationError, { reason: `Error: ${err}` });
+        Telemetry.error(errorType.observerInitializationError);
+      }
+    },
+  });
+}
+
 export default function _dlo_initializeFromWindow() {
   try {
     const win = (window as { [key: string]: any });
@@ -120,6 +188,7 @@ export default function _dlo_initializeFromWindow() {
 
     if (win._dlo_observer) {
       Logger.getInstance().warn(LogMessageType.ObserverMultipleLoad);
+      initializationSpan.end();
       return;
     }
 
@@ -129,18 +198,10 @@ export default function _dlo_initializeFromWindow() {
       Logger.getInstance().warn(LogMessageType.ObserverRulesNone);
     }
 
-    win._dlo_observer = new DataLayerObserver({
-      appender: win._dlo_appender || undefined,
-      beforeDestination: win._dlo_beforeDestination || undefined,
-      logLevel: win._dlo_logLevel,
-      previewMode: win._dlo_previewMode === true,
-      previewDestination: win._dlo_previewDestination || undefined,
-      readOnLoad: win._dlo_readOnLoad === true,
-      validateRules: win._dlo_validateRules === true,
-      urlValidator: win._dlo_urlValidator || undefined,
-      rules,
-    });
+    win._dlo_observer = new DataLayerObserver(readDloConfigFromWindow(win, rules));
     initializationSpan.end();
+
+    attachDloFullStoryLifecycle(win);
   } catch (err) {
     Logger.getInstance().error(LogMessageType.ObserverInitializationError, { reason: `Error: ${err}` });
     Telemetry.error(errorType.observerInitializationError);
