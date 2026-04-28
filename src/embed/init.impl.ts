@@ -52,6 +52,11 @@ window['_dlo_validateRules'] = false;
 // Default is null
 window['_dlo_urlValidator'] = null;
 
+// When true, subscribe to FullStory capture lifecycle (shutdown/start) and tear down /
+// recreate the observer when capture stops and starts again. When false or omitted,
+// that wiring is not installed.
+window['_dlo_enable_restart'] = false;
+
 // Anything on `window` that starts with `_dlo_rules` is read as a rules array
 window['_dlo_rules'] = [
 // rules can go here
@@ -112,8 +117,14 @@ function readDloConfigFromWindow(win: { [key: string]: any }, rules: any[]): Dat
  * Subscribes to FullStory capture lifecycle via FS('observe', …).
  * When capture shuts down, the active observer is destroyed; when capture starts again
  * (after a prior shutdown), a new observer is created from current window._dlo_* config.
+ *
+ * No-ops unless `win._dlo_enable_restart === true` (set on `window` before embed init).
  */
 export function attachDloFullStoryLifecycle(win: { [key: string]: any }): void {
+  if (win._dlo_enable_restart !== true) {
+    return;
+  }
+
   const ns = win._fs_namespace;
   const fs = (typeof ns === 'string' && ns) ? win[ns] : undefined;
   if (typeof fs !== 'function') {
