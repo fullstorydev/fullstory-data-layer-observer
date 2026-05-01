@@ -332,6 +332,7 @@ export class DataLayerObserver {
    * @param version version of this rule, defaults to 1
    * @param destination function using selector syntax or native function
    * @param fsApi special Fullstory API Constant
+   * @returns the created handler, or `undefined` if this observer has been destroyed
    * @throws error if an error occurs during handler creation
    */
   registerTarget(
@@ -347,9 +348,11 @@ export class DataLayerObserver {
     debug = false,
     debounce = DataHandler.DefaultDebounceTime,
     version:number = 1,
-  ): DataHandler {
+  ): DataHandler | undefined {
     if (this.destroyed) {
-      throw new Error('DataLayerObserver has been destroyed');
+      Logger.getInstance().warn(LogMessageType.RegisterError,
+        { reason: 'DataLayerObserver has been destroyed' });
+      return undefined;
     }
 
     let workingTarget = target;
@@ -700,7 +703,7 @@ export class DataLayerObserver {
    * Stops all handlers, removes monitors for their targets, and clears this observer.
    * After this call, deferred rule registration (waitUntil timers, sleep retries, DOMContentLoaded)
    * and {@link DataLayerObserver.registerRule} / {@link DataLayerObserver.registerOperator} are ignored;
-   * {@link DataLayerObserver.registerTarget} throws.
+   * {@link DataLayerObserver.registerTarget} logs and returns undefined.
    * Does not unregister custom operators on the class instance.
    */
   destroy(): void {

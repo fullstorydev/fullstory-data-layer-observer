@@ -1051,15 +1051,23 @@ describe('DataLayerObserver unit tests', () => {
     ExpectObserver.getInstance().cleanup(observer);
   });
 
-  it('registerTarget throws after destroy', () => {
+  it('registerTarget returns undefined after destroy', () => {
     const observer = ExpectObserver.getInstance().default();
     const user = deepcopy(basicDigitalData.user.profile[0]);
     const target = new DataLayerTarget(user, 'profileInfo', 'myUser');
     observer.destroy();
-    expect(() => {
-      observer.registerTarget(target, [{ name: 'query', select: '$[(profileID)]' }], 'digitalData.user.profile[0]',
-        undefined, undefined, () => {}, undefined, true);
-    }).to.throw('DataLayerObserver has been destroyed');
+    const handler = observer.registerTarget(
+      target,
+      [{ name: 'query', select: '$[(profileID)]' }],
+      'digitalData.user.profile[0]',
+      undefined,
+      undefined,
+      () => {},
+      undefined,
+      true,
+    );
+    expect(handler).to.eq(undefined);
+    expect(observer.handlers.length).to.eq(0);
     ExpectObserver.getInstance().cleanup(observer);
   });
 });
