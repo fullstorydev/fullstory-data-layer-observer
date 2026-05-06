@@ -166,14 +166,15 @@ export class DataLayerObserver {
 
   /**
    * Creates and adds a DataHandler.
+   * @param read from the rule if this is a read on load rule
    * @param source from the rule monitoring the data layer
    * @param target to the data layer
    * @param debug when true enables debugging of operator transformations
    * @param debounce number of milliseconds to debounce property assignments before handling the event
    */
-  private addHandler(source: string, target: DataLayerValue, debug = false,
+  private addHandler(read: boolean, source: string, target: DataLayerValue, debug = false,
     debounce = DataHandler.DefaultDebounceTime): DataHandler {
-    const handler = new DataHandler(source, target, debug, debounce);
+    const handler = new DataHandler(read, source, target, debug, debounce);
     this.handlers.push(handler);
 
     return handler;
@@ -370,37 +371,10 @@ export class DataLayerObserver {
     if (!sourceName && (cookieSource && (cookieSource.length > 0))) {
       [sourceName] = cookieSource;
     }
-    const handler = this.addHandler(sourceName!, workingTarget, !!debug, debounce);
+    const handler = this.addHandler(read, sourceName!, workingTarget, !!debug, debounce);
     this.addOperators(handler, options, destination, fsApi, version);
 
-    if (read) {
-      // For read-on-load for targeted arrays we do a sort of manual fan-out of the items
-      if (Array.isArray(targetValue)) {
-        for (let i = 0; i < targetValue.length; i += 1) {
-          try {
-            handler.fireEvent(targetValue[i]);
-          } catch (err) {
-            Logger.getInstance().error(LogMessageType.ObserverReadError,
-              {
-                path: workingTarget.path,
-                reason: err.message,
-              });
-            Telemetry.error(errorType.observerReadError);
-          }
-        }
-      } else if (workingTarget.type === 'object') {
-        try {
-          handler.fireEvent();
-        } catch (err) {
-          Logger.getInstance().error(LogMessageType.ObserverReadError,
-            {
-              path: workingTarget.path,
-              reason: err.message,
-            });
-          Telemetry.error(errorType.observerReadError);
-        }
-      }
-    }
+    handler.handleReadOnLoad();
 
     // NOTE functions are always monitored
     if (monitor || workingTarget.type === 'function') {

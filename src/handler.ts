@@ -26,13 +26,15 @@ export default class DataHandler {
 
   /**
    * Creates a DataHandler.
+   * @param readOnLoad if this rule is a readOnLoad rule
    * @param source from the rule monitoring the data layer
    * @param target in the data layer
    * @param debug true optionally enables debugging data transformation (defaults to console.debug)
    * @param debounce number of milliseconds to debounce property value assignments (defaults to 250ms)
    * @throws will throw an error if the data layer is not found (i.e. undefined or null)
    */
-  constructor(private readonly source: string, public readonly target: DataLayerValue, public debug = false,
+  constructor(private readonly readOnLoad: boolean, private readonly source: string,
+              public readonly target: DataLayerValue, public debug = false,
     public debounce = DataHandler.DefaultDebounceTime) {
     if (!target || !target.value) {
       throw new Error(LogMessage.DataLayerMissing);
@@ -40,6 +42,38 @@ export default class DataHandler {
 
     // begin handling data by listening for events
     this.start();
+  }
+
+  public handleReadOnLoad() {
+    const targetValue = this.target.query();
+    if (this.readOnLoad) {
+      // For read-on-load for targeted arrays we do a sort of manual fan-out of the items
+      if (Array.isArray(targetValue)) {
+        for (let i = 0; i < targetValue.length; i += 1) {
+          try {
+            this.fireEvent(targetValue[i]);
+          } catch (err) {
+            Logger.getInstance().error(LogMessageType.ObserverReadError,
+              {
+                path: this.target.path,
+                reason: err.message,
+              });
+            Telemetry.error(errorType.observerReadError);
+          }
+        }
+      } else if (this.target.type === 'object') {
+        try {
+          this.fireEvent();
+        } catch (err) {
+          Logger.getInstance().error(LogMessageType.ObserverReadError,
+            {
+              path: this.target.path,
+              reason: err.message,
+            });
+          Telemetry.error(errorType.observerReadError);
+        }
+      }
+    }
   }
 
   /**
