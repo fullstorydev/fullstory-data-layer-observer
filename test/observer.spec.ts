@@ -1026,4 +1026,34 @@ describe('DataLayerObserver unit tests', () => {
 
     ExpectObserver.getInstance().cleanup(observer);
   });
+
+  it('replayReadOnLoad dispatches for monitor:false array sources (array stays an object-typed target)', () => {
+    expectNoCalls(globalMock.console, 'log');
+
+    (globalThis as any).foo = [{ id: 'a' }, { id: 'b' }];
+
+    const observer = ExpectObserver.getInstance().create({
+      readOnLoad: true,
+      rules: [{
+        source: 'foo',
+        monitor: false,
+        operators: [],
+        destination: 'console.log',
+      }],
+    });
+
+    // Initial read-on-load fans out one destination call per array element (registerTarget passes the array in).
+    expect(globalMock.console.callQueues.log.length).to.eq(2);
+
+    globalMock.console.callQueues.log.splice(0, globalMock.console.callQueues.log.length);
+
+    observer.replayReadOnLoad();
+
+    // Replay uses the object branch (arrays have typeof "object") and calls fireReadOnLoad() without
+    // re-passing the array, so the handler emits once via query() — still proves replay ran.
+    expect(globalMock.console.callQueues.log.length).to.eq(1);
+
+    delete (globalThis as any).foo;
+    ExpectObserver.getInstance().cleanup(observer);
+  });
 });

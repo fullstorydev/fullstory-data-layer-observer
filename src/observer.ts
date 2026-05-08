@@ -646,9 +646,20 @@ export class DataLayerObserver {
   /**
    * Re-runs the read-on-load dispatch for handlers whose rule resolved `readOnLoad` to true.
    * Handlers, monitors, and operators remain in place; this just re-emits the current snapshot
-   * the same way an initial `readOnLoad` would. Object-typed handlers fire once via the
-   * underlying target's `query()`; array `.push` handlers fan out the parent array's current
-   * elements. Other targets (e.g. function calls, `.unshift`) are skipped.
+   * in line with how {@link DataLayerObserver.registerTarget} wired each handler.
+   *
+   * **Arrays — depend on `monitor`:**
+   * - `monitor: false` — the rule keeps a single handler on the array itself. Arrays have
+   *   `typeof === 'object'`, so replay uses the object branch below (`fireReadOnLoad()` with no
+   *   element list), i.e. one emission from `query()`, not per-index fan-out.
+   * - `monitor: true` — registration **replaces** that target with separate `.push` and `.unshift`
+   *   function monitors. Replay treats **`.push`** specially: it passes the live parent array
+   *   (`subject`) into `fireReadOnLoad` so element fan-out matches initial read-on-load. The
+   *   `.unshift` handler is a function target whose path does not match this `.push` branch, so
+   *   it is not replayed here (same as other non-covered function targets).
+   *
+   * Non-array object handlers use the object branch (one `query()`-driven emission). Other
+   * function targets not handled above are skipped.
    *
    * Useful when something downstream of DLO needs the current state of the data layer to be
    * re-emitted (for example, when FullStory capture restarts).
