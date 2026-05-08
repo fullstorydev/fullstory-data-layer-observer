@@ -170,10 +170,16 @@ export class DataLayerObserver {
    * @param target to the data layer
    * @param debug when true enables debugging of operator transformations
    * @param debounce number of milliseconds to debounce property assignments before handling the event
+   * @param readOnLoad when true, this handler participates in initial read-on-load and in {@link DataLayerObserver.replayReadOnLoad}
    */
-  private addHandler(source: string, target: DataLayerValue, debug = false,
-    debounce = DataHandler.DefaultDebounceTime): DataHandler {
-    const handler = new DataHandler(source, target, debug, debounce);
+  private addHandler(
+    source: string,
+    target: DataLayerValue,
+    debug = false,
+    debounce = DataHandler.DefaultDebounceTime,
+    readOnLoad = false,
+  ): DataHandler {
+    const handler = new DataHandler(source, target, debug, debounce, readOnLoad);
     this.handlers.push(handler);
 
     return handler;
@@ -322,7 +328,7 @@ export class DataLayerObserver {
    * @param cookieSource from the rule monitoring the data layer
    * @param target from the data layer
    * @param options list of OperatorOptions to transform data before a destination
-   * @param read when true reads data layer target and emit the initial value
+   * @param readOnLoad when true reads data layer target and emit the initial value
    * @param monitor when true property changes or function calls re-run the operators
    * @param debug when true the rule prints debug for each Operator transformation
    * @param debounce number of milliseconds to debounce property assignments before handling the event
@@ -339,7 +345,7 @@ export class DataLayerObserver {
     cookieSource: Array<string> | undefined = undefined,
     destination: string | Function | undefined = undefined,
     fsApi: FS_API_CONSTANTS | undefined = undefined,
-    read = false,
+    readOnLoad = false,
     monitor = true,
     debug = false,
     debounce = DataHandler.DefaultDebounceTime,
@@ -370,36 +376,11 @@ export class DataLayerObserver {
     if (!sourceName && (cookieSource && (cookieSource.length > 0))) {
       [sourceName] = cookieSource;
     }
-    const handler = this.addHandler(sourceName!, workingTarget, !!debug, debounce);
+    const handler = this.addHandler(sourceName!, workingTarget, !!debug, debounce, readOnLoad);
     this.addOperators(handler, options, destination, fsApi, version);
 
-    if (read) {
-      // For read-on-load for targeted arrays we do a sort of manual fan-out of the items
-      if (Array.isArray(targetValue)) {
-        for (let i = 0; i < targetValue.length; i += 1) {
-          try {
-            handler.fireEvent(targetValue[i]);
-          } catch (err) {
-            Logger.getInstance().error(LogMessageType.ObserverReadError,
-              {
-                path: workingTarget.path,
-                reason: err.message,
-              });
-            Telemetry.error(errorType.observerReadError);
-          }
-        }
-      } else if (workingTarget.type === 'object') {
-        try {
-          handler.fireEvent();
-        } catch (err) {
-          Logger.getInstance().error(LogMessageType.ObserverReadError,
-            {
-              path: workingTarget.path,
-              reason: err.message,
-            });
-          Telemetry.error(errorType.observerReadError);
-        }
-      }
+    if (readOnLoad) {
+      handler.fireReadOnLoad(Array.isArray(targetValue) ? targetValue : undefined);
     }
 
     // NOTE functions are always monitored
@@ -660,5 +641,35 @@ export class DataLayerObserver {
     if (i > -1) {
       this.handlers.splice(i, 1);
     }
+  }
+
+  /**
+   * Re-runs the read-on-load dispatch for handlers whose rule resolved `readOnLoad` to true.
+   * Handlers, monitors, and operators remain in place; this just re-emits the current snapshot
+   * the same way an initial `readOnLoad` would. Object-typed handlers fire once via the
+   * underlying target's `query()`; array `.push` handlers fan out the parent array's current
+   * elements. Other targets (e.g. function calls, `.unshift`) are skipped.
+   *
+   * Useful when something downstream of DLO needs the current state of the data layer to be
+   * re-emitted (for example, when FullStory capture restarts).
+   */
+  replayReadOnLoad(): void {
+    this.handlers.forEach((handler) => {
+      if (!handler.readOnLoad) {
+        return;
+      }
+
+      const t = handler.target as DataLayerTarget;
+      if (t.type === 'object') {
+        handler.fireReadOnLoad();
+        return;
+      }
+
+      if (t.type === 'function'
+        && typeof t.path === 'string' && t.path.endsWith('.push')
+        && Array.isArray(t.subject)) {
+        handler.fireReadOnLoad(t.subject);
+      }
+    });
   }
 }

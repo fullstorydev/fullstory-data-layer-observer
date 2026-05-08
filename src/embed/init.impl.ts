@@ -52,6 +52,11 @@ window['_dlo_validateRules'] = false;
 // Default is null
 window['_dlo_urlValidator'] = null;
 
+// When true, subscribe to FullStory capture lifecycle (shutdown/start) and replay the
+// current data layer state through the existing observer when capture restarts. When
+// false or omitted, that wiring is not installed.
+window['_dlo_enable_restart'] = false;
+
 // Anything on `window` that starts with `_dlo_rules` is read as a rules array
 window['_dlo_rules'] = [
 // rules can go here
@@ -94,6 +99,57 @@ function _dlo_collectRules(): any[] {
   }
 }
 
+/**
+ * Subscribes to FullStory capture lifecycle via FS('observe', …). When capture shuts
+ * down and then starts again, calls `replayReadOnLoad()` on the existing observer so
+ * the new capture session sees the current data layer snapshot. The observer instance,
+ * its handlers, and its monitors all stay in place across the restart.
+ *
+ * No-ops unless `win._dlo_enable_restart === true` (set on `window` before embed init).
+ */
+export function attachDloFullStoryLifecycle(win: { [key: string]: any }): void {
+  if (win._dlo_enable_restart !== true) {
+    return;
+  }
+
+  const ns = win._fs_namespace;
+  const fs = (typeof ns === 'string' && ns) ? win[ns] : undefined;
+  if (typeof fs !== 'function') {
+    return;
+  }
+
+  let hadFsShutdown = false;
+
+  fs('observe', {
+    type: 'shutdown',
+    callback: () => {
+      hadFsShutdown = true;
+    },
+  });
+
+  fs('observe', {
+    type: 'start',
+    callback: () => {
+      // FS invokes the `start` callback once on registration if capture is already running;
+      // we only want to replay after a real shutdown -> start cycle.
+      if (!hadFsShutdown) {
+        return;
+      }
+      hadFsShutdown = false;
+      try {
+        const observer = win._dlo_observer as DataLayerObserver | undefined;
+        if (observer) {
+          observer.replayReadOnLoad();
+        }
+      } catch (err) {
+        Logger.getInstance().error(LogMessageType.ObserverInitializationError,
+          { reason: `Error during FullStory restart replay: ${err}` });
+        Telemetry.error(errorType.observerInitializationError);
+      }
+    },
+  });
+}
+
 export default function _dlo_initializeFromWindow() {
   try {
     const win = (window as { [key: string]: any });
@@ -120,6 +176,7 @@ export default function _dlo_initializeFromWindow() {
 
     if (win._dlo_observer) {
       Logger.getInstance().warn(LogMessageType.ObserverMultipleLoad);
+      initializationSpan.end();
       return;
     }
 
@@ -141,6 +198,8 @@ export default function _dlo_initializeFromWindow() {
       rules,
     });
     initializationSpan.end();
+
+    attachDloFullStoryLifecycle(win);
   } catch (err) {
     Logger.getInstance().error(LogMessageType.ObserverInitializationError, { reason: `Error: ${err}` });
     Telemetry.error(errorType.observerInitializationError);

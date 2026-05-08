@@ -30,10 +30,11 @@ export default class DataHandler {
    * @param target in the data layer
    * @param debug true optionally enables debugging data transformation (defaults to console.debug)
    * @param debounce number of milliseconds to debounce property value assignments (defaults to 250ms)
+   * @param readOnLoad when true, initial read and FullStory lifecycle replay should emit the current snapshot for this handler
    * @throws will throw an error if the data layer is not found (i.e. undefined or null)
    */
   constructor(private readonly source: string, public readonly target: DataLayerValue, public debug = false,
-    public debounce = DataHandler.DefaultDebounceTime) {
+    public debounce = DataHandler.DefaultDebounceTime, public readonly readOnLoad = false) {
     if (!target || !target.value) {
       throw new Error(LogMessage.DataLayerMissing);
     }
@@ -48,6 +49,42 @@ export default class DataHandler {
   fireEvent(value = this.target.query()) {
     if (value) {
       this.handleData([value]);
+    }
+  }
+
+  /**
+   * Re-emits the initial-load events for this handler, mirroring the read-on-load semantics
+   * used at registration time. When `initialValue` is an array, each element is fanned out
+   * through `fireEvent`. Otherwise, for object-typed targets, `fireEvent()` is invoked once,
+   * which queries the current snapshot. Other types (e.g. functions) are a no-op.
+   */
+  fireReadOnLoad(initialValue?: any): void {
+    const logReadError = (err: any) => {
+      Logger.getInstance().error(LogMessageType.ObserverReadError,
+        {
+          path: this.target.path,
+          reason: err.message,
+        });
+      Telemetry.error(errorType.observerReadError);
+    };
+
+    if (Array.isArray(initialValue)) {
+      for (let i = 0; i < initialValue.length; i += 1) {
+        try {
+          this.fireEvent(initialValue[i]);
+        } catch (err) {
+          logReadError(err);
+        }
+      }
+      return;
+    }
+
+    if (this.target.type === 'object') {
+      try {
+        this.fireEvent();
+      } catch (err) {
+        logReadError(err);
+      }
     }
   }
 

@@ -63,4 +63,17 @@ export default class MonitorFactory {
       }
     });
   }
+
+  /**
+   * Removes every monitor. Used by tests to reset singleton state between specs.
+   */
+  removeAll(): void {
+    Object.getOwnPropertyNames(this.monitors).forEach((monitorPath) => {
+      const monitor = this.monitors[monitorPath];
+      if (monitor) {
+        monitor.remove();
+        delete this.monitors[monitorPath];
+      }
+    });
+  }
 }
