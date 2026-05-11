@@ -174,7 +174,7 @@ export class DataLayerObserver {
    */
   private addHandler(read: boolean, source: string, target: DataLayerValue, debug = false,
     debounce = DataHandler.DefaultDebounceTime): DataHandler {
-    const handler = new DataHandler(read, source, target, debug, debounce);
+    const handler = new DataHandler(source, target, debug, debounce);
     this.handlers.push(handler);
 
     return handler;
@@ -374,7 +374,9 @@ export class DataLayerObserver {
     const handler = this.addHandler(read, sourceName!, workingTarget, !!debug, debounce);
     this.addOperators(handler, options, destination, fsApi, version);
 
-    handler.handleReadOnLoad();
+    if (read) {
+      handler.fireDeep(targetValue);
+    }
 
     // NOTE functions are always monitored
     if (monitor || workingTarget.type === 'function') {
