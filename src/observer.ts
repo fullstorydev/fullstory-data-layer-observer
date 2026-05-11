@@ -166,13 +166,12 @@ export class DataLayerObserver {
 
   /**
    * Creates and adds a DataHandler.
-   * @param read from the rule if this is a read on load rule
    * @param source from the rule monitoring the data layer
    * @param target to the data layer
    * @param debug when true enables debugging of operator transformations
    * @param debounce number of milliseconds to debounce property assignments before handling the event
    */
-  private addHandler(read: boolean, source: string, target: DataLayerValue, debug = false,
+  private addHandler(source: string, target: DataLayerValue, debug = false,
     debounce = DataHandler.DefaultDebounceTime): DataHandler {
     const handler = new DataHandler(source, target, debug, debounce);
     this.handlers.push(handler);
@@ -371,7 +370,7 @@ export class DataLayerObserver {
     if (!sourceName && (cookieSource && (cookieSource.length > 0))) {
       [sourceName] = cookieSource;
     }
-    const handler = this.addHandler(read, sourceName!, workingTarget, !!debug, debounce);
+    const handler = this.addHandler(sourceName!, workingTarget, !!debug, debounce);
     this.addOperators(handler, options, destination, fsApi, version);
 
     if (read) {
