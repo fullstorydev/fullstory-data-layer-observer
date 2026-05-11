@@ -33,8 +33,7 @@ export default class DataHandler {
    * @param debounce number of milliseconds to debounce property value assignments (defaults to 250ms)
    * @throws will throw an error if the data layer is not found (i.e. undefined or null)
    */
-  constructor(private readonly source: string,
-              public readonly target: DataLayerValue, public debug = false,
+  constructor(private readonly source: string, public readonly target: DataLayerValue, public debug = false,
     public debounce = DataHandler.DefaultDebounceTime) {
     if (!target || !target.value) {
       throw new Error(LogMessage.DataLayerMissing);
