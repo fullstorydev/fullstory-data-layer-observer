@@ -26,7 +26,6 @@ export default class DataHandler {
 
   /**
    * Creates a DataHandler.
-   * @param readOnLoad if this rule is a readOnLoad rule
    * @param source from the rule monitoring the data layer
    * @param target in the data layer
    * @param debug true optionally enables debugging data transformation (defaults to console.debug)
