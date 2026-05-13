@@ -379,9 +379,7 @@ export class DataLayerObserver {
     const handler = this.addHandler(sourceName!, workingTarget, !!debug, debounce, readOnLoad);
     this.addOperators(handler, options, destination, fsApi, version);
 
-    if (readOnLoad) {
-      handler.fireReadOnLoad(Array.isArray(targetValue) ? targetValue : undefined);
-    }
+    handler.maybeReadOnLoad(Array.isArray(targetValue) ? targetValue : undefined);
 
     // NOTE functions are always monitored
     if (monitor || workingTarget.type === 'function') {
@@ -644,9 +642,10 @@ export class DataLayerObserver {
   }
 
   /**
-   * Re-runs the read-on-load dispatch for handlers whose rule resolved `readOnLoad` to true.
-   * Handlers, monitors, and operators remain in place; this just re-emits the current snapshot
-   * in line with how {@link DataLayerObserver.registerTarget} wired each handler.
+   * Re-runs the read-on-load dispatch for each handler using the same branches as registration.
+   * {@link DataHandler.maybeReadOnLoad} no-ops when that handler was not created with
+   * `readOnLoad: true`. Handlers, monitors, and operators remain in place; this re-emits the
+   * current snapshot where applicable.
    *
    * **Arrays — depend on `monitor`:**
    * - `monitor: false` — the rule keeps a single handler on the array itself. Arrays have
@@ -666,20 +665,16 @@ export class DataLayerObserver {
    */
   replayReadOnLoad(): void {
     this.handlers.forEach((handler) => {
-      if (!handler.readOnLoad) {
-        return;
-      }
-
       const t = handler.target as DataLayerTarget;
       if (t.type === 'object') {
-        handler.fireReadOnLoad();
+        handler.maybeReadOnLoad();
         return;
       }
 
       if (t.type === 'function'
         && typeof t.path === 'string' && t.path.endsWith('.push')
         && Array.isArray(t.subject)) {
-        handler.fireReadOnLoad(t.subject);
+        handler.maybeReadOnLoad(t.subject);
       }
     });
   }

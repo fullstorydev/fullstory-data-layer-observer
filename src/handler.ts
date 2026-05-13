@@ -34,7 +34,7 @@ export default class DataHandler {
    * @throws will throw an error if the data layer is not found (i.e. undefined or null)
    */
   constructor(private readonly source: string, public readonly target: DataLayerValue, public debug = false,
-    public debounce = DataHandler.DefaultDebounceTime, public readonly readOnLoad = false) {
+    public debounce = DataHandler.DefaultDebounceTime, private readonly readOnLoad = true) {
     if (!target || !target.value) {
       throw new Error(LogMessage.DataLayerMissing);
     }
@@ -54,11 +54,16 @@ export default class DataHandler {
 
   /**
    * Re-emits the initial-load events for this handler, mirroring the read-on-load semantics
-   * used at registration time. When `initialValue` is an array, each element is fanned out
-   * through `fireEvent`. Otherwise, for object-typed targets, `fireEvent()` is invoked once,
-   * which queries the current snapshot. Other types (e.g. functions) are a no-op.
+   * used at registration time. No-ops when the handler was constructed with `readOnLoad: false`.
+   * When `initialValue` is an array, each element is fanned out through `fireEvent`. Otherwise,
+   * for object-typed targets, `fireEvent()` is invoked once, which queries the current snapshot.
+   * Other types (e.g. functions) are a no-op.
    */
-  fireReadOnLoad(initialValue?: any): void {
+  maybeReadOnLoad(initialValue?: any): void {
+    if (!this.readOnLoad) {
+      return;
+    }
+
     const logReadError = (err: any) => {
       Logger.getInstance().error(LogMessageType.ObserverReadError,
         {
