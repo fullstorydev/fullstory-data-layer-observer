@@ -55,7 +55,7 @@ Sensitive, private, and confidential information should never be added to a data
 
 DLO is a JavaScript asset that is included on a web page.  FullStory hosts versions of DLO on our CDN.  Versioned releases have the naming convention `<version>.js`, and the most recent version is named `latest.js`:
 
-- https://edge.fullstory.com/datalayer/v4/v4.1.3.js
+- https://edge.fullstory.com/datalayer/v4/v4.1.5.js
 - https://edge.fullstory.com/datalayer/v4/latest.js
 
 If you would like the most up to date version of DLO on your site always, use `latest.js`.  If you'd rather use stable releases and perform manual upgrades, use `<version>.js`.
@@ -141,7 +141,7 @@ The above sample contains two rules that respectively send all properties in the
 
 ## Rule Options
 
-Each rule provides a set of options for configuration.  
+Each rule provides a set of options for configuration.
 
 | Option        | Default     | Description                                                                                                                                         |
 |---------------|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -199,7 +199,7 @@ The properties in the object returned from source selection will be monitored fo
 
 ## domSource
 
-In place of `source` you can use `domSource` with a CSS selector that will find elements in the current DOM, try to parse them as JSON, and then send that through the operators.  Rules with a `domSource` will ignore the `monitor` flag on the rule, and will force `readOnLoad` to be `true`, so this will attempt to query the CSS after `DOMContentLoaded` has fired.  Only valid JSON values in the text content of the DOM elements found through the CSS selector will be used.  Any invalid JSON will be ignored. If the selector is not found the rule will not fire.  If multiple DOM elements are found with the selector and/or the root object is an array, each one will be looped over and the rule will run for every value.  
+In place of `source` you can use `domSource` with a CSS selector that will find elements in the current DOM, try to parse them as JSON, and then send that through the operators.  Rules with a `domSource` will ignore the `monitor` flag on the rule, and will force `readOnLoad` to be `true`, so this will attempt to query the CSS after `DOMContentLoaded` has fired.  Only valid JSON values in the text content of the DOM elements found through the CSS selector will be used.  Any invalid JSON will be ignored. If the selector is not found the rule will not fire.  If multiple DOM elements are found with the selector and/or the root object is an array, each one will be looped over and the rule will run for every value.
 
 Here is an example of a domSelector:
 
@@ -217,7 +217,7 @@ window['_dlo_rules'] = [
 ```
 ## cookieSource
 
-In place of `source` you can use `cookieSource` with an array of strings representing cookie names that will be looked up on the current page, and then send that through the operators if they exist.  Rules with a `cookieSource` will ignore the `monitor` flag on the rule, and will force `readOnLoad` to be `true`, This will attempt to read the cookies after `DOMContentLoaded` has fired.  If none of the cookie names specified are found the rule will not fire. 
+In place of `source` you can use `cookieSource` with an array of strings representing cookie names that will be looked up on the current page, and then send that through the operators if they exist.  Rules with a `cookieSource` will ignore the `monitor` flag on the rule, and will force `readOnLoad` to be `true`, This will attempt to read the cookies after `DOMContentLoaded` has fired.  If none of the cookie names specified are found the rule will not fire.
 
 Here is an example of a cookieSelector:
 

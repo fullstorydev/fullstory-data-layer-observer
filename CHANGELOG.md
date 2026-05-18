@@ -10,6 +10,9 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 4.1.5
+- Adds optional support for replaying the readOnload functionality if Fullstory is restarted
+
 ### 4.1.4
 - Adds support for `cookieSource` selector to read from the cookies.
 
