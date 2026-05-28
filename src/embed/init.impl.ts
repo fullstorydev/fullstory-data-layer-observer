@@ -1,5 +1,6 @@
 /* eslint-disable no-underscore-dangle, camelcase */
 import { Logger, LogMessageType } from '../utils/logger';
+import { getFsNamespace } from '../utils/fsNamespace';
 import { startsWith } from '../utils/object';
 import { DataLayerObserver } from '../observer';
 import {
@@ -112,8 +113,8 @@ export function attachDloFullStoryLifecycle(win: { [key: string]: any }): void {
     return;
   }
 
-  const ns = win._fs_namespace;
-  const fs = (typeof ns === 'string' && ns) ? win[ns] : undefined;
+  const ns = getFsNamespace(win as any);
+  const fs = win[ns];
   if (typeof fs !== 'function') {
     return;
   }

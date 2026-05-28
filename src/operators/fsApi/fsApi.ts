@@ -1,5 +1,6 @@
 import { Operator, OperatorOptions, OperatorValidator } from '../../operator';
 import { getGlobal } from '../../utils/object';
+import { getFsNamespace } from '../../utils/fsNamespace';
 
 export interface FSApiOperatorOptions extends OperatorOptions {
 
@@ -14,10 +15,9 @@ export default abstract class FSApiOperator implements Operator {
 
   handleData(data: any[]): any[] | null {
     const thisArg: object = getGlobal();
-    // @ts-ignore
-    const fsFunction:any = thisArg[thisArg._fs_namespace]; // eslint-disable-line
+    const fsFunction: any = (thisArg as any)[getFsNamespace(thisArg as any)];
     if (typeof fsFunction !== 'function') {
-      throw new Error('_fs_namespace is not a function');
+      throw new Error('Fullstory namespace is not a function');
     }
     // subclasses will determine how to prepare the data
     const realData = this.prepareData(data);
