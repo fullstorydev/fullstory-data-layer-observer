@@ -1,5 +1,7 @@
 /* eslint-disable no-console, max-classes-per-file */
 
+import { getFsNamespace } from './fsNamespace';
+
 /**
  * A LogAppender simply serializes a LogEvent to a sink.
  */
@@ -88,7 +90,7 @@ export class FullStoryAppender implements LogAppender {
 
   /* eslint-disable class-methods-use-this */
   log(event: LogEvent): void {
-    const fs = (window as any)[(window as any)._fs_namespace]; // eslint-disable-line no-underscore-dangle
+    const fs = (window as any)[getFsNamespace(window)];
 
     const customEventName = 'Data Layer Observer';
     const customEventSource = 'dlo-log';

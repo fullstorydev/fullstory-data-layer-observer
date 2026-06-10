@@ -1,5 +1,6 @@
 import { parsePath, ElementKind, select } from './selector';
 import { Logger, LogMessage } from './utils/logger';
+import { getFsNamespace } from './utils/fsNamespace';
 import { getGlobal } from './utils/object';
 import DataLayerValue from './value';
 
@@ -48,8 +49,7 @@ export default class DataLayerTarget implements DataLayerValue {
   constructor(public subject: Object, public property: string, public path: string,
     public selector = '') {
     // NB special case added to support new FS.dataLayer observation
-    // eslint-disable-next-line no-underscore-dangle
-    if (typeof subject !== 'object' && subject !== (window as any)[(window as any)._fs_namespace]) {
+    if (typeof subject !== 'object' && subject !== (window as any)[getFsNamespace(window)]) {
       throw new Error(LogMessage.TargetSubjectObject);
     }
 
