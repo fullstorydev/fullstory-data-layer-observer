@@ -3,7 +3,7 @@
 /**
  * Resolves the FullStory client namespace on `window`.
  *
- * Mirrors the resolution order used by `@fullstory/browser-api`:
+ * Mirrors the resolution order used by fs.js:
  *   1. The `data-fs-namespace` attribute on `document.currentScript` (best-effort).
  *   2. The `_fs_namespace` global set on `window` by the FullStory snippet.
  *   3. The default namespace `'FS'`.
