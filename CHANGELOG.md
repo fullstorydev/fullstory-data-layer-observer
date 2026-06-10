@@ -10,6 +10,9 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 4.1.6
+- Centralizes FullStory namespace resolution via `getFsNamespace`, matching `@fullstory/browser-api` resolution order (`data-fs-namespace` attribute, `_fs_namespace` global, default `FS`).
+
 ### 4.1.5
 - Adds optional support for replaying the readOnload functionality if Fullstory is restarted
 
