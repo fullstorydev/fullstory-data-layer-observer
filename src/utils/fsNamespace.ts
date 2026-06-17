@@ -3,10 +3,16 @@
 const FS_NAMESPACE_ATTR = 'data-fs-namespace';
 const DEFAULT_NAMESPACE = 'FS';
 
-function readCurrentScriptNamespace(): string | undefined {
+/**
+ * Reads the data-fs-namespace attribute from `win.document.currentScript`.
+ * Returns undefined when there is no document, no current script, no attribute,
+ * or when access throws (e.g. cross-origin or detached document).
+ *
+ * @param win the global to read from
+ */
+function readCurrentScriptNamespace(win: any): string | undefined {
   try {
-    if (typeof document === 'undefined') return undefined;
-    const script = document.currentScript as HTMLScriptElement | null;
+    const script = (win && win.document && win.document.currentScript) as HTMLScriptElement | null;
     return (script && script.getAttribute && script.getAttribute(FS_NAMESPACE_ATTR)) || undefined;
   } catch (_) {
     return undefined;
@@ -22,7 +28,7 @@ function readCurrentScriptNamespace(): string | undefined {
  * currentScript is still live and cache the resolved string (not the element, so it
  * can still be garbage collected after DOM removal).
  */
-const cachedScriptNamespace = readCurrentScriptNamespace();
+const cachedScriptNamespace = readCurrentScriptNamespace(typeof window !== 'undefined' ? window : undefined);
 
 /**
  * Resolves the FullStory client namespace on `win`.
@@ -35,15 +41,8 @@ const cachedScriptNamespace = readCurrentScriptNamespace();
  * @param win the global to read from; defaults to `window`
  */
 export function getFsNamespace(win: any = window): string {
-  let fromLiveScript: string | undefined;
-  try {
-    const script = (win && win.document && win.document.currentScript) as HTMLScriptElement | null;
-    fromLiveScript = (script && script.getAttribute && script.getAttribute(FS_NAMESPACE_ATTR))
-      || undefined;
-  } catch (_) {
-    // ignore: cross-origin or detached document access can throw. cachedScriptNamespace
-    // is captured at module load and does not depend on win.document, so it is still
-    // consulted below before the global fallback.
-  }
-  return fromLiveScript || cachedScriptNamespace || (win && win._fs_namespace) || DEFAULT_NAMESPACE;
+  return readCurrentScriptNamespace(win)
+    || cachedScriptNamespace
+    || (win && win._fs_namespace)
+    || DEFAULT_NAMESPACE;
 }
