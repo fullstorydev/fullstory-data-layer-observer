@@ -10,6 +10,9 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 4.1.7
+- Caches the FullStory namespace from the executing script tag at load so it resolves in deferred callbacks where document.currentScript is null, without relying on the _fs_namespace global.
+
 ### 4.1.6
 - Centralizes FullStory namespace resolution via `getFsNamespace`, matching fs.js resolution order (`data-fs-namespace` attribute, `_fs_namespace` global, default `FS`).
 
