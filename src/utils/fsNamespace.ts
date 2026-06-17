@@ -35,13 +35,15 @@ const cachedScriptNamespace = readCurrentScriptNamespace();
  * @param win the global to read from; defaults to `window`
  */
 export function getFsNamespace(win: any = window): string {
+  let fromLiveScript: string | undefined;
   try {
     const script = (win && win.document && win.document.currentScript) as HTMLScriptElement | null;
-    const fromScript = (script && script.getAttribute && script.getAttribute(FS_NAMESPACE_ATTR))
-      || cachedScriptNamespace;
-    if (fromScript) return fromScript;
+    fromLiveScript = (script && script.getAttribute && script.getAttribute(FS_NAMESPACE_ATTR))
+      || undefined;
   } catch (_) {
-    // ignore: cross-origin or detached document access can throw
+    // ignore: cross-origin or detached document access can throw. cachedScriptNamespace
+    // is captured at module load and does not depend on win.document, so it is still
+    // consulted below before the global fallback.
   }
-  return (win && win._fs_namespace) || DEFAULT_NAMESPACE;
+  return fromLiveScript || cachedScriptNamespace || (win && win._fs_namespace) || DEFAULT_NAMESPACE;
 }

@@ -123,4 +123,10 @@ describe('cached currentScript namespace (captured at module load)', () => {
     const { getFsNamespace: fresh } = loadFresh();
     expect(fresh(makeWin({ fsNamespace: 'GlobalNS' }))).to.eq('CachedNS');
   });
+
+  it('falls back to the cached namespace when live document access throws', () => {
+    stampDocumentCurrentScript('CachedNS');
+    const { getFsNamespace: fresh } = loadFresh();
+    expect(fresh(makeWin({ throwOnCurrentScript: true, fsNamespace: 'GlobalNS' }))).to.eq('CachedNS');
+  });
 });
