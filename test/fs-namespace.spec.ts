@@ -81,3 +81,52 @@ describe('getFsNamespace', () => {
     expect(getFsNamespace(undefined as any)).to.eq('FS');
   });
 });
+
+describe('cached currentScript namespace (captured at module load)', () => {
+  const modulePath = '../src/utils/fsNamespace';
+  let originalCurrentScript: PropertyDescriptor | undefined;
+
+  function stampDocumentCurrentScript(namespace: string | null) {
+    originalCurrentScript = Object.getOwnPropertyDescriptor(document, 'currentScript');
+    Object.defineProperty(document, 'currentScript', {
+      configurable: true,
+      value: namespace === null ? null : {
+        getAttribute: (name: string) => (name === 'data-fs-namespace' ? namespace : null),
+      },
+    });
+  }
+
+  function loadFresh(): { getFsNamespace: (win?: any) => string } {
+    delete require.cache[require.resolve(modulePath)];
+    // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires, import/no-dynamic-require
+    return require(modulePath);
+  }
+
+  afterEach(() => {
+    if (originalCurrentScript) {
+      Object.defineProperty(document, 'currentScript', originalCurrentScript);
+    } else {
+      delete (document as any).currentScript;
+    }
+    originalCurrentScript = undefined;
+    delete require.cache[require.resolve(modulePath)];
+  });
+
+  it('resolves the cached namespace when the live currentScript is null', () => {
+    stampDocumentCurrentScript('CachedNS');
+    const { getFsNamespace: fresh } = loadFresh();
+    expect(fresh(makeWin({}))).to.eq('CachedNS');
+  });
+
+  it('prefers the cached namespace over the _fs_namespace global', () => {
+    stampDocumentCurrentScript('CachedNS');
+    const { getFsNamespace: fresh } = loadFresh();
+    expect(fresh(makeWin({ fsNamespace: 'GlobalNS' }))).to.eq('CachedNS');
+  });
+
+  it('falls back to the cached namespace when live document access throws', () => {
+    stampDocumentCurrentScript('CachedNS');
+    const { getFsNamespace: fresh } = loadFresh();
+    expect(fresh(makeWin({ throwOnCurrentScript: true, fsNamespace: 'GlobalNS' }))).to.eq('CachedNS');
+  });
+});
