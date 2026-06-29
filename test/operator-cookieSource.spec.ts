@@ -12,7 +12,7 @@ import { expectNoCalls, expectParams } from './utils/mocha';
 const originalConsole = globalThis.console;
 const mockConsole = new Console();
 
-describe.only('cookieSource unit tests', () => {
+describe('cookieSource unit tests', () => {
   beforeEach(() => {
     Logger.getInstance().appender = new ConsoleAppender();
     (globalThis as any).console = mockConsole;
