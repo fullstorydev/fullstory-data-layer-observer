@@ -12,7 +12,7 @@ import { expectNoCalls, expectParams } from './utils/mocha';
 const originalConsole = globalThis.console;
 const mockConsole = new Console();
 
-describe('cookieSource unit tests', () => {
+describe.only('cookieSource unit tests', () => {
   beforeEach(() => {
     Logger.getInstance().appender = new ConsoleAppender();
     (globalThis as any).console = mockConsole;
@@ -316,5 +316,15 @@ describe('cookieSource unit tests', () => {
         foosball: 'five',
       },
     );
+  });
+
+  it('it should not work with starts with and wildcard/empty match', () => {
+    (globalThis as any).document = {
+      cookie: 'foo=one; footie=two; foosball=five; test=test',
+    };
+    const observer = new DataLayerObserver();
+    observer.registerRule({ cookieSource: ['^'], operators: [], destination: 'console.log' });
+    expectNoCalls(mockConsole, 'error');
+    expectNoCalls(mockConsole, 'log');
   });
 });

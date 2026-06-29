@@ -565,9 +565,7 @@ export class DataLayerObserver {
               const cookieList : string[] = Array.from(cookieMap.keys());
               const actualData:any = {};
               cookieSource.forEach((cookieName) => {
-                if (cookieMap.has(cookieName)) {
-                  actualData[cookieName] = cookieMap.get(cookieName);
-                } else if (cookieName && cookieName.startsWith('^')) {
+                if (cookieName && cookieName.startsWith('^') && cookieName.length > 1) {
                   const cookieNameWithoutPrefix = cookieName.substring(1);
                   const cookieMatches = cookieList.filter(
                     (cookie) => cookie && cookie.startsWith(cookieNameWithoutPrefix),
@@ -577,6 +575,8 @@ export class DataLayerObserver {
                       actualData[cookie] = cookieMap.get(cookie);
                     });
                   }
+                } else if (cookieMap.has(cookieName)) {
+                  actualData[cookieName] = cookieMap.get(cookieName);
                 }
               });
               const simpleValue = new SimpleDataLayerValue(cookieSource[0], actualData);
