@@ -562,10 +562,21 @@ export class DataLayerObserver {
                 );
               }
               const cookieMap = getAvailableCookies();
+              const cookieList : string[] = Array.from(cookieMap.keys());
               const actualData:any = {};
               cookieSource.forEach((cookieName) => {
                 if (cookieMap.has(cookieName)) {
                   actualData[cookieName] = cookieMap.get(cookieName);
+                } else if (cookieName && cookieName.startsWith('^')) {
+                  const cookieNameWithoutPrefix = cookieName.substring(1);
+                  const cookieMatches = cookieList.filter(
+                    (cookie) => cookie && cookie.startsWith(cookieNameWithoutPrefix),
+                  );
+                  if (cookieMatches && cookieMatches.length > 0) {
+                    cookieMatches.forEach((cookie) => {
+                      actualData[cookie] = cookieMap.get(cookie);
+                    });
+                  }
                 }
               });
               const simpleValue = new SimpleDataLayerValue(cookieSource[0], actualData);
