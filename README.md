@@ -219,13 +219,15 @@ window['_dlo_rules'] = [
 
 In place of `source` you can use `cookieSource` with an array of strings representing cookie names that will be looked up on the current page, and then send that through the operators if they exist.  Rules with a `cookieSource` will ignore the `monitor` flag on the rule, and will force `readOnLoad` to be `true`, This will attempt to read the cookies after `DOMContentLoaded` has fired.  If none of the cookie names specified are found the rule will not fire.
 
+You can use the `^` character to do a `startsWith` matching for cookie names.  For example a cookieSource of `^test` would match cookies of `test`, `tester`, and `test-cookie`
+
 Here is an example of a cookieSelector:
 
 ```javascript
 window['_dlo_rules'] = [
   {
     id: 'fs-uservars-user-all',
-    cookieSource: ['someCookie', 'anotherCookie'],
+    cookieSource: ['someCookie', 'anotherCookie', '^test'],
     operators: [
       { name: 'query', select: '$[(type,id)]' },
     ],

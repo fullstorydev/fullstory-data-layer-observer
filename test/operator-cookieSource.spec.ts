@@ -229,4 +229,102 @@ describe('cookieSource unit tests', () => {
       },
     );
   });
+
+  it('it should work with starts with operator', () => {
+    (globalThis as any).document = {
+      cookie: ' foo=; one=two; four=five',
+    };
+    const observer = new DataLayerObserver();
+    observer.registerRule({ cookieSource: ['^foo', '^one', '^four'], operators: [], destination: 'console.log' });
+    expectNoCalls(mockConsole, 'error');
+    const [log] = expectParams(mockConsole, 'log');
+    expect(log).to.be.deep.eq(
+      {
+        foo: '',
+        one: 'two',
+        four: 'five',
+      },
+    );
+  });
+
+  it('it should work with starts with multiple match', () => {
+    (globalThis as any).document = {
+      cookie: 'foo=one; footie=two; foosball=five',
+    };
+    const observer = new DataLayerObserver();
+    observer.registerRule({ cookieSource: ['^foo'], operators: [], destination: 'console.log' });
+    expectNoCalls(mockConsole, 'error');
+    const [log] = expectParams(mockConsole, 'log');
+    expect(log).to.be.deep.eq(
+      {
+        foo: 'one',
+        footie: 'two',
+        foosball: 'five',
+      },
+    );
+  });
+
+  it('it should work with starts with and exact match', () => {
+    (globalThis as any).document = {
+      cookie: 'foo=one; footie=two; foosball=five; test=test',
+    };
+    const observer = new DataLayerObserver();
+    observer.registerRule({ cookieSource: ['^foo', 'test'], operators: [], destination: 'console.log' });
+    expectNoCalls(mockConsole, 'error');
+    const [log] = expectParams(mockConsole, 'log');
+    expect(log).to.be.deep.eq(
+      {
+        foo: 'one',
+        footie: 'two',
+        foosball: 'five',
+        test: 'test',
+      },
+    );
+  });
+
+  it('it should work with starts with and no match', () => {
+    (globalThis as any).document = {
+      cookie: 'foo=one; footie=two; foosball=five; test=test',
+    };
+    const observer = new DataLayerObserver();
+    observer.registerRule({ cookieSource: ['^foob'], operators: [], destination: 'console.log' });
+    expectNoCalls(mockConsole, 'error');
+    expectNoCalls(mockConsole, 'log');
+  });
+
+  it('it should not break with starts with and special characters in test', () => {
+    (globalThis as any).document = {
+      cookie: 'foo=one; footie=two; foosball=five; test=test',
+    };
+    const observer = new DataLayerObserver();
+    observer.registerRule({ cookieSource: ['^^foo'], operators: [], destination: 'console.log' });
+    expectNoCalls(mockConsole, 'error');
+    expectNoCalls(mockConsole, 'log');
+  });
+
+  it('it should not break with starts with and special characters in cookie', () => {
+    (globalThis as any).document = {
+      cookie: 'foo=one; ^footie=two; foosball=five; test=test',
+    };
+    const observer = new DataLayerObserver();
+    observer.registerRule({ cookieSource: ['^foo'], operators: [], destination: 'console.log' });
+    expectNoCalls(mockConsole, 'error');
+    const [log] = expectParams(mockConsole, 'log');
+    expect(log).to.be.deep.eq(
+      {
+        foo: 'one',
+        foosball: 'five',
+      },
+    );
+  });
+
+  it('it should not work with starts with and wildcard/empty match', () => {
+    (globalThis as any).document = {
+      cookie: 'foo=one; footie=two; foosball=five; test=test',
+    };
+    const observer = new DataLayerObserver();
+    observer.registerRule({ cookieSource: ['^'], operators: [], destination: 'console.log' });
+    expectNoCalls(mockConsole, 'error');
+    expectNoCalls(mockConsole, 'log');
+  });
 });
