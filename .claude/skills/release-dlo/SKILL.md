@@ -178,7 +178,7 @@ checkout itself** on a fresh `green`-based branch — no worktree.
    > `gh pr edit --body`). When creating the PR fresh, just include it from the start as above.
 4. Show the user the PR link and prompt them to get it reviewed and merged.
 
-## Step 6 — ⛔ HUMAN GATE: wait for the sync PR to merge, then find the squash commit
+## Step 6 — ⛔ HUMAN GATE: wait for the sync PR to merge, then poll `green` for the deploy commit
 
 STOP. Ask the user to confirm once the PR from Step 5 is merged. Do not proceed until they confirm.
 
@@ -192,15 +192,28 @@ guarantees the deploy hash is build-passing.)
    SQUASH=$(cd "$FS_HOME" && gh pr view <pr-number> --json mergeCommit -q .mergeCommit.oid)
    echo "squash commit: $SQUASH"
    ```
-2. Find the commit immediately after it on `green` (first commit whose parent is the squash commit):
+2. **Poll `green` until the deploy commit lands — don't make the user watch.** Even after the merge,
+   `green` won't include the squash commit until CI builds `master` and advances `green` past it, AND a
+   further commit lands after the squash. This routinely takes **well over an hour**. Do NOT sit in the
+   foreground or ask the user to keep re-checking — run a background poll that re-fetches and exits once
+   the commit-after-squash appears on `green`, so you're re-invoked when it's ready:
    ```bash
-   git -C "$MN_ROOT" fetch origin -q
-   DEPLOY_HASH=$(git -C "$MN_ROOT" log --reverse --ancestry-path --format=%H "$SQUASH"..origin/green | head -1)
-   echo "deploy hash (commit after squash): $DEPLOY_HASH"
+   # Run with the Bash tool's run_in_background=true. It re-fetches, checks, sleeps, and exits
+   # (printing the deploy hash) only once green has advanced past the squash commit.
+   until git -C "$MN_ROOT" fetch origin green -q && \
+         H=$(git -C "$MN_ROOT" log --reverse --ancestry-path --format=%H "$SQUASH"..origin/green | head -1) && \
+         [ -n "$H" ]; do
+     sleep 900   # 15 min between checks
+   done
+   echo "DEPLOY_HASH=$H"
    ```
-   If that comes back empty, `green` has **not yet advanced past the squash commit** — CI builds are
-   still pending or failing. Wait for `green` to move (re-fetch and retry), or ask the user how to
-   proceed. Never fall back to deploying the squash commit itself.
+   - Launch it in the background (`run_in_background: true`) — a foreground `sleep` is blocked, and the
+     background runner re-invokes you when the loop exits. Tell the user you're polling and will notify
+     them when the hash is ready (expected >1hr); they don't need to babysit it.
+   - Alternatively, self-pace with scheduled re-checks (~15–20 min apart) if a background process isn't
+     appropriate for the run context.
+   - When it resolves, set `DEPLOY_HASH="$H"`, **notify the user**, and continue.
+   - Never fall back to deploying the squash commit itself.
 
 Use `$DEPLOY_HASH` for all deploys going forward (Steps 7 and 9). Confirm it with the user before deploying.
 
