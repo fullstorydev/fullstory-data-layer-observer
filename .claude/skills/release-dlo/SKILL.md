@@ -15,10 +15,15 @@ user before continuing. Never skip a gate. Never approve a prod deploy on the us
 - **DLO repo** (the "latest" source): this repository — `fullstory-data-layer-observer`. Detect its
   root with `git rev-parse --show-toplevel` from the current folder. Version lives in `package.json`.
 - **GitHub repo**: `fullstorydev/fullstory-data-layer-observer`. Release tags are `v<version>` (e.g. `v4.1.7`).
-- **Target folder** (inside the monorepo): `$FS_HOME/opensource/fullstory-data-layer-observer`.
-- **Monorepo**: `$FS_HOME` is `.../mn/projects/fullstory`, but the **git root is one level up** —
-  `git -C "$FS_HOME" rev-parse --show-toplevel` (e.g. `/Users/<you>/src/mn`). Worktrees are worktrees
-  of that root, so a worktree at `~/src/worktrees/<x>` contains `projects/fullstory/` inside it.
+- **Target folder** (inside the monorepo): `$FS_HOME/opensource/fullstory-data-layer-observer`. This is
+  where the sync writes and where the browser tests run — this skill operates in the `$FS_HOME` checkout
+  directly (no separate worktree; see the resolution note below).
+- **Monorepo**: `$FS_HOME` is `.../mn/projects/fullstory`; its **git root is one level up** —
+  `git -C "$FS_HOME" rev-parse --show-toplevel` (e.g. `/Users/<you>/src/mn`), referred to as `$MN_ROOT`.
+- **`opensource.go` and `conancli` resolve paths from the `$FS_HOME` env var, NOT the current directory**
+  (`fsio.ProjectPath` reads `$FS_HOME`). So `opensource.go sync` always writes into the `$FS_HOME`
+  checkout regardless of where you `cd` — a worktree elsewhere would be ignored. That's why this skill
+  switches the `$FS_HOME` checkout itself onto a `green`-based branch (Step 5) and works there.
 - **Trunk branches differ per repo — do not conflate them:**
   - DLO source repo (`fullstory-data-layer-observer`) → trunk is **`main`**. All Step 1–4 branch/tag/pull
     operations use `main`.
@@ -45,10 +50,20 @@ MN_ROOT="$(git -C "$FS_HOME" rev-parse --show-toplevel)"
 
 ---
 
-## Step 1 — Sync main
+## Step 1 — Preflight both repos
 
-From the DLO repo, switch to `main` if not already there, then `git pull` to get up to date.
-If the working tree is dirty, stop and ask the user how to proceed.
+**DLO repo:** switch to `main` if not already there, then `git pull` to get up to date. If the working
+tree is dirty, stop and ask the user how to proceed.
+
+**Monorepo (`$FS_HOME`):** this skill switches the `$FS_HOME` checkout onto a `green`-based sync branch
+in Step 5, so it must be clean first (otherwise the switch would carry or clobber the user's work).
+Capture the current branch to restore at the end, and require a clean tree:
+```bash
+ORIG_MN_BRANCH="$(git -C "$MN_ROOT" rev-parse --abbrev-ref HEAD)"   # remember to restore this at the end
+git -C "$MN_ROOT" status --porcelain
+```
+If `git status --porcelain` prints **anything** (uncommitted or untracked changes), do NOT proceed —
+show the user the list and ask how to handle it (stash / commit / abort). Continue only once it's clean.
 
 ## Step 2 — Read the current version
 
@@ -118,27 +133,32 @@ gh release view "v<latest-version>" -R "$GH_REPO"
 
 ## Step 5 — Create the monorepo sync branch + PR
 
-The sync pulls the just-released tag into the monorepo and updates the conan action config.
+The sync pulls the just-released tag into the monorepo and updates the conan action config. Because
+`opensource.go` writes to `$FS_HOME` regardless of cwd (see Orientation), do this **in the `$FS_HOME`
+checkout itself** on a fresh `green`-based branch — no worktree.
 
-1. Create a worktree of the monorepo from `origin/green`, named by version, branched as
-   `<whoami>/sync-dlo-v<latest-version>`:
+1. Switch `$FS_HOME` to a new branch off `origin/green` (the tree is clean, verified in Step 1):
    ```bash
-   git -C "$MN_ROOT" fetch origin
-   git -C "$MN_ROOT" worktree add "$HOME/src/worktrees/v<latest-version>" \
-     -b "$(whoami)/sync-dlo-v<latest-version>" origin/green
+   git -C "$MN_ROOT" fetch origin -q
+   git -C "$MN_ROOT" checkout -b "$(whoami)/sync-dlo-v<latest-version>" origin/green
    ```
-2. Run the sync from `projects/fullstory` inside the new worktree:
+2. Run the sync (writes into `$FS_HOME`):
    ```bash
-   WT="$HOME/src/worktrees/v<latest-version>/projects/fullstory"
-   ( cd "$WT" && tools/opensource.go sync fullstory-data-layer-observer v<latest-version> )
+   ( cd "$FS_HOME" && tools/opensource.go sync fullstory-data-layer-observer v<latest-version> )
    ```
    This updates `opensource/repos.yaml`, re-downloads source into `opensource/fullstory-data-layer-observer`,
    and updates `etc/cfg/deploy/actions/fullstory-data-layer-observer/action.yaml` (`RELEASE_TAG`).
-3. Commit all changes, push the branch, and open a PR **against `green`** (the monorepo trunk, not `main`):
+3. Stage **only the sync's paths** (don't `git add -A` — avoid sweeping in any unrelated untracked files),
+   commit, push, and open a PR **against `green`** (the monorepo trunk, not `main`):
    ```bash
-   ( cd "$WT" && git add -A && git commit -m "sync fullstory-data-layer-observer to v<latest-version>" )
-   git -C "$WT" push -u origin "$(whoami)/sync-dlo-v<latest-version>"
-   ( cd "$WT" && gh pr create --base green --fill )
+   git -C "$MN_ROOT" add \
+     projects/fullstory/opensource/repos.yaml \
+     projects/fullstory/opensource/fullstory-data-layer-observer \
+     projects/fullstory/etc/cfg/deploy/actions/fullstory-data-layer-observer
+   git -C "$MN_ROOT" status --short   # sanity-check: only the DLO sync files are staged
+   git -C "$MN_ROOT" commit -m "sync fullstory-data-layer-observer to v<latest-version>"
+   git -C "$MN_ROOT" push -u origin "$(whoami)/sync-dlo-v<latest-version>"
+   ( cd "$FS_HOME" && gh pr create --base green --fill )
    ```
 4. Show the user the PR link and prompt them to get it reviewed and merged.
 
@@ -150,9 +170,9 @@ Once merged, the PR is squash-merged into the monorepo trunk, **`green`**. You m
 **immediately after** the squash commit — NOT the squash commit itself. (Builds tend to fail *on* the
 squash commit; the mechanics aren't important here, just always take the next one.)
 
-1. Get the squash-merge commit from the PR:
+1. Get the squash-merge commit from the PR (run from `$FS_HOME` so `gh` targets the monorepo):
    ```bash
-   SQUASH=$(gh pr view <pr-number> -R <monorepo> --json mergeCommit -q .mergeCommit.oid)
+   SQUASH=$(cd "$FS_HOME" && gh pr view <pr-number> --json mergeCommit -q .mergeCommit.oid)
    echo "squash commit: $SQUASH"
    ```
 2. Find the commit immediately after it on `green` (first commit whose parent is the squash commit):
@@ -168,11 +188,11 @@ Use `$DEPLOY_HASH` for all deploys going forward (Steps 7 and 9). Confirm it wit
 
 ## Step 7 — Deploy to staging (conancli)
 
-Deploy `$DEPLOY_HASH` (from Step 6) to staging using the `conan-skill`. Run conancli from any checkout of
-the monorepo under `projects/fullstory` — the branch you're on doesn't matter, conancli just talks to
-Conan with the hash. First make sure the hash is fetched locally so Conan/git can resolve it:
+Deploy `$DEPLOY_HASH` (from Step 6) to staging using the `conan-skill`. Run conancli from `$FS_HOME` — the
+branch you're on doesn't matter, conancli just talks to Conan with the hash. First fetch so the hash
+resolves locally:
 ```bash
-( cd "$WT" && git fetch origin -q && go run ./tools/conancli/ -env=fs-staging create \
+( cd "$FS_HOME" && git fetch origin -q && go run ./tools/conancli/ -env=fs-staging create \
     -githash="$DEPLOY_HASH" -cogs=fullstory-data-layer-observer )
 ```
 This deploys both na1 and eu1 realms. Surface the returned Conan deployment URL. The action is `manual`,
@@ -181,16 +201,15 @@ so it may await approval — show the URL and wait until the deploy reports comp
 
 ## Step 8 — Browser tests against staging
 
-Run the tests from the **worktree's synced copy**, NOT `$FS_HOME/opensource/...`. This matters: the
-`$FS_HOME` checkout is often on some other branch and does **not** contain the sync PR's changes (those
-landed on `green` in Step 6), so its `test/*.spec.ts` can be stale — if the release changed the test suite,
-you'd run the wrong tests. The worktree's `opensource/fullstory-data-layer-observer` holds exactly the
-content synced from the release tag in Step 5, which is what's deployed.
+Run the tests from `$TARGET` (`$FS_HOME/opensource/fullstory-data-layer-observer`). Because Step 5 left
+the `$FS_HOME` checkout **on the sync branch**, this copy holds exactly the content synced from the
+release tag — including any new/changed `test/*.spec.ts` — so the tests match what's deployed. (Do NOT
+switch `$FS_HOME` back to another branch before testing, or the test suite would go stale.)
 ```bash
-TEST_DIR="$WT/opensource/fullstory-data-layer-observer"   # $WT from Step 5
+TEST_DIR="$TARGET"   # = $FS_HOME/opensource/fullstory-data-layer-observer, on the sync branch
 ```
 
-1. Install deps and browser binaries (the worktree copy has no `node_modules`):
+1. Install deps and browser binaries (this folder has no `node_modules`):
    ```bash
    ( cd "$TEST_DIR" && npm install && npm run test:browser:bootstrap )
    ```
@@ -211,7 +230,7 @@ If tests fail (for real, not the drift issue), stop and report to the user befor
 
 Once staging tests pass, deploy the **same `$DEPLOY_HASH`** (Step 6) to production:
 ```bash
-( cd "$WT" && go run ./tools/conancli/ -env=fullstoryapp create \
+( cd "$FS_HOME" && go run ./tools/conancli/ -env=fullstoryapp create \
     -githash="$DEPLOY_HASH" -cogs=fullstory-data-layer-observer )
 ```
 Surface the returned Conan **approval URL** to the user. STOP. Do **not** approve on their behalf. Wait
@@ -219,8 +238,8 @@ until the user confirms the deploy is live in production before continuing.
 
 ## Step 10 — Browser tests against production
 
-Repeat Step 8's tests from the **same `$TEST_DIR`** (the worktree copy), but drop `staging.` from the
-hosts (`edge.staging.fullstory.com` → `edge.fullstory.com`, `edge.eu1.staging.fullstory.com` →
+Repeat Step 8's tests from the **same `$TEST_DIR`** (still on the sync branch), but drop `staging.` from
+the hosts (`edge.staging.fullstory.com` → `edge.fullstory.com`, `edge.eu1.staging.fullstory.com` →
 `edge.eu1.fullstory.com`). Keep the same major:
 ```bash
 ( cd "$TEST_DIR" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.fullstory.com/datalayer/v4/latest.js npm run test:browser )
@@ -241,5 +260,6 @@ https://fullstory.grafana.net/d/-nktqXEnz/data-layer-observer-dlo?orgId=1&from=n
 - The three human gates are **hard stops**: Step 3.1.2 (bump PR merge, only if reached), Step 6 (sync PR
   merge), and Step 9 (prod approval). Never proceed past them without explicit user confirmation.
 - Report test output faithfully — if something fails, show it and stop rather than continuing to prod.
-- Clean up the worktree when done (optional, after the user confirms success):
-  `git -C "$MN_ROOT" worktree remove "$HOME/src/worktrees/v<latest-version>"`.
+- The `$FS_HOME` checkout is left on the sync branch through the tests (Steps 8/10). Once the user
+  confirms the release is done, offer to restore their original branch:
+  `git -C "$MN_ROOT" checkout "$ORIG_MN_BRANCH"` (from Step 1). Don't switch back before the tests run.
