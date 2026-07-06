@@ -19,6 +19,11 @@ user before continuing. Never skip a gate. Never approve a prod deploy on the us
 - **Monorepo**: `$FS_HOME` is `.../mn/projects/fullstory`, but the **git root is one level up** —
   `git -C "$FS_HOME" rev-parse --show-toplevel` (e.g. `/Users/<you>/src/mn`). Worktrees are worktrees
   of that root, so a worktree at `~/src/worktrees/<x>` contains `projects/fullstory/` inside it.
+- **Trunk branches differ per repo — do not conflate them:**
+  - DLO source repo (`fullstory-data-layer-observer`) → trunk is **`main`**. All Step 1–4 branch/tag/pull
+    operations use `main`.
+  - Monorepo (`$MN_ROOT` / `$FS_HOME`) → trunk is **`green`** (NOT `main`). The sync PR branches from,
+    targets, and merges into `origin/green`; the post-merge deploy commit is found on `origin/green`.
 - **conan cog name** for DLO: `fullstory-data-layer-observer`.
 - **conancli** (see the `conan-skill`): run from `projects/fullstory`:
   `go run ./tools/conancli/ -env=<env> create -githash=<hash> -cogs=fullstory-data-layer-observer`
@@ -56,17 +61,21 @@ Read `version` from `$TARGET/package.json` and compare (semver) to the DLO versi
 - **DLO version is OLDER than target** → this is an error state. Report it and **exit**.
 - **DLO version is NEWER than target** (e.g. `4.1.8` vs `4.1.7`) → `latest-version` = the DLO version.
   Skip to Step 4. (Normal case: whoever made changes already bumped the version + changelog.)
-- **Versions are EQUAL** → compare the **contents** of the two folders to detect unpushed code changes.
-  Compare source that actually ships — at minimum `src/`, plus `package.json`, `README.md`,
-  `rollup.config.js`, `tsconfig.json`. Ignore build output, `node_modules`, `.git`, lockfiles noise,
-  and files the monorepo sync doesn't take. A reasonable check:
+- **Versions are EQUAL** → the target folder was synced from the released tag `v<version>`, so the real
+  question is whether anything shippable has landed on DLO `main` since that release. Ask git directly —
+  this is **authoritative and catches every file** (`src/`, `package.json`, `README.md`,
+  `rollup.config.js`, `tsconfig.json`, tests, anything) rather than diffing a hand-picked list of paths
+  that can silently miss non-`src/` changes:
   ```bash
-  diff -rq --exclude=node_modules --exclude=.git --exclude=dist --exclude=build \
-    "$DLO_REPO/src" "$TARGET/src"
+  git -C "$DLO_REPO" fetch --tags -q
+  git -C "$DLO_REPO" diff --stat "v<version>..HEAD"   # lists changed files; empty output = no changes
   ```
-  - **Identical** → nothing to release. Report "target is already up to date with DLO main; nothing to
-    do" and **exit**.
-  - **Different** → someone landed code without bumping the version. Do a **patch** version bump (semver):
+  > Optional cross-check only: `diff -rq "$DLO_REPO" "$TARGET"`. Treat it as advisory — the target holds
+  > only the subset the monorepo sync ships, so `Only in $DLO_REPO: …` lines are expected noise. Never
+  > gate the release decision on a partial, hand-listed folder diff; use the git-tag diff above.
+  - **No changes** (empty diff) → nothing to release. Report "DLO main is unchanged since `v<version>`;
+    nothing to do" and **exit**.
+  - **Changes present** → code landed without a version bump. Do a **patch** version bump (semver):
     1. Compute `latest-version` = current version with patch incremented
        (e.g. `4.1.7` → `4.1.8`).
     2. `git diff v<previous-version>..HEAD` (previous = the current package.json version's tag) to
@@ -117,11 +126,11 @@ The sync pulls the just-released tag into the monorepo and updates the conan act
    ```
    This updates `opensource/repos.yaml`, re-downloads source into `opensource/fullstory-data-layer-observer`,
    and updates `etc/cfg/deploy/actions/fullstory-data-layer-observer/action.yaml` (`RELEASE_TAG`).
-3. Commit all changes, push the branch, and open a PR against the monorepo's default branch:
+3. Commit all changes, push the branch, and open a PR **against `green`** (the monorepo trunk, not `main`):
    ```bash
    ( cd "$WT" && git add -A && git commit -m "sync fullstory-data-layer-observer to v<latest-version>" )
    git -C "$WT" push -u origin "$(whoami)/sync-dlo-v<latest-version>"
-   ( cd "$WT" && gh pr create --fill )
+   ( cd "$WT" && gh pr create --base green --fill )
    ```
 4. Show the user the PR link and prompt them to get it reviewed and merged.
 
@@ -129,21 +138,34 @@ The sync pulls the just-released tag into the monorepo and updates the conan act
 
 STOP. Ask the user to confirm once the PR from Step 5 is merged. Do not proceed until they confirm.
 
-Once merged, the PR is squash-merged into the monorepo's main branch. Find that squash commit, then take
-the commit **immediately after** it on main — use that commit hash for all deploys going forward
-(Steps 7 and 9). Determine it via the PR:
-```bash
-gh pr view <pr-number> -R <monorepo> --json mergeCommit,state
-```
-Confirm the resolved deploy hash with the user before deploying.
+Once merged, the PR is squash-merged into the monorepo trunk, **`green`**. You must deploy the commit
+**immediately after** the squash commit — NOT the squash commit itself. (Builds tend to fail *on* the
+squash commit; the mechanics aren't important here, just always take the next one.)
+
+1. Get the squash-merge commit from the PR:
+   ```bash
+   SQUASH=$(gh pr view <pr-number> -R <monorepo> --json mergeCommit -q .mergeCommit.oid)
+   echo "squash commit: $SQUASH"
+   ```
+2. Find the commit immediately after it on `green` (first commit whose parent is the squash commit):
+   ```bash
+   git -C "$MN_ROOT" fetch origin -q
+   DEPLOY_HASH=$(git -C "$MN_ROOT" log --reverse --ancestry-path --format=%H "$SQUASH"..origin/green | head -1)
+   echo "deploy hash (commit after squash): $DEPLOY_HASH"
+   ```
+   If that comes back empty, the squash commit is currently the tip of `green` — wait for the next commit
+   to land (or ask the user how to proceed) rather than deploying the squash commit.
+
+Use `$DEPLOY_HASH` for all deploys going forward (Steps 7 and 9). Confirm it with the user before deploying.
 
 ## Step 7 — Deploy to staging (conancli)
 
-From `projects/fullstory` (in the worktree, still on the Step-5 branch), deploy the Step-6 commit to
-staging. Uses the `conan-skill`:
+Deploy `$DEPLOY_HASH` (from Step 6) to staging using the `conan-skill`. Run conancli from any checkout of
+the monorepo under `projects/fullstory` — the branch you're on doesn't matter, conancli just talks to
+Conan with the hash. First make sure the hash is fetched locally so Conan/git can resolve it:
 ```bash
-( cd "$WT" && go run ./tools/conancli/ -env=fs-staging create \
-    -githash=<step6-commit> -cogs=fullstory-data-layer-observer )
+( cd "$WT" && git fetch origin -q && go run ./tools/conancli/ -env=fs-staging create \
+    -githash="$DEPLOY_HASH" -cogs=fullstory-data-layer-observer )
 ```
 This deploys both na1 and eu1 realms. Surface the returned Conan deployment URL. The action is `manual`,
 so it may await approval — show the URL and wait until the deploy reports complete before testing.
@@ -151,16 +173,23 @@ so it may await approval — show the URL and wait until the deploy reports comp
 
 ## Step 8 — Browser tests against staging
 
-From the **target folder** `$FS_HOME/opensource/fullstory-data-layer-observer`:
+Run the tests from the **worktree's synced copy**, NOT `$FS_HOME/opensource/...`. This matters: the
+`$FS_HOME` checkout is often on some other branch and does **not** contain the sync PR's changes (those
+landed on `green` in Step 6), so its `test/*.spec.ts` can be stale — if the release changed the test suite,
+you'd run the wrong tests. The worktree's `opensource/fullstory-data-layer-observer` holds exactly the
+content synced from the release tag in Step 5, which is what's deployed.
+```bash
+TEST_DIR="$WT/opensource/fullstory-data-layer-observer"   # $WT from Step 5
+```
 
-1. Install browser binaries:
+1. Install deps and browser binaries (the worktree copy has no `node_modules`):
    ```bash
-   ( cd "$TARGET" && npm run test:browser:bootstrap )
+   ( cd "$TEST_DIR" && npm install && npm run test:browser:bootstrap )
    ```
 2. Run the browser tests against both staging edges. **Replace `v4` with the major of `latest-version`.**
    ```bash
-   ( cd "$TARGET" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.staging.fullstory.com/datalayer/v4/latest.js npm run test:browser )
-   ( cd "$TARGET" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.eu1.staging.fullstory.com/datalayer/v4/latest.js npm run test:browser )
+   ( cd "$TEST_DIR" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.staging.fullstory.com/datalayer/v4/latest.js npm run test:browser )
+   ( cd "$TEST_DIR" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.eu1.staging.fullstory.com/datalayer/v4/latest.js npm run test:browser )
    ```
 3. Display both results to the user.
 
@@ -172,21 +201,22 @@ If tests fail (for real, not the drift issue), stop and report to the user befor
 
 ## Step 9 — ⛔ HUMAN GATE: deploy to production
 
-Once staging tests pass, deploy the **same Step-6 commit** to production:
+Once staging tests pass, deploy the **same `$DEPLOY_HASH`** (Step 6) to production:
 ```bash
 ( cd "$WT" && go run ./tools/conancli/ -env=fullstoryapp create \
-    -githash=<step6-commit> -cogs=fullstory-data-layer-observer )
+    -githash="$DEPLOY_HASH" -cogs=fullstory-data-layer-observer )
 ```
 Surface the returned Conan **approval URL** to the user. STOP. Do **not** approve on their behalf. Wait
 until the user confirms the deploy is live in production before continuing.
 
 ## Step 10 — Browser tests against production
 
-Repeat Step 8's tests, but drop `staging.` from the hosts (`edge.staging.fullstory.com` →
-`edge.fullstory.com`, `edge.eu1.staging.fullstory.com` → `edge.eu1.fullstory.com`). Keep the same major:
+Repeat Step 8's tests from the **same `$TEST_DIR`** (the worktree copy), but drop `staging.` from the
+hosts (`edge.staging.fullstory.com` → `edge.fullstory.com`, `edge.eu1.staging.fullstory.com` →
+`edge.eu1.fullstory.com`). Keep the same major:
 ```bash
-( cd "$TARGET" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.fullstory.com/datalayer/v4/latest.js npm run test:browser )
-( cd "$TARGET" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.eu1.fullstory.com/datalayer/v4/latest.js npm run test:browser )
+( cd "$TEST_DIR" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.fullstory.com/datalayer/v4/latest.js npm run test:browser )
+( cd "$TEST_DIR" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.eu1.fullstory.com/datalayer/v4/latest.js npm run test:browser )
 ```
 Display the results to the user.
 
