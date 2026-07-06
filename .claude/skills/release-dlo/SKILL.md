@@ -54,9 +54,17 @@ If the working tree is dirty, stop and ask the user how to proceed.
 
 Read `version` from the DLO repo `package.json`.
 
-## Step 3 — Compare against the target folder
+## Step 3 — Compare against the released version
 
-Read `version` from `$TARGET/package.json` and compare (semver) to the DLO version.
+Read the currently-released target version from the monorepo trunk (`origin/green`) directly — NOT from
+the `$TARGET` working copy. The `$FS_HOME` checkout is usually parked on some other branch, so its
+`opensource/.../package.json` can be stale; reading `origin/green` needs no checkout and is authoritative:
+```bash
+git -C "$MN_ROOT" fetch origin -q
+git -C "$MN_ROOT" show origin/green:opensource/fullstory-data-layer-observer/package.json \
+  | node -p "JSON.parse(require('fs').readFileSync(0)).version"
+```
+Compare that (semver) to the DLO version from Step 2.
 
 - **DLO version is OLDER than target** → this is an error state. Report it and **exit**.
 - **DLO version is NEWER than target** (e.g. `4.1.8` vs `4.1.7`) → `latest-version` = the DLO version.
