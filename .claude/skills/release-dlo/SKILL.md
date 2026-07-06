@@ -81,15 +81,24 @@ the `$TARGET` working copy. The `$FS_HOME` checkout is usually parked on some ot
 `opensource/.../package.json` can be stale; reading `origin/green` needs no checkout and is authoritative:
 ```bash
 git -C "$MN_ROOT" fetch origin -q
-git -C "$MN_ROOT" show origin/green:opensource/fullstory-data-layer-observer/package.json \
-  | node -p "JSON.parse(require('fs').readFileSync(0)).version"
+TGT_VER=$(git -C "$MN_ROOT" show origin/green:opensource/fullstory-data-layer-observer/package.json \
+  | node -p "JSON.parse(require('fs').readFileSync(0)).version")
+DLO_VER=$(node -p "require('$DLO_REPO/package.json').version")   # from Step 2
 ```
-Compare that (semver) to the DLO version from Step 2.
+Compare them with a **proper numeric semver comparison — NOT a string/lexicographic compare** (else
+`4.1.10` would sort *before* `4.1.9`, which is wrong; also don't rely on `sort -V`, unavailable on
+macOS/BSD `sort`). Compare each dotted component numerically, e.g.:
+```bash
+CMP=$(node -e 'const a=process.argv[1].split(".").map(Number),b=process.argv[2].split(".").map(Number);
+for(let i=0;i<Math.max(a.length,b.length);i++){const x=a[i]||0,y=b[i]||0;if(x!==y){console.log(x>y?"newer":"older");process.exit()}}
+console.log("equal")' "$DLO_VER" "$TGT_VER")
+echo "DLO $DLO_VER vs target $TGT_VER => DLO is $CMP"
+```
 
-- **DLO version is OLDER than target** → this is an error state. Report it and **exit**.
-- **DLO version is NEWER than target** (e.g. `4.1.8` vs `4.1.7`) → `latest-version` = the DLO version.
+- **`older`** → DLO version is behind the released target — an error state. Report it and **exit**.
+- **`newer`** (e.g. `4.1.8` vs `4.1.7`) → `latest-version` = the DLO version.
   Skip to Step 4. (Normal case: whoever made changes already bumped the version + changelog.)
-- **Versions are EQUAL** → the target folder was synced from the released tag `v<version>`, so the real
+- **`equal`** → the target folder was synced from the released tag `v<version>`, so the real
   question is whether anything shippable has landed on DLO `main` since that release. Ask git directly —
   this is **authoritative and catches every file** (`src/`, `package.json`, `README.md`,
   `rollup.config.js`, `tsconfig.json`, tests, anything) rather than diffing a hand-picked list of paths
