@@ -20,6 +20,9 @@ user before continuing. Never skip a gate. Never approve a prod deploy on the us
   directly (no separate worktree; see the resolution note below).
 - **Monorepo**: `$FS_HOME` is `.../mn/projects/fullstory`; its **git root is one level up** —
   `git -C "$FS_HOME" rev-parse --show-toplevel` (e.g. `/Users/<you>/src/mn`), referred to as `$MN_ROOT`.
+  Consequence: any **repo-root-relative git path** (e.g. `git show origin/green:<path>`, `git add <path>`
+  run with `-C "$MN_ROOT"`) must be prefixed with **`projects/fullstory/`** — the `opensource/…` and
+  `etc/cfg/…` trees live under `$FS_HOME`, not at the repo root.
 - **`opensource.go` and `conancli` resolve paths from the `$FS_HOME` env var, NOT the current directory**
   (`fsio.ProjectPath` reads `$FS_HOME`). So `opensource.go sync` always writes into the `$FS_HOME`
   checkout regardless of where you `cd` — a worktree elsewhere would be ignored. That's why this skill
@@ -81,7 +84,7 @@ the `$TARGET` working copy. The `$FS_HOME` checkout is usually parked on some ot
 `opensource/.../package.json` can be stale; reading `origin/green` needs no checkout and is authoritative:
 ```bash
 git -C "$MN_ROOT" fetch origin -q
-TGT_VER=$(git -C "$MN_ROOT" show origin/green:opensource/fullstory-data-layer-observer/package.json \
+TGT_VER=$(git -C "$MN_ROOT" show origin/green:projects/fullstory/opensource/fullstory-data-layer-observer/package.json \
   | node -p "JSON.parse(require('fs').readFileSync(0)).version")
 DLO_VER=$(node -p "require('$DLO_REPO/package.json').version")   # from Step 2
 ```
