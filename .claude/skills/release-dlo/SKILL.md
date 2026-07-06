@@ -45,8 +45,12 @@ user before continuing. Never skip a gate. Never approve a prod deploy on the us
   Go script, run from `projects/fullstory`). It downloads the **GitHub release tag** into the monorepo,
   so the GitHub release/tag MUST exist before you sync.
 
-Throughout, call the resolved version **`latest-version`** (bare semver, no `v`). Derive the **major**
-as `v<N>` from it (e.g. `4.1.8` → `v4`); the test URLs and CDN paths use this major.
+Throughout, call the resolved version **`latest-version`** (bare semver, no `v`). Once it's known
+(Step 3), derive the **major** into a shell var and use that in the test URLs — do NOT hardcode a literal
+like `v4` (it looks runnable but silently breaks on a new major):
+```bash
+MAJOR="v$(printf '%s' "<latest-version>" | cut -d. -f1)"   # e.g. 4.1.8 -> v4
+```
 
 Set up shell vars once, at the start:
 ```bash
@@ -256,10 +260,10 @@ TEST_DIR="$TARGET"   # = $FS_HOME/opensource/fullstory-data-layer-observer, on t
    ```bash
    ( cd "$TEST_DIR" && npm install && npm run test:browser:bootstrap )
    ```
-2. Run the browser tests against both staging edges. **Replace `v4` with the major of `latest-version`.**
+2. Run the browser tests against both staging edges (uses `$MAJOR` from Orientation — never a hardcoded `v4`):
    ```bash
-   ( cd "$TEST_DIR" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.staging.fullstory.com/datalayer/v4/latest.js npm run test:browser )
-   ( cd "$TEST_DIR" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.eu1.staging.fullstory.com/datalayer/v4/latest.js npm run test:browser )
+   ( cd "$TEST_DIR" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.staging.fullstory.com/datalayer/${MAJOR}/latest.js npm run test:browser )
+   ( cd "$TEST_DIR" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.eu1.staging.fullstory.com/datalayer/${MAJOR}/latest.js npm run test:browser )
    ```
 3. Display both results to the user.
 
@@ -285,8 +289,8 @@ Repeat Step 8's tests from the **same `$TEST_DIR`** (still on the sync branch), 
 the hosts (`edge.staging.fullstory.com` → `edge.fullstory.com`, `edge.eu1.staging.fullstory.com` →
 `edge.eu1.fullstory.com`). Keep the same major:
 ```bash
-( cd "$TEST_DIR" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.fullstory.com/datalayer/v4/latest.js npm run test:browser )
-( cd "$TEST_DIR" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.eu1.fullstory.com/datalayer/v4/latest.js npm run test:browser )
+( cd "$TEST_DIR" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.fullstory.com/datalayer/${MAJOR}/latest.js npm run test:browser )
+( cd "$TEST_DIR" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.eu1.fullstory.com/datalayer/${MAJOR}/latest.js npm run test:browser )
 ```
 Display the results to the user.
 
