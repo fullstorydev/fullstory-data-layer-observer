@@ -10,6 +10,9 @@ Data Layer Observer follows semantic versioning when releasing updates.
 
 ## History
 
+### 4.1.8
+- Adds `startsWith` matching for `cookieSource` cookie names using a `^` prefix (e.g. `^test` matches `test`, `tester`, and `test-cookie`).
+
 ### 4.1.7
 - Caches the FullStory namespace from the executing script tag at load so it resolves in deferred callbacks where document.currentScript is null, without relying on the _fs_namespace global.
 
