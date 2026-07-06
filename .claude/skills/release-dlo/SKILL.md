@@ -24,11 +24,15 @@ user before continuing. Never skip a gate. Never approve a prod deploy on the us
   (`fsio.ProjectPath` reads `$FS_HOME`). So `opensource.go sync` always writes into the `$FS_HOME`
   checkout regardless of where you `cd` — a worktree elsewhere would be ignored. That's why this skill
   switches the `$FS_HOME` checkout itself onto a `green`-based branch (Step 5) and works there.
-- **Trunk branches differ per repo — do not conflate them:**
+- **Trunk / branch model differs per repo — do not conflate them:**
   - DLO source repo (`fullstory-data-layer-observer`) → trunk is **`main`**. All Step 1–4 branch/tag/pull
     operations use `main`.
-  - Monorepo (`$MN_ROOT` / `$FS_HOME`) → trunk is **`green`** (NOT `main`). The sync PR branches from,
-    targets, and merges into `origin/green`; the post-merge deploy commit is found on `origin/green`.
+  - Monorepo (`$MN_ROOT` / `$FS_HOME`) → two branches matter, **`green`** and **`master`** (NOT `main`):
+    - `green` is the known **build-passing** branch. You cannot PR into it directly. Branch **off**
+      `origin/green` for the sync.
+    - `master` is the mainline you **PR into**. When a merged commit's build passes, CI **auto-advances
+      `green`** to it. So: base the sync branch on `green`, but target the PR at **`master`**.
+    - The squash-merge lands on `master`; the post-merge deploy commit is found on `origin/master`.
 - **conan cog name** for DLO: `fullstory-data-layer-observer`.
 - **conancli** (see the `conan-skill`): run from `projects/fullstory`:
   `go run ./tools/conancli/ -env=<env> create -githash=<hash> -cogs=fullstory-data-layer-observer`
@@ -149,7 +153,7 @@ checkout itself** on a fresh `green`-based branch — no worktree.
    This updates `opensource/repos.yaml`, re-downloads source into `opensource/fullstory-data-layer-observer`,
    and updates `etc/cfg/deploy/actions/fullstory-data-layer-observer/action.yaml` (`RELEASE_TAG`).
 3. Stage **only the sync's paths** (don't `git add -A` — avoid sweeping in any unrelated untracked files),
-   commit, push, and open a PR **against `green`** (the monorepo trunk, not `main`):
+   commit, push, and open a PR **against `master`** (you branch off `green` but PR into `master`):
    ```bash
    git -C "$MN_ROOT" add \
      projects/fullstory/opensource/repos.yaml \
@@ -158,30 +162,41 @@ checkout itself** on a fresh `green`-based branch — no worktree.
    git -C "$MN_ROOT" status --short   # sanity-check: only the DLO sync files are staged
    git -C "$MN_ROOT" commit -m "sync fullstory-data-layer-observer to v<latest-version>"
    git -C "$MN_ROOT" push -u origin "$(whoami)/sync-dlo-v<latest-version>"
-   ( cd "$FS_HOME" && gh pr create --base green --fill )
    ```
+   Then open the PR **against `master`** (NOT `green` — you can't PR into `green`) with a body that states
+   it's a sync and includes the changelog. Pull the changelog section for this version straight out of the
+   synced `CHANGELOG.md`:
+   ```bash
+   NOTES=$(awk '/^### <latest-version>$/{f=1;next} /^### /{f=0} f' "$TARGET/CHANGELOG.md")
+   ( cd "$FS_HOME" && gh pr create --base master \
+       --title "sync fullstory-data-layer-observer to v<latest-version>" \
+       --body "$(printf 'Syncs the open-source [\`fullstory-data-layer-observer\`](https://github.com/fullstorydev/fullstory-data-layer-observer) release **v<latest-version>** into the monorepo — updates \`opensource/repos.yaml\`, the deploy \`action.yaml\` \`RELEASE_TAG\`, and the vendored source under \`opensource/fullstory-data-layer-observer\`.\n\n## Changelog (v<latest-version>)\n%s\n' "$NOTES")" )
+   ```
+   > If a bot (e.g. Cursor) has already populated the PR body by the time you'd set it, **prepend** this
+   > content above the existing text instead of overwriting it (fetch `gh pr view --json body`, then
+   > `gh pr edit --body`). When creating the PR fresh, just include it from the start as above.
 4. Show the user the PR link and prompt them to get it reviewed and merged.
 
 ## Step 6 — ⛔ HUMAN GATE: wait for the sync PR to merge, then find the squash commit
 
 STOP. Ask the user to confirm once the PR from Step 5 is merged. Do not proceed until they confirm.
 
-Once merged, the PR is squash-merged into the monorepo trunk, **`green`**. You must deploy the commit
-**immediately after** the squash commit — NOT the squash commit itself. (Builds tend to fail *on* the
-squash commit; the mechanics aren't important here, just always take the next one.)
+Once merged, the PR is squash-merged into **`master`**. You must deploy the commit **immediately after**
+the squash commit — NOT the squash commit itself. (Builds tend to fail *on* the squash commit; the
+mechanics aren't important here, just always take the next one.)
 
 1. Get the squash-merge commit from the PR (run from `$FS_HOME` so `gh` targets the monorepo):
    ```bash
    SQUASH=$(cd "$FS_HOME" && gh pr view <pr-number> --json mergeCommit -q .mergeCommit.oid)
    echo "squash commit: $SQUASH"
    ```
-2. Find the commit immediately after it on `green` (first commit whose parent is the squash commit):
+2. Find the commit immediately after it on `master` (first commit whose parent is the squash commit):
    ```bash
    git -C "$MN_ROOT" fetch origin -q
-   DEPLOY_HASH=$(git -C "$MN_ROOT" log --reverse --ancestry-path --format=%H "$SQUASH"..origin/green | head -1)
+   DEPLOY_HASH=$(git -C "$MN_ROOT" log --reverse --ancestry-path --format=%H "$SQUASH"..origin/master | head -1)
    echo "deploy hash (commit after squash): $DEPLOY_HASH"
    ```
-   If that comes back empty, the squash commit is currently the tip of `green` — wait for the next commit
+   If that comes back empty, the squash commit is currently the tip of `master` — wait for the next commit
    to land (or ask the user how to proceed) rather than deploying the squash commit.
 
 Use `$DEPLOY_HASH` for all deploys going forward (Steps 7 and 9). Confirm it with the user before deploying.
