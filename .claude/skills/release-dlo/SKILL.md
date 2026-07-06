@@ -32,7 +32,8 @@ user before continuing. Never skip a gate. Never approve a prod deploy on the us
       `origin/green` for the sync.
     - `master` is the mainline you **PR into**. When a merged commit's build passes, CI **auto-advances
       `green`** to it. So: base the sync branch on `green`, but target the PR at **`master`**.
-    - The squash-merge lands on `master`; the post-merge deploy commit is found on `origin/master`.
+    - The squash-merge lands on `master`; once its build passes CI advances `green` past it. The deploy
+      commit (commit-after-squash) is taken from `origin/green` — so it's inherently build-passing.
 - **conan cog name** for DLO: `fullstory-data-layer-observer`.
 - **conancli** (see the `conan-skill`): run from `projects/fullstory`:
   `go run ./tools/conancli/ -env=<env> create -githash=<hash> -cogs=fullstory-data-layer-observer`
@@ -181,23 +182,25 @@ checkout itself** on a fresh `green`-based branch — no worktree.
 
 STOP. Ask the user to confirm once the PR from Step 5 is merged. Do not proceed until they confirm.
 
-Once merged, the PR is squash-merged into **`master`**. You must deploy the commit **immediately after**
-the squash commit — NOT the squash commit itself. (Builds tend to fail *on* the squash commit; the
-mechanics aren't important here, just always take the next one.)
+Once merged, the PR is squash-merged into **`master`**, and when its build passes CI advances **`green`**
+past it. You deploy the commit **immediately after** the squash commit, taken from **`green`** — NOT the
+squash commit itself. (Builds tend to fail *on* the squash commit; taking the next commit on `green` also
+guarantees the deploy hash is build-passing.)
 
 1. Get the squash-merge commit from the PR (run from `$FS_HOME` so `gh` targets the monorepo):
    ```bash
    SQUASH=$(cd "$FS_HOME" && gh pr view <pr-number> --json mergeCommit -q .mergeCommit.oid)
    echo "squash commit: $SQUASH"
    ```
-2. Find the commit immediately after it on `master` (first commit whose parent is the squash commit):
+2. Find the commit immediately after it on `green` (first commit whose parent is the squash commit):
    ```bash
    git -C "$MN_ROOT" fetch origin -q
-   DEPLOY_HASH=$(git -C "$MN_ROOT" log --reverse --ancestry-path --format=%H "$SQUASH"..origin/master | head -1)
+   DEPLOY_HASH=$(git -C "$MN_ROOT" log --reverse --ancestry-path --format=%H "$SQUASH"..origin/green | head -1)
    echo "deploy hash (commit after squash): $DEPLOY_HASH"
    ```
-   If that comes back empty, the squash commit is currently the tip of `master` — wait for the next commit
-   to land (or ask the user how to proceed) rather than deploying the squash commit.
+   If that comes back empty, `green` has **not yet advanced past the squash commit** — CI builds are
+   still pending or failing. Wait for `green` to move (re-fetch and retry), or ask the user how to
+   proceed. Never fall back to deploying the squash commit itself.
 
 Use `$DEPLOY_HASH` for all deploys going forward (Steps 7 and 9). Confirm it with the user before deploying.
 
