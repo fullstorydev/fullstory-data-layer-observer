@@ -259,25 +259,24 @@ This deploys both na1 and eu1 realms; surface the Conan URL and wait for it to c
 
 ## Step 8 — Browser tests against staging
 
-Run the tests from `$TARGET` (`$FS_HOME/opensource/fullstory-data-layer-observer`). Because Step 5 left
-the `$FS_HOME` checkout **on the sync branch**, this copy holds exactly the content synced from the
-release tag — including any new/changed `test/*.spec.ts` — so the tests match what's deployed. (Do NOT
-switch `$FS_HOME` back to another branch before testing, or the test suite would go stale.)
+Run the tests from the **standalone `fullstory-data-layer-observer` repo** (`$DLO_REPO`) — NOT the monorepo
+`$TARGET`. Make sure the checkout is on the released code: Step 1 left it on `main` (which is at
+`v<latest-version>` once the release is out); to be exact, `git -C "$DLO_REPO" checkout v<latest-version>`.
+The browser tests exercise the deployed CDN script, so the checkout just needs the released test suite.
 ```bash
-TEST_DIR="$TARGET"   # = $FS_HOME/opensource/fullstory-data-layer-observer, on the sync branch
+TEST_DIR="$DLO_REPO"   # the standalone fullstory-data-layer-observer repo, at the released version
 ```
 
 1. **Pin Node 20** (required). This repo fails under the machine's global Node when it's been upgraded
-   (e.g. Homebrew bumped it to v26) — the browser tests won't start. Install node@20 once, then pin it for
-   the test dir with direnv (the DLO source repo's own `.envrc` is the model):
+   (e.g. Homebrew bumped it to v26) — the browser tests won't start. Install node@20 once and pin it for
+   the repo with direnv (this `.envrc` lives permanently in the standalone repo):
    ```bash
    brew install node@20                                                    # once per machine
    printf 'export PATH="/opt/homebrew/opt/node@20/bin:$PATH"\n' > "$TEST_DIR/.envrc"
    ( cd "$TEST_DIR" && direnv allow && node --version )                     # expect v20.x, not v26
    ```
-   > Put the `.envrc` in the `fullstory-data-layer-observer` dir, NOT at `$FS_HOME`. If `$TEST_DIR` is the
-   > synced `$TARGET`, note a later `opensource.go sync` overwrites that folder — recreate the `.envrc`
-   > (and re-run `direnv allow`) after syncing.
+   > In a non-interactive shell direnv won't auto-load; prefix test commands with
+   > `direnv exec "$TEST_DIR" …` (or `export PATH="/opt/homebrew/opt/node@20/bin:$PATH"`) so they use node 20.
 2. Install deps and browser binaries. **`webkit` must be installed explicitly** for this repo's setup, in
    addition to the general bootstrap (which otherwise may not fetch it):
    ```bash
@@ -309,9 +308,9 @@ until the user confirms the deploy is live in production before continuing.
 
 ## Step 10 — Browser tests against production
 
-Repeat Step 8's tests from the **same `$TEST_DIR`** (still on the sync branch), but drop `staging.` from
-the hosts (`edge.staging.fullstory.com` → `edge.fullstory.com`, `edge.eu1.staging.fullstory.com` →
-`edge.eu1.fullstory.com`). Keep the same major:
+Repeat Step 8's tests from the **same `$TEST_DIR`** (the standalone repo; node 20 + browsers already set
+up), but drop `staging.` from the hosts (`edge.staging.fullstory.com` → `edge.fullstory.com`,
+`edge.eu1.staging.fullstory.com` → `edge.eu1.fullstory.com`). Keep the same major:
 ```bash
 ( cd "$TEST_DIR" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.fullstory.com/datalayer/${MAJOR}/latest.js npm run test:browser )
 ( cd "$TEST_DIR" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.eu1.fullstory.com/datalayer/${MAJOR}/latest.js npm run test:browser )
