@@ -37,10 +37,15 @@ user before continuing. Never skip a gate. Never approve a prod deploy on the us
       `green`** to it. So: base the sync branch on `green`, but target the PR at **`master`**.
     - The squash-merge lands on `master`; once its build passes CI advances `green` past it. The deploy
       commit (commit-after-squash) is taken from `origin/green` — so it's inherently build-passing.
-- **conan cog name** for DLO: `fullstory-data-layer-observer`.
+- **conan cog name** for DLO is the action's **display name**, `deploy 'fullstory-data-layer-observer'`
+  (NOT the directory name `fullstory-data-layer-observer`). Using the directory name fails at deploy time
+  with `Unable to find selected cog … in expanded tarball`. Pass it quoted: `-cog="deploy 'fullstory-data-layer-observer'"`.
 - **conancli** (see the `conan-skill`): run from `projects/fullstory`:
-  `go run ./tools/conancli/ -env=<env> create -githash=<hash> -cogs=fullstory-data-layer-observer`
+  `go run ./tools/conancli/ -env=<env> create -githash=<hash> -cogs="deploy 'fullstory-data-layer-observer'"`
   - staging env = `fs-staging`, production env = `fullstoryapp`. One `create` deploys **both** na1 and eu1 realms.
+- **Staging auto-deploys** this cog (deploys show creator `autodeploy` in `history`); once `green` has the
+  sync, staging gets it automatically — a manual staging deploy is usually unnecessary (verify instead).
+  **Prod is manual** (human deployers in `history`) — Step 9 is a real `conancli create` + approval.
 - **sync tool**: `tools/opensource.go sync fullstory-data-layer-observer v<version>` (a self-executing
   Go script, run from `projects/fullstory`). It downloads the **GitHub release tag** into the monorepo,
   so the GitHub release/tag MUST exist before you sync.
@@ -233,18 +238,24 @@ guarantees the deploy hash is build-passing.)
 
 Use `$DEPLOY_HASH` for all deploys going forward (Steps 7 and 9). Confirm it with the user before deploying.
 
-## Step 7 — Deploy to staging (conancli)
+## Step 7 — Staging (usually auto-deployed — verify, don't manually deploy)
 
-Deploy `$DEPLOY_HASH` (from Step 6) to staging using the `conan-skill`. Run conancli from `$FS_HOME` — the
-branch you're on doesn't matter, conancli just talks to Conan with the hash. First fetch so the hash
-resolves locally:
+Staging **auto-deploys** this cog, so once `green` has the sync it typically ships to staging on its own.
+**Verify first** rather than deploying manually:
+```bash
+# Recent staging deploys for the cog (look for a SUCCEEDED autodeploy whose hash includes the sync):
+( cd "$FS_HOME" && go run ./tools/conancli/ -env=fs-staging history -cog="deploy 'fullstory-data-layer-observer'" -limit=5 )
+# And confirm the CDN serves the new version on both edges (expect HTTP 200):
+curl -s -o /dev/null -w "na1 %{http_code}\n" "https://edge.staging.fullstory.com/datalayer/${MAJOR}/v<latest-version>.js"
+curl -s -o /dev/null -w "eu1 %{http_code}\n" "https://edge.eu1.staging.fullstory.com/datalayer/${MAJOR}/v<latest-version>.js"
+```
+If staging already serves `v<latest-version>` on both edges, staging is done — go to Step 8. Only if it
+hasn't autodeployed after a reasonable wait, deploy it manually (note the **display-name** cog):
 ```bash
 ( cd "$FS_HOME" && git fetch origin -q && go run ./tools/conancli/ -env=fs-staging create \
-    -githash="$DEPLOY_HASH" -cogs=fullstory-data-layer-observer )
+    -githash="$DEPLOY_HASH" -cogs="deploy 'fullstory-data-layer-observer'" )
 ```
-This deploys both na1 and eu1 realms. Surface the returned Conan deployment URL. The action is `manual`,
-so it may await approval — show the URL and wait until the deploy reports complete before testing.
-(You may pass `-auto-approve` for staging if the user wants it streamlined; never for prod.)
+This deploys both na1 and eu1 realms; surface the Conan URL and wait for it to complete before testing.
 
 ## Step 8 — Browser tests against staging
 
@@ -275,10 +286,11 @@ If tests fail (for real, not the drift issue), stop and report to the user befor
 
 ## Step 9 — ⛔ HUMAN GATE: deploy to production
 
-Once staging tests pass, deploy the **same `$DEPLOY_HASH`** (Step 6) to production:
+Prod is **manual** (no autodeploy), so this is a real deploy. Once staging tests pass, deploy the **same
+`$DEPLOY_HASH`** (Step 6) to production (note the **display-name** cog):
 ```bash
-( cd "$FS_HOME" && go run ./tools/conancli/ -env=fullstoryapp create \
-    -githash="$DEPLOY_HASH" -cogs=fullstory-data-layer-observer )
+( cd "$FS_HOME" && git fetch origin -q && go run ./tools/conancli/ -env=fullstoryapp create \
+    -githash="$DEPLOY_HASH" -cogs="deploy 'fullstory-data-layer-observer'" )
 ```
 Surface the returned Conan **approval URL** to the user. STOP. Do **not** approve on their behalf. Wait
 until the user confirms the deploy is live in production before continuing.
