@@ -267,20 +267,32 @@ switch `$FS_HOME` back to another branch before testing, or the test suite would
 TEST_DIR="$TARGET"   # = $FS_HOME/opensource/fullstory-data-layer-observer, on the sync branch
 ```
 
-1. Install deps and browser binaries (this folder has no `node_modules`):
+1. **Pin Node 20** (required). This repo fails under the machine's global Node when it's been upgraded
+   (e.g. Homebrew bumped it to v26) — the browser tests won't start. Install node@20 once, then pin it for
+   the test dir with direnv (the DLO source repo's own `.envrc` is the model):
+   ```bash
+   brew install node@20                                                    # once per machine
+   printf 'export PATH="/opt/homebrew/opt/node@20/bin:$PATH"\n' > "$TEST_DIR/.envrc"
+   ( cd "$TEST_DIR" && direnv allow && node --version )                     # expect v20.x, not v26
+   ```
+   > Put the `.envrc` in the `fullstory-data-layer-observer` dir, NOT at `$FS_HOME`. If `$TEST_DIR` is the
+   > synced `$TARGET`, note a later `opensource.go sync` overwrites that folder — recreate the `.envrc`
+   > (and re-run `direnv allow`) after syncing.
+2. Install deps and browser binaries. **`webkit` must be installed explicitly** for this repo's setup, in
+   addition to the general bootstrap (which otherwise may not fetch it):
    ```bash
    ( cd "$TEST_DIR" && npm install && npm run test:browser:bootstrap )
+   ( cd "$TEST_DIR" && PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install webkit )
    ```
-2. Run the browser tests against both staging edges (uses `$MAJOR` from Orientation — never a hardcoded `v4`):
+3. Run the browser tests against both staging edges (uses `$MAJOR` from Orientation — never a hardcoded `v4`):
    ```bash
    ( cd "$TEST_DIR" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.staging.fullstory.com/datalayer/${MAJOR}/latest.js npm run test:browser )
    ( cd "$TEST_DIR" && PLAYWRIGHT_DLO_SCRIPT_SRC=https://edge.eu1.staging.fullstory.com/datalayer/${MAJOR}/latest.js npm run test:browser )
    ```
-3. Display both results to the user.
+4. Display both results to the user.
 
-> **Node version drift (Step 8.1):** The two repos run different Node versions and the tests may fail to
-> start. If so, add `--experimental-transform-types` to the `test:browser` npm script you're invoking
-> (edit the script command in the target `package.json`, or invoke node with the flag) and re-run.
+> **If tests still won't start after pinning Node 20:** try adding `--experimental-transform-types` to the
+> `test:browser` npm script (a transform-types drift between Node versions).
 
 If tests fail (for real, not the drift issue), stop and report to the user before any prod deploy.
 
