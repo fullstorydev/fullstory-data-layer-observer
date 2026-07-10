@@ -297,14 +297,17 @@ If tests fail (for real, not the drift issue), stop and report to the user befor
 
 ## Step 9 — ⛔ HUMAN GATE: deploy to production
 
-Prod is **manual** (no autodeploy), so this is a real deploy. Once staging tests pass, deploy the **same
-`$DEPLOY_HASH`** (Step 6) to production (note the **display-name** cog):
+Prod is **manual** (no autodeploy), so this is a real deploy. **The human gate is here, BEFORE you run
+`create`** — get the user's explicit go-ahead first, because for this cog `create` starts deploying
+immediately (it goes straight to `DEPLOYMENT_STATE_IN_PROGRESS`; there is no separate approval click to
+withhold). Only once the user says go, deploy the **same `$DEPLOY_HASH`** (Step 6), noting the
+**display-name** cog:
 ```bash
 ( cd "$FS_HOME" && git fetch origin -q && go run ./tools/conancli/ -env=fullstoryapp create \
     -githash="$DEPLOY_HASH" -cogs="deploy 'fullstory-data-layer-observer'" )
 ```
-Surface the returned Conan **approval URL** to the user. STOP. Do **not** approve on their behalf. Wait
-until the user confirms the deploy is live in production before continuing.
+Surface the returned Conan status URL, then poll the deploy to a terminal state (background poll, like
+staging) — do NOT run the prod tests until it reports `SUCCEEDED`. If it `FAILED`, stop and show the error.
 
 ## Step 10 — Browser tests against production
 
