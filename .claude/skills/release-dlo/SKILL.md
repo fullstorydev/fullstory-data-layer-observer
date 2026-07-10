@@ -133,9 +133,18 @@ echo "DLO $DLO_VER vs target $TGT_VER => DLO is $CMP"
        summarizing the changes (match the existing terse, bullet style). Save this summary text — you'll
        reuse it as the GitHub release notes in Step 4.
     4. Update the `version` field in `package.json` to `latest-version`.
-    5. Update the version reference in `README.md` (the `Deployment` section links a versioned URL like
+    5. **Also bump `package-lock.json`** — it carries its own `version` (top-level and `packages[""]`)
+       that must match, or the release ships a stale lockfile version. Regenerate it from the bumped
+       `package.json` without touching `node_modules`:
+       ```bash
+       ( cd "$DLO_REPO" && npm install --package-lock-only )
+       ```
+       Confirm the only lockfile change is the two `version` fields → `latest-version` (if it also churns
+       dependencies, review that separately — the bump itself should be version-only).
+    6. Update the version reference in `README.md` (the `Deployment` section links a versioned URL like
        `https://edge.fullstory.com/datalayer/v4/v<version>.js` — update it to `latest-version`).
-    6. **⛔ HUMAN GATE**: Show the user the diff of these three files and the proposed changelog entry.
+    7. **⛔ HUMAN GATE**: Show the user the diff of these **four** files (`package.json`,
+       `package-lock.json`, `README.md`, `CHANGELOG.md`) and the proposed changelog entry.
        These changes must land on DLO `main` (with a `v<latest-version>` tag) before the release. `main`
        is PR-protected (recent history is all squashed PRs), so open a PR for the bump, and **wait** for
        the user to merge it. After merge, `git pull` main so HEAD includes the bump, then continue.
